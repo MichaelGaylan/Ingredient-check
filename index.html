@@ -148,7 +148,7 @@ details summary::-webkit-details-marker{display:none}
         <input id="photo" type="file" accept="image/*" capture="environment" hidden>
         <div class="or">or paste the ingredient list from the label</div>
         <textarea id="ingredients" aria-label="Ingredient list" placeholder="Ingredients: water, sugar, citric acid, ..."></textarea>
-        <div class="row"><button id="checkBtn" type="button">Check ingredients</button><button id="labelBtn" type="button">Read label from photo</button></div>
+        <div class="row"><button id="labelBtn" type="button">Read label from photo</button></div>
         <input id="labelPhoto" type="file" accept="image/*" capture="environment" hidden>
         <p class="status" id="status" role="status"></p>
       </div>
@@ -586,7 +586,7 @@ function renderMissing(info, code){
     ${info ? `<div><h2 class="prod-name">${esc(info.name || "Product " + code)}</h2>${info.brand?`<p class="muted">${esc(info.brand)}</p>`:""}</div>
       <p><b>No ingredient list found.</b> This product is in ${esc(info.db)}, but its ingredients haven't been added, so there is nothing to score.</p>`
     : `<p><b>Barcode ${esc(code)} isn't in Open Food Facts or the USDA database yet.</b></p>`}
-    <p>Add the ingredients any of these ways, then tap <b>Check ingredients</b>:</p>
+    <p>Add the ingredients any of these ways and the app checks them as soon as they're in the box:</p>
     <div class="row">
       <button type="button" class="primary" onclick="document.getElementById('labelPhoto').click()">Read label from photo</button>
       <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q.replace(/ ingredients$/, "") + " SmartLabel")}" target="_blank" rel="noopener">Find it on SmartLabel</a>
@@ -719,18 +719,24 @@ $("#labelPhoto").onchange = async (ev) => {
     const text = cleanOCR(data.text || "");
     if (text.length < 8){ status("Couldn't read any text. Try a closer, well-lit photo of just the ingredient list.", true); return; }
     $("#ingredients").value = text;
-    status("Here's what the photo says. Fix any misread words in the box, then tap Check ingredients again if needed.");
+    status("Here's what the photo says. Fix any misread words in the box and the result updates by itself.");
     checkEntered(text);
   }catch(e){ status("The text reader couldn't load. Check your connection, or type the ingredients instead.", true); }
   finally{ btn.disabled = false; }
 };
 $("#lookupBtn").onclick = () => lookup($("#barcode").value);
 $("#barcode").addEventListener("keydown", e => { if (e.key === "Enter") lookup(e.target.value); });
-$("#checkBtn").onclick = () => {
+// No Check button: a pasted list is checked at once, a typed one after a short pause.
+let typeTimer = null, lastChecked = "";
+function autoCheck(){
   const t = $("#ingredients").value.trim();
-  if (!t){ status("Paste an ingredient list first.", true); return; }
-  status(""); checkEntered(t);
-};
+  if (t.length < 4 || t === lastChecked) return;
+  lastChecked = t; status(""); checkEntered(t);
+}
+$("#ingredients").addEventListener("input", e => {
+  clearTimeout(typeTimer);
+  typeTimer = setTimeout(autoCheck, e.inputType === "insertFromPaste" ? 50 : 1200);
+});
 
 /* ---------- library + method ---------- */
 let libFilter = "all";
