@@ -105,6 +105,12 @@ details summary::-webkit-details-marker{display:none}
 .breakdown td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}
 .breakdown td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap;padding-left:12px}
 .unreviewed{display:flex;flex-wrap:wrap;gap:6px}
+.reg-item{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.reg-item h4{margin:0;font:600 14.5px var(--body)}
+.reg-item .src{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.reg-item ul{margin:0;padding-left:18px}
+.reg-item a{color:var(--accent)}
+.auto-note{font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
 .btnlink{display:inline-flex;align-items:center;font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
 .disclaimer{font-size:12.5px;color:var(--muted)}
 .grade-table{width:100%;border-collapse:collapse;font-size:14px}
@@ -444,11 +450,83 @@ function renderResult({name, brand, example, text, tags, nutriments, source}){
       </div>
     </div>
     ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map((e,i)=>entryRow(e, i===0 && topGrade(e)!=="OK")).join("")}</div>`:""}
-    ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">We have no graded evidence for these yet. That does not mean they are safe or unsafe.</p><div class="unreviewed">${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div></div>`:""}
+    ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">We have no graded evidence for these yet. That does not mean they are safe or unsafe.</p><div class="unreviewed">${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div>
+      <div class="row"><button type="button" id="regBtn">Look these up in FDA, WHO and IARC records</button></div>
+      <div id="regOut" class="stack"></div></div>`:""}
     ${text?`<details class="panel"><summary><span class="label">Ingredients checked</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${esc(text)}</p></details>`:""}
     ${source?`<p class="disclaimer">${source}</p>`:""}
     <p class="disclaimer">General information from published science, not medical advice.</p>`;
+  if (unrev.length) $("#regBtn").onclick = () => regLookup(unrev);
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
+}
+
+
+/* ---------- live regulatory lookup for unreviewed ingredients (PubChem) ----------
+   PubChem aggregates the FDA "Substances Added to Food" inventory, WHO/FAO JECFA evaluations
+   and IARC classifications. Results are shown as-is, labelled automatic, and never change the score. */
+const PC = "https://pubchem.ncbi.nlm.nih.gov/rest";
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function cleanName(n){
+  return n.toLowerCase().replace(/contains? (less than )?2% or less of/g,"").replace(/\b(color|colour|preservative|to preserve freshness|for color|for freshness|added)\b/g,"").replace(/[^a-z0-9 \-']/g," ").replace(/\s+/g," ").trim();
+}
+function walk(sec, path, out){
+  const here = [...path, sec.TOCHeading].filter(Boolean);
+  (sec.Information||[]).forEach(inf => {
+    const txt = (inf.Value?.StringWithMarkup||[]).map(x=>x.String).join(" ") || (inf.Value?.Number||[]).join(", ");
+    if (txt || inf.URL) out.push({heading: here[here.length-1], name: inf.Name||"", text: txt, url: inf.URL||"", ref: inf.ReferenceNumber});
+  });
+  (sec.Section||[]).forEach(c => walk(c, here, out));
+}
+async function pcHeading(cid, heading){
+  const r = await fetch(`${PC}/pug_view/data/compound/${cid}/JSON?heading=${encodeURIComponent(heading)}`);
+  if (!r.ok) return {items:[], refs:{}};
+  const j = await r.json(); const out = [];
+  (j.Record?.Section||[]).forEach(sct => walk(sct, [], out));
+  const refs = {}; (j.Record?.Reference||[]).forEach(x => refs[x.ReferenceNumber] = x);
+  return {items: out, refs};
+}
+function regBlock(title, data, filter){
+  const items = data.items.filter(filter);
+  if (!items.length) return "";
+  const seen = new Set(), lines = [];
+  for (const it of items){
+    const line = `${it.name ? `<b>${esc(it.name)}:</b> ` : ""}${esc(it.text).slice(0,300)}${it.url ? ` <a href="${esc(it.url)}" target="_blank" rel="noopener">link</a>` : ""}`;
+    if (!seen.has(line) && lines.length < 8){ seen.add(line); lines.push(`<li>${line}</li>`); }
+  }
+  const srcs = [...new Set(items.map(i => data.refs[i.ref]).filter(Boolean).map(r => r.URL ? `<a href="${esc(r.URL)}" target="_blank" rel="noopener">${esc(r.SourceName)}</a>` : esc(r.SourceName)))].join(", ");
+  return `<div><div class="src">${esc(title)}</div><ul>${lines.join("")}</ul>${srcs ? `<div class="muted" style="font-size:12px">Source: ${srcs}</div>` : ""}</div>`;
+}
+async function regOne(raw){
+  const name = cleanName(raw);
+  const pcLink = `https://pubchem.ncbi.nlm.nih.gov/#query=${encodeURIComponent(name)}`;
+  if (!name) return "";
+  let cid = null;
+  try {
+    const r = await fetch(`${PC}/pug/compound/name/${encodeURIComponent(name)}/cids/JSON`);
+    if (r.ok) cid = (await r.json()).IdentifierList?.CID?.[0] || null;
+  } catch(_) { return `<div class="reg-item"><h4>${esc(raw)}</h4><p class="muted">Couldn't reach PubChem. <a href="${pcLink}" target="_blank" rel="noopener">Search PubChem yourself</a>.</p></div>`; }
+  if (!cid) return `<div class="reg-item"><h4>${esc(raw)}</h4><p class="muted">Not found as a single substance. Mixtures and whole foods (flours, oils, flavourings) usually aren't listed. <a href="${pcLink}" target="_blank" rel="noopener">Search PubChem</a>.</p></div>`;
+  await sleep(250);
+  const food = await pcHeading(cid, "Food Additives and Ingredients").catch(()=>({items:[],refs:{}}));
+  await sleep(250);
+  const carc = await pcHeading(cid, "Carcinogen Classification").catch(()=>({items:[],refs:{}}));
+  const fda = regBlock("FDA", food, i => /fda|substances added|cfr|regs|technical effect/i.test(i.heading + " " + i.name) || /CFR/.test(i.text));
+  const jecfa = regBlock("WHO/FAO expert committee (JECFA)", food, i => /jecfa|fao\/who/i.test(i.heading) || /^adi$/i.test(i.name));
+  const iarc = regBlock("Cancer classification", carc, () => true);
+  const nothing = !fda && !jecfa;
+  return `<div class="reg-item"><h4>${esc(raw)} <a class="f-code" href="https://pubchem.ncbi.nlm.nih.gov/compound/${cid}" target="_blank" rel="noopener">PubChem ${cid}</a></h4>
+    ${fda}${jecfa}${iarc || `<div><div class="src">Cancer classification</div><p class="muted">None listed (IARC or similar).</p></div>`}
+    ${nothing ? `<p class="muted">No FDA food-additive or JECFA record found for this substance.</p>` : ""}</div>`;
+}
+async function regLookup(list){
+  const btn = $("#regBtn"), out = $("#regOut");
+  btn.disabled = true; btn.textContent = "Looking up…";
+  out.innerHTML = `<p class="auto-note">Automatic lookup from public records via PubChem (FDA Substances Added to Food, WHO/FAO JECFA, IARC). These are shown as published and have not been graded by us, so they don't change the score. An FDA listing means an ingredient is permitted for that use, not that it has been proven safe or harmful.</p>`;
+  for (const u of list.slice(0, 15)){
+    out.insertAdjacentHTML("beforeend", await regOne(u));
+    await sleep(250);
+  }
+  btn.textContent = "Done"; 
 }
 
 /* ---------- lookup ---------- */
