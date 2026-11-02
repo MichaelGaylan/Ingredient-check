@@ -91,12 +91,13 @@ details summary{list-style:none;cursor:pointer;display:grid;grid-template-column
 details summary::-webkit-details-marker{display:none}
 .f-name{font-weight:600}
 .f-code{font:400 12px var(--mono);color:var(--muted)}
-.neg{color:var(--neg);font-weight:700}
-tr.neg td{color:var(--neg);font-weight:700}
+.neg{color:var(--gC);font-weight:700}
+.reg-warn{color:var(--neg);font-weight:700}
+tr.neg td{color:var(--gC);font-weight:700}
 details[open] .f-neg{display:none}
-.f-neg{grid-column:1/-1;color:var(--neg);font-weight:700;font-size:14px;margin-top:4px}
-.neg-tag{font:700 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--neg)}
-.claim.is-neg{border-left:3px solid var(--neg);padding-left:10px;margin-left:-14px}
+.f-neg{grid-column:1/-1;color:var(--gC);font-weight:700;font-size:14px;margin-top:4px}
+.neg-tag{font:700 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--gC)}
+.claim.is-neg{border-left:3px solid var(--gC);padding-left:10px;margin-left:-14px}
 .f-sum{font-size:14px;color:var(--muted);margin-top:2px;grid-column:1/-1}
 .claims{display:flex;flex-direction:column;gap:12px;margin-top:12px;padding-left:12px;border-left:2px solid var(--line)}
 .claim p{font-size:14.5px}
@@ -389,7 +390,10 @@ function entryDetail(e){
     return `
     <div class="claim${neg?" is-neg":""}"><div class="meta">${chip(neg?c.grade:"OK")}${top?'<span class="neg-tag">Strongest concern</span>':neg?'<span class="neg-tag">Concern</span>':""}</div>
       <p${neg?' class="neg"':""}>${esc(c.text)}</p><ul class="cites">${c.cites.map(citeHTML).join("")}</ul></div>`; }).join("");
-  const reg = e.reg ? `<div class="reg">${e.reg.eu?`<b>EU</b><span>${esc(e.reg.eu)}</span>`:""}${e.reg.us?`<b>US</b><span>${esc(e.reg.us)}</span>`:""}</div>` : "";
+  // Regulatory restrictions (bans, revocations, mandatory warnings) are set in bold red.
+  const restrict = t => /no longer|not (authorised|authorized|permitted)|revoked|must|banned|stop using/i.test(t);
+  const regLine = (k, t) => t ? `<b>${k}</b><span${restrict(t)?' class="reg-warn"':""}>${esc(t)}</span>` : "";
+  const reg = e.reg ? `<div class="reg">${regLine("EU", e.reg.eu)}${regLine("US", e.reg.us)}</div>` : "";
   return `<div class="claims">${claims}${reg}<p class="f-code">Last reviewed ${esc(e.reviewed)}</p></div>`;
 }
 function topNeg(e){
