@@ -16,7 +16,7 @@
 :root{
   --bg:#f3f5f2; --surface:#ffffff; --ink:#18221d; --muted:#5b6862; --line:#d8ded9;
   --accent:#1f6f5c; --accent-soft:#e1efe9;
-  --gA:#7a1f2b; --gB:#b04a1c; --gC:#a8780e; --gD:#5f6b78; --gN:#8a948f; --ok:#2f7a45;
+  --neg:#c0161f; --gA:#7a1f2b; --gB:#b04a1c; --gC:#a8780e; --gD:#5f6b78; --gN:#8a948f; --ok:#2f7a45;
   --gA-bg:#f6e4e6; --gB-bg:#f8e8df; --gC-bg:#f6efd9; --gD-bg:#e8ecf0; --ok-bg:#e2f1e6;
   --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -25,13 +25,13 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111613; --surface:#18201c; --ink:#e6ece8; --muted:#9aa8a1; --line:#2c3732;
   --accent:#5fc4a8; --accent-soft:#1c3029;
-  --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
+  --neg:#ff6b6b; --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
   --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --ok-bg:#183020;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111613; --surface:#18201c; --ink:#e6ece8; --muted:#9aa8a1; --line:#2c3732;
   --accent:#5fc4a8; --accent-soft:#1c3029;
-  --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
+  --neg:#ff6b6b; --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
   --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --ok-bg:#183020;
   color-scheme:dark}
 *{box-sizing:border-box}
@@ -91,6 +91,12 @@ details summary{list-style:none;cursor:pointer;display:grid;grid-template-column
 details summary::-webkit-details-marker{display:none}
 .f-name{font-weight:600}
 .f-code{font:400 12px var(--mono);color:var(--muted)}
+.neg{color:var(--neg);font-weight:700}
+tr.neg td{color:var(--neg);font-weight:700}
+details[open] .f-neg{display:none}
+.f-neg{grid-column:1/-1;color:var(--neg);font-weight:700;font-size:14px;margin-top:4px}
+.neg-tag{font:700 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--neg)}
+.claim.is-neg{border-left:3px solid var(--neg);padding-left:10px;margin-left:-14px}
 .f-sum{font-size:14px;color:var(--muted);margin-top:2px;grid-column:1/-1}
 .claims{display:flex;flex-direction:column;gap:12px;margin-top:12px;padding-left:12px;border-left:2px solid var(--line)}
 .claim p{font-size:14.5px}
@@ -376,18 +382,29 @@ function citeHTML(id){
   return `<li><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a>. ${esc(c.src)}, ${esc(c.year)}.${ids ? ` <span class="id">${esc(ids)}</span>` : ""} <span class="chk">${chk}</span></li>`;
 }
 function entryDetail(e){
-  const claims = e.claims.slice().sort((a,b)=>GRADE_ORDER[a.dir==="concern"?a.grade:"OK"]-GRADE_ORDER[b.dir==="concern"?b.grade:"OK"]).map(c => `
-    <div class="claim"><div class="meta">${chip(c.dir==="concern"?c.grade:"OK")}</div>
-      <p>${esc(c.text)}</p><ul class="cites">${c.cites.map(citeHTML).join("")}</ul></div>`).join("");
+  // Negative findings are set in bold red; the strongest one is labelled.
+  let firstNeg = true;
+  const claims = e.claims.slice().sort((a,b)=>GRADE_ORDER[a.dir==="concern"?a.grade:"OK"]-GRADE_ORDER[b.dir==="concern"?b.grade:"OK"]).map(c => {
+    const neg = c.dir === "concern", top = neg && firstNeg; if (neg) firstNeg = false;
+    return `
+    <div class="claim${neg?" is-neg":""}"><div class="meta">${chip(neg?c.grade:"OK")}${top?'<span class="neg-tag">Strongest concern</span>':neg?'<span class="neg-tag">Concern</span>':""}</div>
+      <p${neg?' class="neg"':""}>${esc(c.text)}</p><ul class="cites">${c.cites.map(citeHTML).join("")}</ul></div>`; }).join("");
   const reg = e.reg ? `<div class="reg">${e.reg.eu?`<b>EU</b><span>${esc(e.reg.eu)}</span>`:""}${e.reg.us?`<b>US</b><span>${esc(e.reg.us)}</span>`:""}</div>` : "";
   return `<div class="claims">${claims}${reg}<p class="f-code">Last reviewed ${esc(e.reviewed)}</p></div>`;
+}
+function topNeg(e){
+  // The strongest negative point, shown in bold red even when the finding is collapsed.
+  const c = e.claims.filter(c => c.dir === "concern").sort((a,b)=>GRADE_ORDER[a.grade]-GRADE_ORDER[b.grade])[0];
+  if (!c) return "";
+  const first = c.text.match(/^.*?[.!?](\s|$)/)?.[0].trim() || c.text;
+  return `<p class="f-neg"><span aria-hidden="true">⚠</span> ${esc(first)}</p>`;
 }
 function entryRow(e, open){
   const codes = (e.codes||[]).map(c=>c.toUpperCase()).join(", ");
   return `<div class="finding"><details${open?" open":""}><summary>
       <div><span class="f-name">${esc(e.name)}</span> ${codes?`<span class="f-code">${esc(codes)}</span>`:""}</div>
       <div>${chip(topGrade(e))}</div>
-      <p class="f-sum">${esc(e.summary)}</p></summary>${entryDetail(e)}</details></div>`;
+      <p class="f-sum">${esc(e.summary)}</p>${topNeg(e)}</summary>${entryDetail(e)}</details></div>`;
 }
 
 /* ---------- matching ---------- */
@@ -435,7 +452,7 @@ function nutriPanel(n){
   const per = n.drink ? "100 ml" : "100 g";
   const rows = NUTRI.filter(t => typeof n[t.k] === "number").map(t => {
     const lim = n.drink ? t.drink : t.food, high = n[t.k] > lim;
-    return `<tr><td>${t.label[0].toUpperCase()+t.label.slice(1)}</td><td>${n[t.k].toFixed(1)} g</td><td>${high?'<span class="chip g-B">High</span>':`<span class="muted" style="font-size:12px">under ${lim} g</span>`}</td></tr>`;
+    return `<tr${high?' class="neg"':""}><td>${t.label[0].toUpperCase()+t.label.slice(1)}</td><td>${n[t.k].toFixed(1)} g</td><td>${high?'<span class="neg">HIGH</span>':`<span class="muted" style="font-size:12px">under ${lim} g</span>`}</td></tr>`;
   }).join("");
   if (!rows) return "";
   return `<div class="panel stack"><div class="label">Nutrition per ${per}${n.drink?" (drink)":""}</div>
@@ -492,19 +509,19 @@ function renderResult(args){
           ${example?'<div class="example-tag">Example, not a real product</div>':""}
           <h2 class="prod-name">${esc(name||"Your ingredient list")}</h2>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
-          <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${esc(headline)}</p>
+          <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
           <div class="counts">${["A","B","C","D","OK"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g}">${counts[g]} × ${g==="OK"?"reassuring":g}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
           ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div>`:""}
         </div>
       </div>
       <div id="breakdown" hidden>
         <table class="breakdown"><tr><td>Starting score</td><td>100</td></tr>
-        ${sc.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join("")}
+        ${sc.rows.map(r=>`<tr class="neg"><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join("")}
         <tr><td><b>Score</b></td><td><b>${sc.score}</b></td></tr></table>
         <p class="disclaimer" style="margin-top:6px">${sc.nutriUsed ? "" : "No nutrition data for this product, so sugar, salt and fat aren't scored. "}See Method for the formula.</p>
       </div>
     </div>
-    ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map((e,i)=>entryRow(e, i===0 && topGrade(e)!=="OK")).join("")}</div>`:""}
+    ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map(e=>entryRow(e, topGrade(e)!=="OK")).join("")}</div>`:""}
     ${(autoHits.length||autoOK.length)?`<div class="panel stack"><div class="label">Automatic findings from FDA, WHO and IARC records</div>
       <p class="auto-note">Looked up automatically in PubChem, which carries the FDA Substances Added to Food inventory, WHO/FAO JECFA evaluations and IARC classifications. Shown as published, not checked by us. IARC classifications lower the score; an FDA or WHO listing means the ingredient is permitted, not that it is proven safe.</p>
       ${[...autoHits, ...autoOK].map(r=>r.html).join("")}</div>`:""}
@@ -594,7 +611,7 @@ async function regOne(raw){
   const iarc = regBlock("Cancer classification", carc, () => true);
   res.cid = cid;
   res.html = `<div class="reg-item"><h4>${esc(raw)} <a class="f-code" href="https://pubchem.ncbi.nlm.nih.gov/compound/${cid}" target="_blank" rel="noopener">PubChem ${cid}</a></h4>
-    ${res.grade ? `<p>${chip(res.grade)} IARC Group ${res.iarc}: ${IARC_WORDS[res.iarc]}. This rates how strong the evidence of a cancer hazard is, not the risk at normal intake.</p>` : res.ok ? `<p>${chip("OK")} Listed as permitted in food by ${[fda?"the FDA":"", jecfa?"the WHO/FAO expert committee":""].filter(Boolean).join(" and ")}.</p>` : ""}
+    ${res.grade ? `<p>${chip(res.grade)} <span class="neg">IARC Group ${res.iarc}: ${IARC_WORDS[res.iarc]}.</span> This rates how strong the evidence of a cancer hazard is, not the risk at normal intake.</p>` : res.ok ? `<p>${chip("OK")} Listed as permitted in food by ${[fda?"the FDA":"", jecfa?"the WHO/FAO expert committee":""].filter(Boolean).join(" and ")}.</p>` : ""}
     ${fda}${jecfa}${iarc || `<div><div class="src">Cancer classification</div><p class="muted">None listed (IARC or similar).</p></div>`}</div>`;
   return res;
 }
