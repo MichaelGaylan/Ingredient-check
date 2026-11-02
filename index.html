@@ -189,7 +189,7 @@ details summary::-webkit-details-marker{display:none}
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script src="vendor/zxing/zxing.min.js"></script>
 <script>
 /* Evidence data. check: "finding" = the cited number or conclusion was confirmed in the source's abstract;
    "source" = the source was confirmed to exist (title, journal, year, DOI) and has no retraction notice. */
@@ -430,6 +430,21 @@ function renderResult({name, brand, example, text, tags, nutriments, source}){
 /* ---------- lookup ---------- */
 const status = (m, err) => { const s=$("#status"); s.textContent = m||""; s.classList.toggle("err", !!err); };
 let current = null; // product found by barcode, kept so a pasted list keeps its name
+/* Ingredient lists the user entered, saved per barcode on this device only. */
+const SAVE_KEY = "sourced.saved.v1";
+function savedAll(){ try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "{}"); } catch(_) { return {}; } }
+function saveList(code, rec){ try { const all = savedAll(); all[code] = rec; localStorage.setItem(SAVE_KEY, JSON.stringify(all)); return true; } catch(_) { return false; } }
+function forget(code){ try { const all = savedAll(); delete all[code]; localStorage.setItem(SAVE_KEY, JSON.stringify(all)); } catch(_) {} }
+function checkEntered(text){
+  // A list typed, pasted or read from a photo. If it belongs to a scanned barcode, remember it.
+  let source = "";
+  if (current?.code){
+    const ok = saveList(current.code, {name:current.name||"", brand:current.brand||"", text, saved:new Date().toISOString().slice(0,10)});
+    if (ok) source = `Saved on this phone for barcode ${esc(current.code)}, so the next scan uses it.`;
+  }
+  renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text, tags:[], source});
+}
+window.forgetSaved = code => { forget(code); lookup(code, true); };
 function renderMissing(info, code){
   $("#ingredients").value = "";
   const q = info ? `${info.brand||""} ${info.name||""} ingredients`.trim() : `${code} ingredients`;
@@ -440,9 +455,10 @@ function renderMissing(info, code){
     <p>Add the ingredients any of these ways, then tap <b>Check ingredients</b>:</p>
     <div class="row">
       <button type="button" class="primary" onclick="document.getElementById('labelPhoto').click()">Read label from photo</button>
-      <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">Search the web for the ingredients</a>
+      <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q.replace(/ ingredients$/, "") + " SmartLabel")}" target="_blank" rel="noopener">Find it on SmartLabel</a>
+      <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">Search the web</a>
     </div>
-    <p class="muted" style="font-size:13.5px">From the web search, open the maker's own product page if you can, copy the ingredient list, and paste it into the box above.</p>
+    <p class="muted" style="font-size:13.5px">SmartLabel pages are published by the manufacturers themselves (most large US brands). Copy the ingredient list from there or from the maker's own site and paste it into the box above. The app remembers it for this barcode on this phone.</p>
     ${info && info.db === "Open Food Facts" ? `<p class="disclaimer">You can also add the ingredients to <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> so the next scan finds them.</p>` : ""}</div>`;
   $("#ingredients").focus();
 }
@@ -467,10 +483,18 @@ async function fromUSDA(code){
   return {db:"the USDA database", name:title(f.description), brand:title(f.brandName || f.brandOwner), text:(f.ingredients||"").trim(), tags:[],
     source:`Ingredients from <a href="https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients" target="_blank" rel="noopener">USDA FoodData Central</a> (supplied by the manufacturer${f.publishedDate?`, published ${esc(f.publishedDate)}`:""}). Recipes change, so check them against the pack.`};
 }
-async function lookup(code){
+async function lookup(code, skipSaved){
   code = (code||"").replace(/\D/g,"");
   if (code.length < 8){ status("Enter the 8 to 14 digit number under the barcode.", true); return; }
   current = null;
+  const mine = !skipSaved && savedAll()[code];
+  if (mine){
+    current = {code, name:mine.name, brand:mine.brand};
+    status(""); $("#ingredients").value = mine.text;
+    renderResult({name:mine.name || "Product " + code, brand:mine.brand, text:mine.text, tags:[],
+      source:`Ingredients you added on ${esc(mine.saved)}, saved on this phone. <a href="#scan" onclick="forgetSaved('${code}');return false">Forget it and look up again</a>.`});
+    return;
+  }
   status("Looking up " + code + "…");
   let off = null, usda = null, usdaErr = false;
   try { off = await fromOFF(code); } catch(_) {}
@@ -480,7 +504,7 @@ async function lookup(code){
   }
   const hit = (off && off.text) ? off : (usda && usda.text) ? usda : null;
   const info = hit || off || usda;
-  if (info) current = {name:info.name, brand:info.brand};
+  current = {code, name:info?.name, brand:info?.brand};
   if (hit){
     status("");
     $("#ingredients").value = hit.text;
@@ -562,7 +586,7 @@ $("#labelPhoto").onchange = async (ev) => {
     if (text.length < 8){ status("Couldn't read any text. Try a closer, well-lit photo of just the ingredient list.", true); return; }
     $("#ingredients").value = text;
     status("Here's what the photo says. Fix any misread words in the box, then tap Check ingredients again if needed.");
-    renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text, tags:[]});
+    checkEntered(text);
   }catch(e){ status("The text reader couldn't load. Check your connection, or type the ingredients instead.", true); }
   finally{ btn.disabled = false; }
 };
@@ -571,7 +595,7 @@ $("#barcode").addEventListener("keydown", e => { if (e.key === "Enter") lookup(e
 $("#checkBtn").onclick = () => {
   const t = $("#ingredients").value.trim();
   if (!t){ status("Paste an ingredient list first.", true); return; }
-  status(""); renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text:t, tags:[]});
+  status(""); checkEntered(t);
 };
 
 /* ---------- library + method ---------- */
