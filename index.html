@@ -106,6 +106,7 @@ details summary::-webkit-details-marker{display:none}
 .breakdown td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}
 .breakdown td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap;padding-left:12px}
 .unreviewed{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{cursor:pointer;font:500 12px var(--mono);padding:3px 8px;border-radius:6px}
 .reg-item{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .reg-item h4{margin:0;font:600 14.5px var(--body)}
 .reg-item .src{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
@@ -458,7 +459,8 @@ function renderResult(args){
           <h2 class="prod-name">${esc(name||"Your ingredient list")}</h2>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${esc(headline)}</p>
-          <div class="counts">${["A","B","C","D","OK"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g}">${counts[g]} × ${g==="OK"?"reassuring":g}</span>`).join("")}${unrev.length?`<span class="chip g-N">${unrev.length} not reviewed</span>`:""}</div>
+          <div class="counts">${["A","B","C","D","OK"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g}">${counts[g]} × ${g==="OK"?"reassuring":g}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
+          ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div>`:""}
         </div>
       </div>
       <div id="breakdown" hidden>
@@ -478,6 +480,11 @@ function renderResult(args){
     ${source?`<p class="disclaimer">${source}</p>`:""}
     <p class="disclaimer">General information from published science, not medical advice.</p>`;
   if (pending.length && !_auto) autoLookup(pending, renderToken);
+  if (unrev.length) $("#unrevChip").onclick = () => {
+    unrevOpen = !unrevOpen; $("#unrevDrop").hidden = !unrevOpen;
+    $("#unrevChip").setAttribute("aria-expanded", unrevOpen);
+    $("#unrevChip").querySelector("span").textContent = unrevOpen ? "▴" : "▾";
+  };
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
 }
 
@@ -558,7 +565,7 @@ async function regOne(raw){
 }
 function data_src(d, it){ const r = d.refs[it.ref]; return r ? (r.SourceName||"") : ""; }
 const regCache = new Map();   // cleaned name -> result
-let renderToken = 0, lastArgs = null;
+let renderToken = 0, lastArgs = null, unrevOpen = false;
 async function autoLookup(list, token){
   for (const u of list.slice(0, 20)){
     const k = cleanName(u);
