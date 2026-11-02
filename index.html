@@ -181,7 +181,7 @@ details summary::-webkit-details-marker{display:none}
       <div class="panel stack">
         <h3>How every citation is checked</h3>
         <p>Every source was looked up in Crossref or on the regulator's own site before it was added, to confirm it exists and has no retraction. Sources marked <b>source and finding checked</b> also had the specific number or conclusion confirmed in their abstract. Findings show the date they were last reviewed. Product data comes from Open Food Facts, an open database built by volunteers.</p>
-        <p>The library is deliberately small. Sugar, salt, trans fats, Red 3, BHA, potassium bromate and brominated vegetable oil are next, and will appear once their sources pass the same check. Nutrition is not part of the score yet for the same reason.</p>
+        <p>The library is deliberately small. Sugar, salt, BHA, potassium bromate, propylparaben, TBHQ and azodicarbonamide are next, and will appear once their sources pass the same check. Nutrition is not part of the score yet for the same reason.</p>
       </div>
       <div class="panel stack" id="sourceList"><h3>All sources</h3></div>
       <p class="disclaimer">Sourced gives general information from published science. It is not medical advice. If you have an allergy, a medical condition or a special diet, follow your doctor's guidance.</p>
@@ -215,6 +215,11 @@ const CITES = {
   efsa_sacch: {title:"Re-evaluation of saccharin and its sodium, potassium and calcium salts (E 954) as food additives", src:"EFSA Journal", year:"2024", doi:"10.2903/j.efsa.2024.9044", url:"https://www.efsa.europa.eu/en/efsajournal/pub/9044", check:"finding"},
   efsa_stevia: {title:"Scientific Opinion on the safety of steviol glycosides for the proposed uses as a food additive", src:"EFSA Journal 8(4):1537", year:"2010", doi:"10.2903/j.efsa.2010.1537", url:"https://www.efsa.europa.eu/en/efsajournal/pub/1537", check:"finding"},
   who_nss: {title:"Use of non-sugar sweeteners: WHO guideline", src:"World Health Organization", year:"2023", doi:"", url:"https://www.who.int/publications/i/item/9789240073616", check:"finding"},
+  efsa_pg: {title:"Scientific Opinion on the re-evaluation of propyl gallate (E 310) as a food additive", src:"EFSA Journal 12(4):3642", year:"2014", doi:"10.2903/j.efsa.2014.3642", url:"https://www.efsa.europa.eu/en/efsajournal/pub/3642", check:"finding"},
+  efsa_al: {title:"Safety of aluminium from dietary intake", src:"EFSA Journal 754", year:"2008", doi:"10.2903/j.efsa.2008.754", url:"https://www.efsa.europa.eu/en/efsajournal/pub/754", check:"finding"},
+  fda_red3: {title:"Color Additive Petition From Center for Science in the Public Interest, et al.; Request To Revoke Color Additive Listing for Use of FD&C Red No. 3 in Food and Ingested Drugs (90 FR 4628)", src:"US FDA, Federal Register", year:"2025", doi:"", url:"https://www.federalregister.gov/documents/2025/01/16/2025-00830/color-additive-petition-from-center-for-science-in-the-public-interest-et-al-request-to-revoke-color", check:"finding"},
+  fda_bvo: {title:"Revocation of Authorization for Use of Brominated Vegetable Oil in Food (89 FR 55040)", src:"US FDA, Federal Register", year:"2024", doi:"", url:"https://www.federalregister.gov/documents/2024/07/03/2024-14300/revocation-of-authorization-for-use-of-brominated-vegetable-oil-in-food", check:"finding"},
+  fda_pho: {title:"Final Determination Regarding Partially Hydrogenated Oils (80 FR 34650)", src:"US FDA, Federal Register", year:"2015", doi:"", url:"https://www.federalregister.gov/documents/2015/06/17/2015-14883/final-determination-regarding-partially-hydrogenated-oils", check:"finding"},
 };
 const R = "2026-11-01";
 const WHO_NSS = {dir:"concern", grade:"C", text:"The World Health Organization advises against using non-sugar sweeteners as a way to control body weight (2023 guideline). This is advice that they do not help with weight control over the long term, not a finding that the sweetener is toxic.", cites:["who_nss"]};
@@ -294,6 +299,25 @@ const ENTRIES = [
   {id:"caramel", name:"Caramel colour", codes:["e150a","e150b","e150c","e150d"], aliases:["caramel color","caramel colour","caramel coloring","caramel colouring","plain caramel","ammonia caramel","sulphite ammonia caramel","sulfite ammonia caramel"], reviewed:"2026-11-02",
    summary:"Brown colouring in colas, sauces and baked goods. Safe within its daily limits.",
    claims:[{dir:"ok", grade:"A", text:"EFSA set a group acceptable daily intake of 300 mg per kg of body weight per day for all caramel colours, with a lower individual limit of 100 mg/kg for ammonia caramel (Class III, E150c).", cites:["efsa_caramel"]}]},
+
+  {id:"pho", name:"Partially hydrogenated oils (trans fat)", codes:[], aliases:["partially hydrogenated","partially hydrogenated oil","partially hydrogenated soybean oil","partially hydrogenated cottonseed oil","partially hydrogenated vegetable oil"], reviewed:"2026-11-02",
+   summary:"The main source of artificial trans fat. No longer allowed in US food.",
+   claims:[{dir:"concern", grade:"A", text:"In 2015 the FDA determined that partially hydrogenated oils, the main source of artificial trans fat, are not generally recognized as safe (GRAS) for any use in human food. Manufacturers had to remove them by June 18, 2018, with extensions for some uses. If you see them on a label, the product may be old or imported.", cites:["fda_pho"]}],
+   reg:{us:"Not permitted in food since 2018 (some uses extended)."}},
+  {id:"bvo", name:"Brominated vegetable oil (BVO)", codes:["e443"], aliases:["brominated vegetable oil","bvo","brominated soybean oil"], reviewed:"2026-11-02",
+   summary:"Was used to keep citrus flavouring mixed in sodas. No longer allowed in US food.",
+   claims:[{dir:"concern", grade:"A", text:"The FDA revoked its authorization in 2024 because there is “no longer a reasonable certainty of no harm from the continued use of BVO in food”. The rule took effect on August 2, 2024.", cites:["fda_bvo"]}],
+   reg:{us:"Revoked in 2024.", eu:"Not authorised as a food additive."}},
+  {id:"red3", name:"Erythrosine (Red 3)", codes:["e127"], aliases:["red 3","fd c red no 3","fd&c red no. 3","fd&c red 3","erythrosine","erythrosin","red no 3"], reviewed:"2026-11-02",
+   summary:"Cherry-pink dye in candy, cake decorations and some fruit cups. Being removed from US food.",
+   claims:[{dir:"concern", grade:"C", text:"In January 2025 the FDA revoked Red 3 for use in food, effective January 15, 2027. The legal reason is the Delaney Clause, which bans any colour shown to cause cancer in people or animals: the FDA found Red 3 “can induce cancer in male rats, through a rat specific hormonal mechanism”. The FDA noted this mechanism is specific to rats, which is why the grade is Possible rather than higher.", cites:["fda_red3"]}],
+   reg:{us:"Revoked for food; manufacturers must stop using it by January 15, 2027."}},
+  {id:"aluminium", name:"Aluminium-containing additives", codes:["e173","e520","e521","e522","e523","e541","e554","e555","e556","e559"], aliases:["sodium aluminum phosphate","sodium aluminium phosphate","sodium aluminum sulfate","aluminum sulfate","aluminium sulphate","potassium aluminum sulfate","sodium aluminosilicate","aluminum silicate","aluminium","aluminum lake","aluminum lakes"], reviewed:"2026-11-02",
+   summary:"Raising agents, anti-caking agents and dye 'lakes'. Total aluminium intake from all food is often above the safety limit.",
+   claims:[{dir:"concern", grade:"A", text:"EFSA set a tolerable weekly intake of 1 mg of aluminium per kg of body weight per week and concluded this limit “is therefore likely to be exceeded in a significant part of the European population”. That limit covers aluminium from all food, of which additives are one source.", cites:["efsa_al"]}]},
+  {id:"pgallate", name:"Propyl gallate", codes:["e310"], aliases:["propyl gallate"], reviewed:"2026-11-02",
+   summary:"Antioxidant preservative for fats and oils. Safe within its daily limit.",
+   claims:[{dir:"ok", grade:"A", text:"EFSA re-evaluated propyl gallate and derived an acceptable daily intake of 0.5 mg per kg of body weight per day.", cites:["efsa_pg"]}]},
 ];
 
 
