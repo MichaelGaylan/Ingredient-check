@@ -105,6 +105,7 @@ details summary::-webkit-details-marker{display:none}
 .breakdown td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}
 .breakdown td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap;padding-left:12px}
 .unreviewed{display:flex;flex-wrap:wrap;gap:6px}
+.btnlink{display:inline-flex;align-items:center;font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
 .disclaimer{font-size:12.5px;color:var(--muted)}
 .grade-table{width:100%;border-collapse:collapse;font-size:14px}
 .grade-table td{padding:10px 8px 10px 0;border-top:1px solid var(--line);vertical-align:top}
@@ -420,6 +421,7 @@ function renderResult({name, brand, example, text, tags, nutriments, source}){
     </div>
     ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map((e,i)=>entryRow(e, i===0 && topGrade(e)!=="OK")).join("")}</div>`:""}
     ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">We have no graded evidence for these yet. That does not mean they are safe or unsafe.</p><div class="unreviewed">${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div></div>`:""}
+    ${text?`<details class="panel"><summary><span class="label">Ingredients checked</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${esc(text)}</p></details>`:""}
     ${source?`<p class="disclaimer">${source}</p>`:""}
     <p class="disclaimer">General information from published science, not medical advice.</p>`;
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
@@ -428,32 +430,65 @@ function renderResult({name, brand, example, text, tags, nutriments, source}){
 /* ---------- lookup ---------- */
 const status = (m, err) => { const s=$("#status"); s.textContent = m||""; s.classList.toggle("err", !!err); };
 let current = null; // product found by barcode, kept so a pasted list keeps its name
-function renderMissing(p, code){
+function renderMissing(info, code){
   $("#ingredients").value = "";
+  const q = info ? `${info.brand||""} ${info.name||""} ingredients`.trim() : `${code} ingredients`;
   $("#result").innerHTML = `<div class="panel stack">
-    <div><h2 class="prod-name">${esc(p.product_name || "Product " + code)}</h2>${p.brands?`<p class="muted">${esc(p.brands)}</p>`:""}</div>
-    <p><b>No ingredient list yet.</b> This product is in Open Food Facts, but nobody has added its ingredients, so there is nothing to score.</p>
-    <p>Take a photo of the ingredient list on the pack with <b>Read label from photo</b>, or type it into the box above, then tap <b>Check ingredients</b>.</p>
-    <p class="disclaimer">You can also add the ingredients to <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> so the next scan finds them.</p></div>`;
+    ${info ? `<div><h2 class="prod-name">${esc(info.name || "Product " + code)}</h2>${info.brand?`<p class="muted">${esc(info.brand)}</p>`:""}</div>
+      <p><b>No ingredient list found.</b> This product is in ${esc(info.db)}, but its ingredients haven't been added, so there is nothing to score.</p>`
+    : `<p><b>Barcode ${esc(code)} isn't in Open Food Facts or the USDA database yet.</b></p>`}
+    <p>Add the ingredients any of these ways, then tap <b>Check ingredients</b>:</p>
+    <div class="row">
+      <button type="button" class="primary" onclick="document.getElementById('labelPhoto').click()">Read label from photo</button>
+      <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">Search the web for the ingredients</a>
+    </div>
+    <p class="muted" style="font-size:13.5px">From the web search, open the maker's own product page if you can, copy the ingredient list, and paste it into the box above.</p>
+    ${info && info.db === "Open Food Facts" ? `<p class="disclaimer">You can also add the ingredients to <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> so the next scan finds them.</p>` : ""}</div>`;
   $("#ingredients").focus();
+}
+const FDC_KEY = (() => { try { return localStorage.getItem("fdcKey") || "DEMO_KEY"; } catch(_) { return "DEMO_KEY"; } })();
+const digits = c => String(c||"").replace(/\D/g,"").replace(/^0+/,"");
+async function fromOFF(code){
+  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,ingredients_text,ingredients_text_en,additives_tags`);
+  const j = await r.json();
+  if (j.status !== 1 || !j.product) return null;
+  const p = j.product;
+  return {db:"Open Food Facts", name:p.product_name, brand:p.brands, text:(p.ingredients_text_en || p.ingredients_text || "").trim(), tags:p.additives_tags||[],
+    source:`Ingredients from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), a volunteer-built open database. Check them against the pack.`};
+}
+async function fromUSDA(code){
+  // USDA FoodData Central, Branded Foods: ingredient lists supplied by manufacturers.
+  const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(FDC_KEY)}&dataType=Branded&pageSize=10&query=${code}`);
+  if (r.status === 429) throw new Error("rate");
+  const j = await r.json();
+  const f = (j.foods||[]).find(x => digits(x.gtinUpc) === digits(code));
+  if (!f) return null;
+  const title = s => s ? s.toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase()) : s;
+  return {db:"the USDA database", name:title(f.description), brand:title(f.brandName || f.brandOwner), text:(f.ingredients||"").trim(), tags:[],
+    source:`Ingredients from <a href="https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients" target="_blank" rel="noopener">USDA FoodData Central</a> (supplied by the manufacturer${f.publishedDate?`, published ${esc(f.publishedDate)}`:""}). Recipes change, so check them against the pack.`};
 }
 async function lookup(code){
   code = (code||"").replace(/\D/g,"");
   if (code.length < 8){ status("Enter the 8 to 14 digit number under the barcode.", true); return; }
-  status("Looking up " + code + " in Open Food Facts…");
-  try{
-    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,ingredients_text,ingredients_text_en,additives_tags,nutriments`);
-    const j = await r.json();
-    if (j.status !== 1 || !j.product){ status("This barcode is not in Open Food Facts yet. Paste the ingredient list from the label instead.", true); return; }
-    const p = j.product, text = p.ingredients_text_en || p.ingredients_text || "";
-    current = {name:p.product_name, brand:p.brands};
-    if (!text && !(p.additives_tags||[]).length){ status(""); renderMissing(p, code); return; }
-    status("");
-    renderResult({name:p.product_name, brand:p.brands, text, tags:p.additives_tags||[],
-      source:`Product data from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), open database licence.`});
-  }catch(e){
-    status("Could not reach Open Food Facts from here. Paste the ingredient list from the label instead.", true);
+  current = null;
+  status("Looking up " + code + "…");
+  let off = null, usda = null, usdaErr = false;
+  try { off = await fromOFF(code); } catch(_) {}
+  if (!off || !off.text){
+    status("Checking the USDA database…");
+    try { usda = await fromUSDA(code); } catch(e) { usdaErr = true; }
   }
+  const hit = (off && off.text) ? off : (usda && usda.text) ? usda : null;
+  const info = hit || off || usda;
+  if (info) current = {name:info.name, brand:info.brand};
+  if (hit){
+    status("");
+    $("#ingredients").value = hit.text;
+    renderResult({name:hit.name, brand:hit.brand, text:hit.text, tags:hit.tags, source:hit.source});
+    return;
+  }
+  status(usdaErr ? "The USDA database is busy right now (free lookups are limited per hour)." : "", usdaErr);
+  renderMissing(info, code);
 }
 
 /* ---------- scanning ---------- */
@@ -561,7 +596,6 @@ function route(){
 window.addEventListener("hashchange", route);
 renderLibrary(); renderSources(); route();
 const EXAMPLE = "Ingredients: carbonated water, citric acid, sodium benzoate (preservative), natural flavors, aspartame, sucralose, Red 40, caramel color, potassium citrate.";
-$("#ingredients").value = EXAMPLE;
 renderResult({name:"Cherry soda", example:true, text:EXAMPLE, tags:[]});
 </script>
 
