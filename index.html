@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f6f5c">
+<title>Sourced</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+</head>
+<body>
+<style>
+/* Layout: one narrow phone-first column, a lab-report reading order: verdict, then findings by evidence grade, then citations. */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --ink:#18221d; --muted:#5b6862; --line:#d8ded9;
+  --accent:#1f6f5c; --accent-soft:#e1efe9;
+  --gA:#7a1f2b; --gB:#b04a1c; --gC:#a8780e; --gD:#5f6b78; --gN:#8a948f; --ok:#2f7a45;
+  --gA-bg:#f6e4e6; --gB-bg:#f8e8df; --gC-bg:#f6efd9; --gD-bg:#e8ecf0; --ok-bg:#e2f1e6;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111613; --surface:#18201c; --ink:#e6ece8; --muted:#9aa8a1; --line:#2c3732;
+  --accent:#5fc4a8; --accent-soft:#1c3029;
+  --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
+  --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --ok-bg:#183020;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111613; --surface:#18201c; --ink:#e6ece8; --muted:#9aa8a1; --line:#2c3732;
+  --accent:#5fc4a8; --accent-soft:#1c3029;
+  --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
+  --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --ok-bg:#183020;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:680px;margin:0 auto}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 10px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:8px}
+.brand small{font:500 12px var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+nav a{color:var(--muted);text-decoration:none;font-weight:500;font-size:13.5px;padding:6px 12px;border-radius:999px}
+nav a[aria-current="page"]{background:var(--accent);color:var(--surface)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h2{font-size:22px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.inputs{display:grid;gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row > input{flex:1 1 180px;min-width:0}
+input[type=text],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input#barcode{font-family:var(--mono);letter-spacing:.04em}
+textarea{min-height:92px;resize:vertical}
+button{font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button:disabled{opacity:.55;cursor:default}
+.label{font:500 11.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.status{font-size:13.5px;color:var(--muted);min-height:1.2em}
+.status.err{color:var(--gA)}
+#camera{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3;max-width:100%}
+#camera video{width:100%;height:100%;object-fit:cover;display:block}
+#camera .frame{position:absolute;inset:30% 12%;border:2px solid #ffffffcc;border-radius:10px}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* result */
+.result-head{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.ring{width:96px;height:96px;position:relative}
+.ring svg{width:96px;height:96px;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font:700 30px var(--display);font-variant-numeric:tabular-nums}
+.ring .num span{display:block;font:500 11px var(--mono);color:var(--muted);text-align:center;margin-top:-6px}
+.prod-name{font-size:21px}
+.example-tag{display:inline-block;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:6px;margin-bottom:6px}
+.counts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font:500 12px var(--mono);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.g-A{background:var(--gA-bg);color:var(--gA)} .g-B{background:var(--gB-bg);color:var(--gB)}
+.g-C{background:var(--gC-bg);color:var(--gC)} .g-D{background:var(--gD-bg);color:var(--gD)}
+.g-OK{background:var(--ok-bg);color:var(--ok)} .g-N{background:var(--bg);color:var(--gN);border:1px solid var(--line)}
+.finding{border-top:1px solid var(--line);padding-top:12px}
+.finding:first-child{border-top:0;padding-top:0}
+details summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+details summary::-webkit-details-marker{display:none}
+.f-name{font-weight:600}
+.f-code{font:400 12px var(--mono);color:var(--muted)}
+.f-sum{font-size:14px;color:var(--muted);margin-top:2px;grid-column:1/-1}
+.claims{display:flex;flex-direction:column;gap:12px;margin-top:12px;padding-left:12px;border-left:2px solid var(--line)}
+.claim p{font-size:14.5px}
+.claim .meta{display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap}
+.cites{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.cites li{font-size:12.5px;color:var(--muted);line-height:1.45}
+.cites a{color:var(--accent);text-underline-offset:2px}
+.cites .chk{font:500 11px var(--mono);color:var(--ok);white-space:nowrap}
+.cites .id{font-family:var(--mono);font-size:11.5px}
+.reg{font-size:13px;margin-top:8px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.reg b{font:500 11.5px var(--mono);color:var(--muted);padding-top:2px}
+.breakdown{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.breakdown td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}
+.breakdown td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap;padding-left:12px}
+.unreviewed{display:flex;flex-wrap:wrap;gap:6px}
+.disclaimer{font-size:12.5px;color:var(--muted)}
+.grade-table{width:100%;border-collapse:collapse;font-size:14px}
+.grade-table td{padding:10px 8px 10px 0;border-top:1px solid var(--line);vertical-align:top}
+.tablewrap{overflow-x:auto}
+.lib-filter{display:flex;gap:6px;flex-wrap:wrap}
+.lib-filter button{padding:6px 10px;font-size:13px}
+.lib-filter button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media (prefers-reduced-motion: no-preference){.ring circle.val{transition:stroke-dashoffset .6s ease}}
+@media (max-width:420px){.result-head{grid-template-columns:1fr}.ring{margin:0 auto}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Sourced <small>evidence-graded food scanner</small></div>
+    <nav aria-label="Sections">
+      <a href="#scan" data-view="scan">Scan</a>
+      <a href="#library" data-view="library">Evidence</a>
+      <a href="#method" data-view="method">Method</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-scan" class="stack">
+      <div class="panel inputs">
+        <div class="label">Check a product</div>
+        <div class="row">
+          <button class="primary" id="scanBtn" type="button">Scan barcode</button>
+          <label class="row" style="flex:1 1 200px">
+            <input id="barcode" type="text" inputmode="numeric" autocomplete="off" placeholder="or type the barcode number" aria-label="Barcode number">
+          </label>
+          <button id="lookupBtn" type="button">Look up</button>
+        </div>
+        <div id="camera" hidden><video id="video" playsinline muted></video><div class="frame"></div></div>
+        <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+        <div class="or">or paste the ingredient list from the label</div>
+        <textarea id="ingredients" aria-label="Ingredient list" placeholder="Ingredients: water, sugar, citric acid, ..."></textarea>
+        <div class="row"><button id="checkBtn" type="button">Check ingredients</button></div>
+        <p class="status" id="status" role="status"></p>
+      </div>
+      <div id="result" class="stack"></div>
+    </section>
+
+    <section id="view-library" class="stack" hidden>
+      <div>
+        <h2>Evidence library</h2>
+        <p class="muted" style="margin-top:4px">Every ingredient the scanner knows, with the strongest evidence for each finding. Tap one to see the sources.</p>
+      </div>
+      <div class="lib-filter" id="libFilter" role="group" aria-label="Filter by grade"></div>
+      <div class="panel stack" id="library"></div>
+    </section>
+
+    <section id="view-method" class="stack" hidden>
+      <div>
+        <h2>How findings are graded</h2>
+        <p class="muted" style="margin-top:4px">Each finding is graded by the strength of the evidence behind it, not by how alarming it sounds. Adapted from the GRADE approach used in clinical guidelines.</p>
+      </div>
+      <div class="panel tablewrap">
+        <table class="grade-table">
+          <tr><td><span class="chip g-A">A · Established</span></td><td>An authoritative body (EFSA, FDA, WHO, IARC Group 1) or a systematic review of human studies with consistent results.</td></tr>
+          <tr><td><span class="chip g-B">B · Probable</span></td><td>Several good human studies point the same way, or a regulator acted on the evidence, but there is no full consensus.</td></tr>
+          <tr><td><span class="chip g-C">C · Possible</span></td><td>Limited or mixed human data, a single large observational study, or IARC Group 2B.</td></tr>
+          <tr><td><span class="chip g-D">D · Preliminary</span></td><td>Cell or animal studies only, often at doses far above normal intake.</td></tr>
+          <tr><td><span class="chip g-OK">Reassuring</span></td><td>An authority reviewed it and found it safe at normal intake, usually with an acceptable daily intake (ADI).</td></tr>
+          <tr><td><span class="chip g-N">Not yet reviewed</span></td><td>We have not assessed it. This is not the same as safe.</td></tr>
+        </table>
+      </div>
+      <div class="panel stack">
+        <h3>How the score works</h3>
+        <p>The score starts at 100. Each ingredient loses points for its strongest concern: <b>20</b> for grade A, <b>12</b> for B, <b>6</b> for C, <b>2</b> for D. Reassuring findings and unreviewed ingredients cost nothing. Tap the score on any product to see each deduction.</p>
+        <p class="muted">The score is a summary, not a diagnosis. Two products with the same score can differ in what matters to you, so read the findings.</p>
+      </div>
+      <div class="panel stack">
+        <h3>How every citation is checked</h3>
+        <p>Every source was looked up in Crossref or on the regulator's own site before it was added, to confirm it exists and has no retraction. Sources marked <b>source and finding checked</b> also had the specific number or conclusion confirmed in their abstract. Findings show the date they were last reviewed. Product data comes from Open Food Facts, an open database built by volunteers.</p>
+        <p>The library is deliberately small. Sugar, salt, trans fats, Red 3, BHA, potassium bromate and brominated vegetable oil are next, and will appear once their sources pass the same check. Nutrition is not part of the score yet for the same reason.</p>
+      </div>
+      <div class="panel stack" id="sourceList"><h3>All sources</h3></div>
+      <p class="disclaimer">Sourced gives general information from published science. It is not medical advice. If you have an allergy, a medical condition or a special diet, follow your doctor's guidance.</p>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script>
+/* Evidence data. check: "finding" = the cited number or conclusion was confirmed in the source's abstract;
+   "source" = the source was confirmed to exist (title, journal, year, DOI) and has no retraction notice. */
+const D = doi => "https://doi.org/" + doi;
+const CITES = {
+  efsa_tio2: {title:"Safety assessment of titanium dioxide (E171) as a food additive", src:"EFSA Journal", year:"2021", doi:"10.2903/j.efsa.2021.6585", url:D("10.2903/j.efsa.2021.6585"), check:"source"},
+  mccann07: {title:"Food additives and hyperactive behaviour in 3-year-old and 8/9-year-old children in the community: a randomised, double-blinded, placebo-controlled trial", src:"The Lancet 370:1560-1567 (McCann et al.)", year:"2007", doi:"10.1016/S0140-6736(07)61306-3", url:D("10.1016/S0140-6736(07)61306-3"), check:"source"},
+  efsa_asp: {title:"Scientific Opinion on the re-evaluation of aspartame (E 951) as a food additive", src:"EFSA Journal 11(12):3496", year:"2013", doi:"10.2903/j.efsa.2013.3496", url:"https://www.efsa.europa.eu/en/efsajournal/pub/3496", check:"finding"},
+  iarc_asp: {title:"Carcinogenicity of aspartame, methyleugenol, and isoeugenol", src:"The Lancet Oncology 24(8):848-850 (Riboli et al., IARC)", year:"2023", doi:"10.1016/S1470-2045(23)00341-8", url:D("10.1016/S1470-2045(23)00341-8"), check:"source"},
+  witkowski23: {title:"The artificial sweetener erythritol and cardiovascular event risk", src:"Nature Medicine 29(3):710-718 (Witkowski et al.)", year:"2023", doi:"10.1038/s41591-023-02223-9", url:D("10.1038/s41591-023-02223-9"), check:"source"},
+  schiffman23: {title:"Toxicological and pharmacokinetic properties of sucralose-6-acetate and its parent sucralose: in vitro screening assays", src:"Journal of Toxicology and Environmental Health, Part B 26(6):307-341 (Schiffman et al.)", year:"2023", doi:"10.1080/10937404.2023.2213903", url:D("10.1080/10937404.2023.2213903"), check:"source"},
+  iarc_meat: {title:"Carcinogenicity of consumption of red and processed meat", src:"The Lancet Oncology 16(16):1599-1600 (Bouvard et al., IARC)", year:"2015", doi:"10.1016/S1470-2045(15)00444-1", url:D("10.1016/S1470-2045(15)00444-1"), check:"source"},
+  efsa_nitrite: {title:"Re-evaluation of potassium nitrite (E 249) and sodium nitrite (E 250) as food additives", src:"EFSA Journal 15(6):4786", year:"2017", doi:"10.2903/j.efsa.2017.4786", url:"https://www.efsa.europa.eu/en/efsajournal/pub/4786", check:"finding"},
+  efsa_carr: {title:"Re-evaluation of carrageenan (E 407) and processed Eucheuma seaweed (E 407a) as food additives", src:"EFSA Journal 16(4):5238", year:"2018", doi:"10.2903/j.efsa.2018.5238", url:"https://www.efsa.europa.eu/en/efsajournal/pub/5238", check:"finding"},
+  chassaing15: {title:"Dietary emulsifiers impact the mouse gut microbiota promoting colitis and metabolic syndrome", src:"Nature 519:92-96 (Chassaing et al.; correction published 2016)", year:"2015", doi:"10.1038/nature14232", url:D("10.1038/nature14232"), check:"source"},
+  chassaing22: {title:"Randomized controlled-feeding study of dietary emulsifier carboxymethylcellulose reveals detrimental impacts on the gut microbiota and metabolome", src:"Gastroenterology 162(3):743-756 (Chassaing et al.)", year:"2022", doi:"10.1053/j.gastro.2021.11.006", url:D("10.1053/j.gastro.2021.11.006"), check:"source"},
+  sellem23: {title:"Food additive emulsifiers and risk of cardiovascular disease in the NutriNet-Santé cohort: prospective cohort study", src:"BMJ 382:e076058 (Sellem et al.)", year:"2023", doi:"10.1136/bmj-2023-076058", url:D("10.1136/bmj-2023-076058"), check:"finding"},
+  efsa_benz: {title:"Scientific Opinion on the re-evaluation of benzoic acid (E 210), sodium benzoate (E 211), potassium benzoate (E 212) and calcium benzoate (E 213) as food additives", src:"EFSA Journal 14(3):4433", year:"2016", doi:"10.2903/j.efsa.2016.4433", url:"https://www.efsa.europa.eu/en/efsajournal/pub/4433", check:"finding"},
+  efsa_glut: {title:"Re-evaluation of glutamic acid (E 620), sodium glutamate (E 621), potassium glutamate (E 622), calcium glutamate (E 623), ammonium glutamate (E 624) and magnesium glutamate (E 625) as food additives", src:"EFSA Journal 15(7):4910", year:"2017", doi:"10.2903/j.efsa.2017.4910", url:D("10.2903/j.efsa.2017.4910"), check:"source"},
+  efsa_phos: {title:"Re-evaluation of phosphoric acid–phosphates – di-, tri- and polyphosphates (E 338–341, E 343, E 450–452) as food additives and the safety of proposed extension of use", src:"EFSA Journal 17(6):5674", year:"2019", doi:"10.2903/j.efsa.2019.5674", url:D("10.2903/j.efsa.2019.5674"), check:"source"},
+  efsa_bht: {title:"Scientific Opinion on the re-evaluation of butylated hydroxytoluene BHT (E 321) as a food additive", src:"EFSA Journal 10(3):2588", year:"2012", doi:"10.2903/j.efsa.2012.2588", url:D("10.2903/j.efsa.2012.2588"), check:"finding"},
+  efsa_caramel: {title:"Scientific Opinion on the re-evaluation of caramel colours (E 150 a,b,c,d) as food additives", src:"EFSA Journal 9(3):2004", year:"2011", doi:"10.2903/j.efsa.2011.2004", url:"https://www.efsa.europa.eu/en/efsajournal/pub/2004", check:"finding"},
+  efsa_sacch: {title:"Re-evaluation of saccharin and its sodium, potassium and calcium salts (E 954) as food additives", src:"EFSA Journal", year:"2024", doi:"10.2903/j.efsa.2024.9044", url:"https://www.efsa.europa.eu/en/efsajournal/pub/9044", check:"finding"},
+  efsa_stevia: {title:"Scientific Opinion on the safety of steviol glycosides for the proposed uses as a food additive", src:"EFSA Journal 8(4):1537", year:"2010", doi:"10.2903/j.efsa.2010.1537", url:"https://www.efsa.europa.eu/en/efsajournal/pub/1537", check:"finding"},
+  who_nss: {title:"Use of non-sugar sweeteners: WHO guideline", src:"World Health Organization", year:"2023", doi:"", url:"https://www.who.int/publications/i/item/9789240073616", check:"finding"},
+};
+const R = "2026-11-01";
+const WHO_NSS = {dir:"concern", grade:"C", text:"The World Health Organization advises against using non-sugar sweeteners as a way to control body weight (2023 guideline). This is advice that they do not help with weight control over the long term, not a finding that the sweetener is toxic.", cites:["who_nss"]};
+const COLOURS = {codes:["e102","e104","e110","e122","e124","e129"], aliases:["tartrazine","yellow 5","fd c yellow no 5","fd&c yellow 5","quinoline yellow","sunset yellow","sunset yellow fcf","yellow 6","fd c yellow no 6","carmoisine","azorubine","ponceau 4r","allura red","allura red ac","red 40","fd c red no 40","red 40 lake","yellow 5 lake","yellow 6 lake"]};
+const ENTRIES = [
+  {id:"tio2", name:"Titanium dioxide", codes:["e171"], aliases:["titanium dioxide","titanium dioxide color","tio2"], reviewed:R,
+   summary:"White colouring. The EU's food safety authority no longer considers it safe as a food additive.",
+   claims:[{dir:"concern", grade:"A", text:"In 2021 the European Food Safety Authority (EFSA) concluded that E171 can no longer be considered safe as a food additive, mainly because a concern that it could damage DNA (genotoxicity) could not be ruled out.", cites:["efsa_tio2"]}],
+   reg:{eu:"No longer authorised as a food additive since 2022, following the EFSA opinion.", us:"Still permitted by the FDA as a colour additive."}},
+  {id:"colours", name:"Synthetic azo and related colours", codes:COLOURS.codes, aliases:COLOURS.aliases, reviewed:R,
+   summary:"Tartrazine (Yellow 5), Sunset Yellow (Yellow 6), Allura Red (Red 40), Ponceau 4R, Carmoisine, Quinoline Yellow.",
+   claims:[{dir:"concern", grade:"C", text:"In a randomised, double-blind trial of about 300 children aged 3 and 8 to 9 in the UK, drinks containing mixtures of these colours together with the preservative sodium benzoate increased hyperactive behaviour compared with placebo. The effect was small, and the study tested mixtures, so it cannot say which additive was responsible.", cites:["mccann07"]}],
+   reg:{eu:"Foods containing these six colours must carry the label “may have an adverse effect on activity and attention in children”.", us:"Red 40, Yellow 5 and Yellow 6 are permitted without a warning label."}},
+  {id:"benzoate", name:"Sodium benzoate", codes:["e211","e210","e212","e213"], aliases:["sodium benzoate","benzoic acid","potassium benzoate","calcium benzoate"], reviewed:R,
+   summary:"Preservative, common in soft drinks and sauces. Safe within its daily limit; one trial links it to hyperactivity when combined with colours.",
+   claims:[
+     {dir:"ok", grade:"A", text:"EFSA set an acceptable daily intake (ADI) of 5 mg per kg of body weight per day, expressed as benzoic acid. That is about 350 mg a day for a 70 kg adult.", cites:["efsa_benz"]},
+     {dir:"concern", grade:"C", text:"Sodium benzoate was part of both additive mixtures in the 2007 UK trial that found a small increase in hyperactive behaviour in children.", cites:["mccann07"]}]},
+  {id:"aspartame", name:"Aspartame", codes:["e951"], aliases:["aspartame","nutrasweet"], reviewed:R,
+   summary:"Sweetener. Safe within its daily limit according to food regulators; classed as a possible carcinogen on limited evidence.",
+   claims:[
+     {dir:"ok", grade:"A", text:"EFSA's full 2013 re-evaluation concluded aspartame is not a safety concern at current intakes or at the acceptable daily intake of 40 mg per kg of body weight per day (about 2,800 mg for a 70 kg adult, the amount in roughly 14 cans of diet soda). People with the inherited condition phenylketonuria must avoid it.", cites:["efsa_asp"]},
+     {dir:"concern", grade:"C", text:"In 2023 the International Agency for Research on Cancer (IARC) classified aspartame as “possibly carcinogenic to humans” (Group 2B), based on limited evidence for liver cancer. At the same time the WHO/FAO expert committee (JECFA) kept the daily limit at 40 mg/kg. Group 2B describes how strong the evidence of a hazard is, not how likely harm is at normal intake.", cites:["iarc_asp"]},
+     {dir:"concern", grade:"C", text:"The World Health Organization advises against using non-sugar sweeteners as a way to control body weight (2023 guideline). This is advice that they do not help with weight control over the long term, not a finding that the sweetener is toxic.", cites:["who_nss"]}]},
+  {id:"erythritol", name:"Erythritol", codes:["e968"], aliases:["erythritol"], reviewed:R,
+   summary:"Sugar alcohol sweetener. One large observational study links high blood levels to heart attack and stroke.",
+   claims:[{dir:"concern", grade:"C", text:"In about 4,000 adults in the US and Europe, people with the highest blood erythritol levels had a higher risk of heart attack, stroke or death over 3 years. In lab and animal tests, erythritol made blood platelets clot more readily. This shows an association in people already at higher heart risk, not proof that erythritol causes heart disease.", cites:["witkowski23"]}]},
+  {id:"sucralose", name:"Sucralose", codes:["e955"], aliases:["sucralose","splenda"], reviewed:R,
+   summary:"Sweetener. Early lab studies raise questions about a breakdown compound.",
+   claims:[{dir:"concern", grade:"D", text:"Cell-based laboratory tests found that sucralose-6-acetate, an impurity in sucralose and a compound formed from it in the gut, damaged DNA (genotoxic) in vitro. These were lab screening assays, not studies in people.", cites:["schiffman23"]},
+     {dir:"concern", grade:"C", text:"The World Health Organization advises against using non-sugar sweeteners as a way to control body weight (2023 guideline). This is advice that they do not help with weight control over the long term, not a finding that the sweetener is toxic.", cites:["who_nss"]}]},
+  {id:"nitrite", name:"Sodium or potassium nitrite", codes:["e250","e249"], aliases:["sodium nitrite","potassium nitrite"], reviewed:R,
+   summary:"Curing agent in bacon, ham and sausages. The additive has a daily limit; processed meat itself is a known cause of bowel cancer.",
+   claims:[
+     {dir:"concern", grade:"A", text:"IARC classifies processed meat (meat preserved by curing, salting or smoking, which is where nitrite is used) as carcinogenic to humans (Group 1), based on colorectal cancer. Each 50 g of processed meat eaten daily was estimated to raise colorectal cancer risk by about 18%.", cites:["iarc_meat"]},
+     {dir:"ok", grade:"A", text:"EFSA set an acceptable daily intake of 0.07 mg of nitrite ion per kg of body weight per day, and found no evidence that nitrite itself damages DNA in living animals.", cites:["efsa_nitrite"]}]},
+  {id:"carrageenan", name:"Carrageenan", codes:["e407","e407a"], aliases:["carrageenan","processed eucheuma seaweed"], reviewed:R,
+   summary:"Seaweed-based thickener. Its daily limit is officially temporary while data gaps are filled.",
+   claims:[{dir:"ok", grade:"A", text:"EFSA kept the group acceptable daily intake of 75 mg per kg of body weight per day, but made it temporary because of gaps in the data, and asked for further studies.", cites:["efsa_carr"]}]},
+  {id:"cmc", name:"Carboxymethylcellulose", codes:["e466"], aliases:["carboxymethylcellulose","carboxymethyl cellulose","cellulose gum","sodium carboxymethylcellulose","cmc"], reviewed:R,
+   summary:"Emulsifier and thickener. Linked to gut microbiome changes in a human trial and to heart disease in a large cohort.",
+   claims:[
+     {dir:"concern", grade:"C", text:"In a French cohort of about 95,000 adults followed for a median of 7 years, higher intake of carboxymethylcellulose was associated with a slightly higher risk of cardiovascular disease (hazard ratio 1.03 per increase in intake). This is an association, not proof of cause.", cites:["sellem23"]},
+     {dir:"concern", grade:"C", text:"In a small randomised controlled feeding study in healthy adults, adding carboxymethylcellulose to the diet changed the gut microbiota and reduced beneficial metabolites compared with an additive-free diet.", cites:["chassaing22"]},
+     {dir:"concern", grade:"D", text:"In mice, carboxymethylcellulose thinned the protective gut mucus layer and promoted low-grade inflammation and metabolic syndrome.", cites:["chassaing15"]}]},
+  {id:"p80", name:"Polysorbate 80", codes:["e433"], aliases:["polysorbate 80","polysorbate-80","tween 80"], reviewed:R,
+   summary:"Emulsifier. Animal studies link it to gut inflammation.",
+   claims:[{dir:"concern", grade:"D", text:"In mice, polysorbate 80 altered the gut microbiota and promoted low-grade intestinal inflammation and metabolic syndrome. Human evidence is not yet available.", cites:["chassaing15"]}]},
+  {id:"cellulose", name:"Cellulose", codes:["e460"], aliases:["cellulose","microcrystalline cellulose","powdered cellulose"], reviewed:R,
+   summary:"Bulking agent and anti-caking agent. Linked to heart disease in one large cohort.",
+   claims:[{dir:"concern", grade:"C", text:"In the same French cohort of about 95,000 adults, higher intake of cellulose additives (E460 to E468 as a group, and E460 on its own) was associated with a higher risk of cardiovascular disease. This is an association from a single cohort.", cites:["sellem23"]}]},
+  {id:"e472", name:"Lactic and citric acid esters of mono- and diglycerides", codes:["e472b","e472c"], aliases:["lactic acid esters of mono and diglycerides","citric acid esters of mono and diglycerides"], reviewed:R,
+   summary:"Emulsifiers. Linked to heart disease in one large cohort.",
+   claims:[{dir:"concern", grade:"C", text:"In the French NutriNet-Santé cohort, higher intakes of lactic acid esters (E472b) and citric acid esters (E472c) of mono- and diglycerides were associated with a higher risk of cardiovascular disease. This is an association from a single cohort.", cites:["sellem23"]}]},
+  {id:"msg", name:"Monosodium glutamate (MSG)", codes:["e621","e620","e622","e623","e624","e625"], aliases:["monosodium glutamate","msg","sodium glutamate","glutamic acid","potassium glutamate"], reviewed:R,
+   summary:"Flavour enhancer. Reviewed by EFSA, which set a group daily limit.",
+   claims:[{dir:"ok", grade:"A", text:"EFSA re-evaluated glutamic acid and its salts in 2017 and set a group acceptable daily intake of 30 mg per kg of body weight per day (expressed as glutamic acid). It noted that some people with high intakes from all sources could exceed it.", cites:["efsa_glut"]}]},
+  {id:"phosphates", name:"Phosphates", codes:["e338","e339","e340","e341","e343","e450","e451","e452"], aliases:["phosphoric acid","sodium phosphate","disodium phosphate","trisodium phosphate","dipotassium phosphate","calcium phosphate","tricalcium phosphate","sodium tripolyphosphate","sodium hexametaphosphate","sodium acid pyrophosphate","diphosphates","triphosphates","polyphosphates"], reviewed:R,
+   summary:"Acids, raising agents and stabilisers. Safe within a daily limit for most people; not for people with reduced kidney function.",
+   claims:[{dir:"ok", grade:"A", text:"EFSA set a group acceptable daily intake of 40 mg per kg of body weight per day, expressed as phosphorus, covering phosphorus from all sources. It stated this limit does not apply to people with moderate or severe kidney disease.", cites:["efsa_phos"]}]},
+  {id:"bht", name:"BHT (butylated hydroxytoluene)", codes:["e321"], aliases:["bht","butylated hydroxytoluene"], reviewed:R,
+   summary:"Antioxidant preservative for fats and oils. Safe within its daily limit.",
+   claims:[{dir:"ok", grade:"A", text:"EFSA set an acceptable daily intake of 0.25 mg per kg of body weight per day, based on the highest dose with no adverse effect in animal studies (25 mg/kg) and a 100-fold safety margin.", cites:["efsa_bht"]}]},
+  {id:"saccharin", name:"Saccharin", codes:["e954"], aliases:["saccharin","sodium saccharin","calcium saccharin","sweet n low"], reviewed:"2026-11-02",
+   summary:"Sweetener. EFSA raised its daily limit in 2024.",
+   claims:[
+     {dir:"ok", grade:"A", text:"EFSA's 2024 re-evaluation set an acceptable daily intake of 9 mg per kg of body weight per day (as free imide), higher than the previous limit.", cites:["efsa_sacch"]},
+     WHO_NSS]},
+  {id:"stevia", name:"Steviol glycosides (stevia)", codes:["e960","e960a"], aliases:["steviol glycosides","stevia","stevia extract","stevia leaf extract","rebaudioside a","reb a"], reviewed:"2026-11-02",
+   summary:"Sweetener from the stevia plant. Safe within its daily limit.",
+   claims:[
+     {dir:"ok", grade:"A", text:"EFSA set an acceptable daily intake of 4 mg per kg of body weight per day, expressed as steviol equivalents.", cites:["efsa_stevia"]},
+     WHO_NSS]},
+  {id:"acek", name:"Acesulfame potassium", codes:["e950"], aliases:["acesulfame potassium","acesulfame k","acesulfame-k","ace k"], reviewed:"2026-11-02",
+   summary:"Sweetener, often paired with aspartame or sucralose.",
+   claims:[WHO_NSS]},
+  {id:"caramel", name:"Caramel colour", codes:["e150a","e150b","e150c","e150d"], aliases:["caramel color","caramel colour","caramel coloring","caramel colouring","plain caramel","ammonia caramel","sulphite ammonia caramel","sulfite ammonia caramel"], reviewed:"2026-11-02",
+   summary:"Brown colouring in colas, sauces and baked goods. Safe within its daily limits.",
+   claims:[{dir:"ok", grade:"A", text:"EFSA set a group acceptable daily intake of 300 mg per kg of body weight per day for all caramel colours, with a lower individual limit of 100 mg/kg for ammonia caramel (Class III, E150c).", cites:["efsa_caramel"]}]},
+];
+
+
+const GRADE_PTS = {A:20, B:12, C:6, D:2};
+const GRADE_NAME = {A:"Established", B:"Probable", C:"Possible", D:"Preliminary"};
+const GRADE_ORDER = {A:0, B:1, C:2, D:3, OK:4, N:5};
+const NUTRI = {sugars:{lim:22.5,label:"sugars",unit:"g"}, salt:{lim:1.5,label:"salt",unit:"g"}, "saturated-fat":{lim:5,label:"saturated fat",unit:"g"}};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function topGrade(e){
+  const g = e.claims.filter(c => c.dir === "concern").map(c => c.grade).sort((a,b)=>GRADE_ORDER[a]-GRADE_ORDER[b])[0];
+  return g || "OK";
+}
+function chip(g){
+  if (g === "OK") return '<span class="chip g-OK">Reassuring</span>';
+  if (g === "N") return '<span class="chip g-N">Not yet reviewed</span>';
+  return `<span class="chip g-${g}">${g} · ${GRADE_NAME[g]}</span>`;
+}
+function citeHTML(id){
+  const c = CITES[id]; if (!c) return "";
+  const ids = [c.pmid ? `PMID ${c.pmid}` : "", c.doi ? `DOI ${c.doi}` : ""].filter(Boolean).join(" · ");
+  const chk = c.check === "finding" ? "✓ source and finding checked" : "✓ source checked";
+  return `<li><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a>. ${esc(c.src)}, ${esc(c.year)}.${ids ? ` <span class="id">${esc(ids)}</span>` : ""} <span class="chk">${chk}</span></li>`;
+}
+function entryDetail(e){
+  const claims = e.claims.slice().sort((a,b)=>GRADE_ORDER[a.dir==="concern"?a.grade:"OK"]-GRADE_ORDER[b.dir==="concern"?b.grade:"OK"]).map(c => `
+    <div class="claim"><div class="meta">${chip(c.dir==="concern"?c.grade:"OK")}</div>
+      <p>${esc(c.text)}</p><ul class="cites">${c.cites.map(citeHTML).join("")}</ul></div>`).join("");
+  const reg = e.reg ? `<div class="reg">${e.reg.eu?`<b>EU</b><span>${esc(e.reg.eu)}</span>`:""}${e.reg.us?`<b>US</b><span>${esc(e.reg.us)}</span>`:""}</div>` : "";
+  return `<div class="claims">${claims}${reg}<p class="f-code">Last reviewed ${esc(e.reviewed)}</p></div>`;
+}
+function entryRow(e, open){
+  const codes = (e.codes||[]).map(c=>c.toUpperCase()).join(", ");
+  return `<div class="finding"><details${open?" open":""}><summary>
+      <div><span class="f-name">${esc(e.name)}</span> ${codes?`<span class="f-code">${esc(codes)}</span>`:""}</div>
+      <div>${chip(topGrade(e))}</div>
+      <p class="f-sum">${esc(e.summary)}</p></summary>${entryDetail(e)}</details></div>`;
+}
+
+/* ---------- matching ---------- */
+const BASIC = ["water","salt","flour","wheat flour","milk","eggs","egg","butter","cream","tomato","tomatoes","vinegar","spices","spice","onion","garlic","yeast","rice","oats","cocoa","cocoa butter","vegetable oil","sunflower oil","olive oil","rapeseed oil","lemon juice","honey","natural flavor","natural flavors","natural flavour","natural flavouring","flavouring","flavoring","skimmed milk","whole milk","potatoes","potato","corn","peanuts","almonds","hazelnuts","soy","soybeans","beans","chickpeas","lentils","carrots","celery","pepper","black pepper","paprika","cinnamon","vanilla","barley malt","malt","starch","corn starch","modified starch","citric acid","ascorbic acid","lactic acid","pectin","sugar"];
+function norm(t){return " " + t.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9%]+/g," ").replace(/\s+/g," ").trim() + " ";}
+function codeVariants(code){ // "e171" -> ["e171","e 171","ins 171"]
+  const n = code.slice(1); return [`e${n}`,`e ${n}`,`ins ${n}`];
+}
+function matchEntries(text, tags){
+  const t = norm(text||""); const found = new Map();
+  for (const e of ENTRIES){
+    let hit = (e.codes||[]).some(c => tags.includes(c) || codeVariants(c).some(v => t.includes(" "+v+" ")));
+    if (!hit) hit = e.aliases.some(a => t.includes(" "+norm(a).trim()+" "));
+    if (hit) found.set(e.id, e);
+  }
+  return [...found.values()];
+}
+function unreviewed(text, matched){
+  if (!text) return [];
+  const parts = text.replace(/^\s*ingredients?\s*:/i,"").split(/[,;()\[\]]|\band\b|\.\s/i).map(s=>s.replace(/[*_]/g,"").replace(/\d+(\.\d+)?\s*%/g,"").trim()).filter(s=>s && s.length<60);
+  const out = [];
+  for (const p of parts){
+    const n = norm(p);
+    if (!n.trim()) continue;
+    if (BASIC.includes(n.trim())) continue;
+    if (matched.some(e => e.aliases.some(a => n.includes(" "+norm(a).trim()+" ") || norm(a).includes(n)) || (e.codes||[]).some(c=>codeVariants(c).some(v=>n.includes(" "+v+" "))))) continue;
+    if (!out.some(o=>norm(o)===n)) out.push(p);
+  }
+  return out.slice(0,24);
+}
+
+/* ---------- scoring ---------- */
+function score(matched, nutriments){
+  let s = 100; const rows = [];
+  for (const e of matched){
+    const g = topGrade(e);
+    if (GRADE_PTS[g]) { s -= GRADE_PTS[g]; rows.push([`${e.name}: strongest concern is grade ${g}`, -GRADE_PTS[g]]); }
+  }
+  let nutriUsed = false;
+  if (nutriments){
+    for (const [k,v] of Object.entries(NUTRI)){
+      const val = nutriments[`${k}_100g`];
+      if (typeof val === "number"){ nutriUsed = true;
+        if (val > v.lim){ s -= 10; rows.push([`High ${v.label}: ${val.toFixed(1)} ${v.unit} per 100 g (over ${v.lim})`, -10]); } }
+    }
+  }
+  return {score: Math.max(0, s), rows, nutriUsed};
+}
+function band(s){ return s>=80 ? ["Few concerns","var(--ok)"] : s>=50 ? ["Some concerns","var(--gC)"] : ["Several concerns","var(--gA)"]; }
+
+/* ---------- render result ---------- */
+function renderResult({name, brand, example, text, tags, nutriments, source}){
+  const matched = matchEntries(text, tags||[]).sort((a,b)=>GRADE_ORDER[topGrade(a)]-GRADE_ORDER[topGrade(b)]);
+  const unrev = unreviewed(text, matched);
+  const sc = score(matched, nutriments);
+  const [bandName, bandColor] = band(sc.score);
+  const C = 2*Math.PI*42, off = C*(1-sc.score/100);
+  const counts = {}; matched.forEach(e=>{const g=topGrade(e); counts[g]=(counts[g]||0)+1;});
+  const concernCount = matched.filter(e=>topGrade(e)!=="OK").length;
+  const headline = concernCount === 0
+    ? (matched.length ? "No graded concerns among the ingredients we have reviewed." : "None of these ingredients are in our evidence library yet.")
+    : `${concernCount} ingredient${concernCount>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}`;
+  $("#result").innerHTML = `
+    <div class="panel stack">
+      <div class="result-head">
+        <button class="ring" id="ringBtn" type="button" aria-label="Score ${sc.score} of 100, show breakdown" style="padding:0;border:0;background:none">
+          <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--line)" stroke-width="8"/>
+          <circle class="val" cx="48" cy="48" r="42" fill="none" stroke="${bandColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg>
+          <div class="num"><div>${sc.score}<span>/100</span></div></div>
+        </button>
+        <div style="min-width:0">
+          ${example?'<div class="example-tag">Example, not a real product</div>':""}
+          <h2 class="prod-name">${esc(name||"Your ingredient list")}</h2>
+          ${brand?`<p class="muted">${esc(brand)}</p>`:""}
+          <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${esc(headline)}</p>
+          <div class="counts">${["A","B","C","D","OK"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g}">${counts[g]} × ${g==="OK"?"reassuring":g}</span>`).join("")}${unrev.length?`<span class="chip g-N">${unrev.length} not reviewed</span>`:""}</div>
+        </div>
+      </div>
+      <div id="breakdown" hidden>
+        <table class="breakdown"><tr><td>Starting score</td><td>100</td></tr>
+        ${sc.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join("")}
+        <tr><td><b>Score</b></td><td><b>${sc.score}</b></td></tr></table>
+        <p class="disclaimer" style="margin-top:6px">Only ingredients in the evidence library affect the score; nutrition is not scored yet. See Method for the formula.</p>
+      </div>
+    </div>
+    ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map((e,i)=>entryRow(e, i===0 && topGrade(e)!=="OK")).join("")}</div>`:""}
+    ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">We have no graded evidence for these yet. That does not mean they are safe or unsafe.</p><div class="unreviewed">${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div></div>`:""}
+    ${source?`<p class="disclaimer">${source}</p>`:""}
+    <p class="disclaimer">General information from published science, not medical advice.</p>`;
+  $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
+}
+
+/* ---------- lookup ---------- */
+const status = (m, err) => { const s=$("#status"); s.textContent = m||""; s.classList.toggle("err", !!err); };
+async function lookup(code){
+  code = (code||"").replace(/\D/g,"");
+  if (code.length < 8){ status("Enter the 8 to 14 digit number under the barcode.", true); return; }
+  status("Looking up " + code + " in Open Food Facts…");
+  try{
+    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,ingredients_text,ingredients_text_en,additives_tags,nutriments`);
+    const j = await r.json();
+    if (j.status !== 1 || !j.product){ status("This barcode is not in Open Food Facts yet. Paste the ingredient list from the label instead.", true); return; }
+    const p = j.product, text = p.ingredients_text_en || p.ingredients_text || "";
+    status(text ? "" : "Found the product, but it has no ingredient list in Open Food Facts. Paste it from the label to check it.", !text);
+    renderResult({name:p.product_name, brand:p.brands, text, tags:p.additives_tags||[],
+      source:`Product data from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), open database licence.`});
+  }catch(e){
+    status("Could not reach Open Food Facts from here. Paste the ingredient list from the label instead.", true);
+  }
+}
+
+/* ---------- scanning ---------- */
+let stream = null, zx = null;
+async function startScan(){
+  // Live camera first; if refused, fall back to a photo of the barcode.
+  try{
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("no camera api");
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    const v = $("#video"); v.srcObject = stream; await v.play(); $("#camera").hidden = false;
+    $("#scanBtn").textContent = "Stop";
+    status("Point the camera at the barcode.");
+    if ("BarcodeDetector" in window){
+      const det = new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});
+      const tick = async () => { if (!stream) return; try{ const r = await det.detect(v); if (r[0]) return found(r[0].rawValue);}catch(_){} requestAnimationFrame(tick); };
+      tick();
+    } else if (window.ZXing){
+      zx = new ZXing.BrowserMultiFormatReader();
+      zx.decodeFromStream(stream, v, (res) => { if (res) found(res.getText()); });
+    }
+  }catch(e){ stopScan(); $("#photo").click(); }
+}
+function stopScan(){
+  if (zx){ try{zx.reset();}catch(_){} zx = null; }
+  if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  $("#camera").hidden = true; $("#scanBtn").textContent = "Scan barcode";
+}
+function found(code){ stopScan(); $("#barcode").value = code; lookup(code); }
+$("#scanBtn").onclick = () => stream ? stopScan() : startScan();
+$("#photo").onchange = async (ev) => {
+  const f = ev.target.files[0]; if (!f) return;
+  status("Reading the barcode from your photo…");
+  try{
+    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+    const reader = new ZXing.BrowserMultiFormatReader(); const r = await reader.decodeFromImageElement(img);
+    found(r.getText());
+  }catch(e){ status("No barcode found in that photo. Try again closer, or type the number.", true); }
+  ev.target.value = "";
+};
+$("#lookupBtn").onclick = () => lookup($("#barcode").value);
+$("#barcode").addEventListener("keydown", e => { if (e.key === "Enter") lookup(e.target.value); });
+$("#checkBtn").onclick = () => {
+  const t = $("#ingredients").value.trim();
+  if (!t){ status("Paste an ingredient list first.", true); return; }
+  status(""); renderResult({name:"Your ingredient list", text:t, tags:[]});
+};
+
+/* ---------- library + method ---------- */
+let libFilter = "all";
+function renderLibrary(){
+  const groups = [["all","All"],["A","Grade A"],["B","Grade B"],["C","Grade C"],["D","Grade D"],["OK","Reassuring"]];
+  $("#libFilter").innerHTML = groups.map(([k,l])=>`<button type="button" data-f="${k}" aria-pressed="${libFilter===k}">${l}</button>`).join("");
+  $("#libFilter").querySelectorAll("button").forEach(b=>b.onclick=()=>{libFilter=b.dataset.f; renderLibrary();});
+  const list = ENTRIES.slice().sort((a,b)=>GRADE_ORDER[topGrade(a)]-GRADE_ORDER[topGrade(b)] || a.name.localeCompare(b.name)).filter(e=>libFilter==="all"||topGrade(e)===libFilter);
+  $("#library").innerHTML = list.map(e=>entryRow(e,false)).join("") || '<p class="muted">Nothing at this grade.</p>';
+}
+function renderSources(){
+  const used = new Set(ENTRIES.flatMap(e=>e.claims.flatMap(c=>c.cites)));
+  $("#sourceList").innerHTML = `<h3>All sources (${used.size})</h3><ul class="cites">${[...used].sort((a,b)=>CITES[a].src.localeCompare(CITES[b].src)).map(citeHTML).join("")}</ul>`;
+}
+function route(){
+  const v = (location.hash||"#scan").slice(1);
+  const view = ["scan","library","method"].includes(v) ? v : "scan";
+  ["scan","library","method"].forEach(n=>$("#view-"+n).hidden = n!==view);
+  document.querySelectorAll("nav a").forEach(a=>a.setAttribute("aria-current", a.dataset.view===view?"page":"false"));
+}
+window.addEventListener("hashchange", route);
+renderLibrary(); renderSources(); route();
+const EXAMPLE = "Ingredients: carbonated water, citric acid, sodium benzoate (preservative), natural flavors, aspartame, sucralose, Red 40, caramel color, potassium citrate.";
+$("#ingredients").value = EXAMPLE;
+renderResult({name:"Cherry soda", example:true, text:EXAMPLE, tags:[]});
+</script>
+
+</body>
+</html>
