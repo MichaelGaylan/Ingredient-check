@@ -141,7 +141,8 @@ details summary::-webkit-details-marker{display:none}
         <input id="photo" type="file" accept="image/*" capture="environment" hidden>
         <div class="or">or paste the ingredient list from the label</div>
         <textarea id="ingredients" aria-label="Ingredient list" placeholder="Ingredients: water, sugar, citric acid, ..."></textarea>
-        <div class="row"><button id="checkBtn" type="button">Check ingredients</button></div>
+        <div class="row"><button id="checkBtn" type="button">Check ingredients</button><button id="labelBtn" type="button">Read label from photo</button></div>
+        <input id="labelPhoto" type="file" accept="image/*" capture="environment" hidden>
         <p class="status" id="status" role="status"></p>
       </div>
       <div id="result" class="stack"></div>
@@ -334,7 +335,7 @@ function entryRow(e, open){
 }
 
 /* ---------- matching ---------- */
-const BASIC = ["water","salt","flour","wheat flour","milk","eggs","egg","butter","cream","tomato","tomatoes","vinegar","spices","spice","onion","garlic","yeast","rice","oats","cocoa","cocoa butter","vegetable oil","sunflower oil","olive oil","rapeseed oil","lemon juice","honey","natural flavor","natural flavors","natural flavour","natural flavouring","flavouring","flavoring","skimmed milk","whole milk","potatoes","potato","corn","peanuts","almonds","hazelnuts","soy","soybeans","beans","chickpeas","lentils","carrots","celery","pepper","black pepper","paprika","cinnamon","vanilla","barley malt","malt","starch","corn starch","modified starch","citric acid","ascorbic acid","lactic acid","pectin","sugar"];
+const BASIC = ["water","salt","flour","wheat flour","milk","eggs","egg","butter","cream","tomato","tomatoes","vinegar","spices","spice","onion","garlic","yeast","rice","oats","cocoa","cocoa butter","vegetable oil","sunflower oil","olive oil","rapeseed oil","canola oil","corn oil","soybean oil","sunflower","canola","safflower oil","peanut oil","lemon juice","honey","natural flavor","natural flavors","natural flavour","natural flavouring","flavouring","flavoring","skimmed milk","whole milk","potatoes","potato","corn","peanuts","almonds","hazelnuts","soy","soybeans","beans","chickpeas","lentils","carrots","celery","pepper","black pepper","paprika","cinnamon","vanilla","barley malt","malt","starch","corn starch","modified starch","citric acid","ascorbic acid","lactic acid","pectin","sugar"];
 function norm(t){return " " + t.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9%]+/g," ").replace(/\s+/g," ").trim() + " ";}
 function codeVariants(code){ // "e171" -> ["e171","e 171","ins 171"]
   const n = code.slice(1); return [`e${n}`,`e ${n}`,`ins ${n}`];
@@ -350,7 +351,7 @@ function matchEntries(text, tags){
 }
 function unreviewed(text, matched){
   if (!text) return [];
-  const parts = text.replace(/^\s*ingredients?\s*:/i,"").split(/[,;()\[\]]|\band\b|\.\s/i).map(s=>s.replace(/[*_]/g,"").replace(/\d+(\.\d+)?\s*%/g,"").trim()).filter(s=>s && s.length<60);
+  const parts = text.replace(/^\s*ingredients?\s*:/i,"").split(/[,;()\[\]]|\band\/or\b|\bor\b|\band\b|\.\s|\.$/i).map(s=>s.replace(/[*_]/g,"").replace(/\d+(\.\d+)?\s*%/g,"").trim()).filter(s=>s && s.length<60);
   const out = [];
   for (const p of parts){
     const n = norm(p);
@@ -386,20 +387,21 @@ function renderResult({name, brand, example, text, tags, nutriments, source}){
   const matched = matchEntries(text, tags||[]).sort((a,b)=>GRADE_ORDER[topGrade(a)]-GRADE_ORDER[topGrade(b)]);
   const unrev = unreviewed(text, matched);
   const sc = score(matched, nutriments);
-  const [bandName, bandColor] = band(sc.score);
+  const none = matched.length === 0;
+  const [bandName, bandColor] = none ? ["Nothing to score yet","var(--gN)"] : band(sc.score);
   const C = 2*Math.PI*42, off = C*(1-sc.score/100);
   const counts = {}; matched.forEach(e=>{const g=topGrade(e); counts[g]=(counts[g]||0)+1;});
   const concernCount = matched.filter(e=>topGrade(e)!=="OK").length;
-  const headline = concernCount === 0
+  const headline = none ? "None of these ingredients are in our evidence library, so there is no score. Basic foods such as potatoes, oil and salt are not scored yet; salt and fat will count once nutrition scoring is added." : concernCount === 0
     ? (matched.length ? "No graded concerns among the ingredients we have reviewed." : "None of these ingredients are in our evidence library yet.")
     : `${concernCount} ingredient${concernCount>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}`;
   $("#result").innerHTML = `
     <div class="panel stack">
       <div class="result-head">
-        <button class="ring" id="ringBtn" type="button" aria-label="Score ${sc.score} of 100, show breakdown" style="padding:0;border:0;background:none">
+        <button class="ring" id="ringBtn" type="button" aria-label="${none?"No score":`Score ${sc.score} of 100, show breakdown`}" style="padding:0;border:0;background:none">
           <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--line)" stroke-width="8"/>
-          <circle class="val" cx="48" cy="48" r="42" fill="none" stroke="${bandColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg>
-          <div class="num"><div>${sc.score}<span>/100</span></div></div>
+          <circle class="val" cx="48" cy="48" r="42" fill="none" stroke="${bandColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${none?C:off}"/></svg>
+          <div class="num"><div>${none?"–":sc.score}<span>${none?"no score":"/100"}</span></div></div>
         </button>
         <div style="min-width:0">
           ${example?'<div class="example-tag">Example, not a real product</div>':""}
@@ -425,6 +427,16 @@ function renderResult({name, brand, example, text, tags, nutriments, source}){
 
 /* ---------- lookup ---------- */
 const status = (m, err) => { const s=$("#status"); s.textContent = m||""; s.classList.toggle("err", !!err); };
+let current = null; // product found by barcode, kept so a pasted list keeps its name
+function renderMissing(p, code){
+  $("#ingredients").value = "";
+  $("#result").innerHTML = `<div class="panel stack">
+    <div><h2 class="prod-name">${esc(p.product_name || "Product " + code)}</h2>${p.brands?`<p class="muted">${esc(p.brands)}</p>`:""}</div>
+    <p><b>No ingredient list yet.</b> This product is in Open Food Facts, but nobody has added its ingredients, so there is nothing to score.</p>
+    <p>Take a photo of the ingredient list on the pack with <b>Read label from photo</b>, or type it into the box above, then tap <b>Check ingredients</b>.</p>
+    <p class="disclaimer">You can also add the ingredients to <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> so the next scan finds them.</p></div>`;
+  $("#ingredients").focus();
+}
 async function lookup(code){
   code = (code||"").replace(/\D/g,"");
   if (code.length < 8){ status("Enter the 8 to 14 digit number under the barcode.", true); return; }
@@ -434,7 +446,9 @@ async function lookup(code){
     const j = await r.json();
     if (j.status !== 1 || !j.product){ status("This barcode is not in Open Food Facts yet. Paste the ingredient list from the label instead.", true); return; }
     const p = j.product, text = p.ingredients_text_en || p.ingredients_text || "";
-    status(text ? "" : "Found the product, but it has no ingredient list in Open Food Facts. Paste it from the label to check it.", !text);
+    current = {name:p.product_name, brand:p.brands};
+    if (!text && !(p.additives_tags||[]).length){ status(""); renderMissing(p, code); return; }
+    status("");
     renderResult({name:p.product_name, brand:p.brands, text, tags:p.additives_tags||[],
       source:`Product data from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), open database licence.`});
   }catch(e){
@@ -479,12 +493,50 @@ $("#photo").onchange = async (ev) => {
   }catch(e){ status("No barcode found in that photo. Try again closer, or type the number.", true); }
   ev.target.value = "";
 };
+/* ---------- read the label from a photo (on-device OCR) ---------- */
+function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = no; document.head.appendChild(el); }); }
+async function shrink(file){ // big phone photos make OCR slow; scale to 2000 px on the long side
+  const img = new Image(); img.src = URL.createObjectURL(file); await img.decode();
+  const k = Math.min(1, 2000 / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(r, "image/jpeg", 0.92));
+}
+function cleanOCR(t){
+  t = t.replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim();
+  const i = t.search(/ingredients?\s*[:;.]/i);
+  if (i >= 0) t = t.slice(i);
+  const end = t.search(/\b(contains|allergen|may contain|distributed by|manufactured by|nutrition facts)\b/i);
+  if (end > 20) t = t.slice(0, end);
+  return t.trim();
+}
+$("#labelBtn").onclick = () => $("#labelPhoto").click();
+$("#labelPhoto").onchange = async (ev) => {
+  const f = ev.target.files[0]; ev.target.value = ""; if (!f) return;
+  const btn = $("#labelBtn"); btn.disabled = true;
+  try{
+    status("Loading the text reader (first time only)…");
+    // OCR files are hosted next to this page (vendor/ocr), so it works without third-party servers.
+    const base = new URL("vendor/ocr/", location.href).href;
+    if (!window.Tesseract) await loadScript(base + "tesseract.min.js");
+    const blob = await shrink(f);
+    const worker = await Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base, langPath: base, workerBlobURL: false,
+      logger: m => { if (m.status === "recognizing text") status(`Reading the label… ${Math.round(m.progress*100)}%`); } });
+    const { data } = await worker.recognize(blob); worker.terminate();
+    const text = cleanOCR(data.text || "");
+    if (text.length < 8){ status("Couldn't read any text. Try a closer, well-lit photo of just the ingredient list.", true); return; }
+    $("#ingredients").value = text;
+    status("Here's what the photo says. Fix any misread words in the box, then tap Check ingredients again if needed.");
+    renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text, tags:[]});
+  }catch(e){ status("The text reader couldn't load. Check your connection, or type the ingredients instead.", true); }
+  finally{ btn.disabled = false; }
+};
 $("#lookupBtn").onclick = () => lookup($("#barcode").value);
 $("#barcode").addEventListener("keydown", e => { if (e.key === "Enter") lookup(e.target.value); });
 $("#checkBtn").onclick = () => {
   const t = $("#ingredients").value.trim();
   if (!t){ status("Paste an ingredient list first.", true); return; }
-  status(""); renderResult({name:"Your ingredient list", text:t, tags:[]});
+  status(""); renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text:t, tags:[]});
 };
 
 /* ---------- library + method ---------- */
