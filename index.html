@@ -104,6 +104,7 @@ details summary::-webkit-details-marker{display:none}
 .reg b{font:500 11.5px var(--mono);color:var(--muted);padding-top:2px}
 .breakdown{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
 .breakdown td{padding:6px 0;border-top:1px solid var(--line);vertical-align:top}
+.nutri td:nth-child(2){font-family:var(--mono);text-align:right;padding-right:12px}
 .breakdown td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap;padding-left:12px}
 .unreviewed{display:flex;flex-wrap:wrap;gap:6px}
 .chipbtn{cursor:pointer;font:500 12px var(--mono);padding:3px 8px;border-radius:6px}
@@ -183,13 +184,13 @@ details summary::-webkit-details-marker{display:none}
       </div>
       <div class="panel stack">
         <h3>How the score works</h3>
-        <p>The score starts at 100. Each ingredient loses points for its strongest concern: <b>20</b> for grade A, <b>12</b> for B, <b>6</b> for C, <b>2</b> for D. Reassuring findings and unreviewed ingredients cost nothing. Ingredients not in the library are looked up automatically in FDA, WHO/FAO (JECFA) and IARC records through PubChem: an IARC cancer classification costs points on the same scale (Group 1 as grade A, 2A as B, 2B as C), marked "automatic" in the breakdown, and an FDA or WHO listing shows as reassuring at no cost. Tap the score on any product to see each deduction.</p>
+        <p>The score starts at 100. Each ingredient loses points for its strongest concern: <b>20</b> for grade A, <b>12</b> for B, <b>6</b> for C, <b>2</b> for D. When the product database has nutrition data, each of sugars, salt, fat and saturated fat that is “high” by the UK front-of-pack thresholds (per 100 g, or per 100 ml for drinks) costs <b>10</b>. Reassuring findings and unreviewed ingredients cost nothing. Ingredients not in the library are looked up automatically in FDA, WHO/FAO (JECFA) and IARC records through PubChem: an IARC cancer classification costs points on the same scale (Group 1 as grade A, 2A as B, 2B as C), marked "automatic" in the breakdown, and an FDA or WHO listing shows as reassuring at no cost. Tap the score on any product to see each deduction.</p>
         <p class="muted">The score is a summary, not a diagnosis. Two products with the same score can differ in what matters to you, so read the findings.</p>
       </div>
       <div class="panel stack">
         <h3>How every citation is checked</h3>
         <p>Every source was looked up in Crossref or on the regulator's own site before it was added, to confirm it exists and has no retraction. Sources marked <b>source and finding checked</b> also had the specific number or conclusion confirmed in their abstract. Findings show the date they were last reviewed. Product data comes from Open Food Facts, an open database built by volunteers.</p>
-        <p>The library is deliberately small. Sugar, salt, BHA, potassium bromate, propylparaben, TBHQ and azodicarbonamide are next, and will appear once their sources pass the same check. Nutrition is not part of the score yet for the same reason.</p>
+        <p>The library is deliberately small. Potassium bromate, propylparaben, TBHQ and azodicarbonamide are next, and will appear once their sources pass the same check.</p>
       </div>
       <div class="panel stack" id="sourceList"><h3>All sources</h3></div>
       <p class="disclaimer">Sourced gives general information from published science. It is not medical advice. If you have an allergy, a medical condition or a special diet, follow your doctor's guidance.</p>
@@ -223,6 +224,11 @@ const CITES = {
   efsa_sacch: {title:"Re-evaluation of saccharin and its sodium, potassium and calcium salts (E 954) as food additives", src:"EFSA Journal", year:"2024", doi:"10.2903/j.efsa.2024.9044", url:"https://www.efsa.europa.eu/en/efsajournal/pub/9044", check:"finding"},
   efsa_stevia: {title:"Scientific Opinion on the safety of steviol glycosides for the proposed uses as a food additive", src:"EFSA Journal 8(4):1537", year:"2010", doi:"10.2903/j.efsa.2010.1537", url:"https://www.efsa.europa.eu/en/efsajournal/pub/1537", check:"finding"},
   who_nss: {title:"Use of non-sugar sweeteners: WHO guideline", src:"World Health Organization", year:"2023", doi:"", url:"https://www.who.int/publications/i/item/9789240073616", check:"finding"},
+  uk_fop: {title:"Guide to creating a front of pack (FoP) nutrition label for pre-packed products sold through retail outlets", src:"UK Department of Health and Food Standards Agency", year:"2016", doi:"", url:"https://assets.publishing.service.gov.uk/media/5a80cd03ed915d74e33fc7c5/FoP_Nutrition_labelling_UK_guidance.pdf", check:"finding"},
+  who_diet: {title:"Healthy diet (fact sheet)", src:"World Health Organization", year:"2026", doi:"", url:"https://www.who.int/news-room/fact-sheets/detail/healthy-diet", check:"finding"},
+  who_sodium: {title:"Sodium reduction (fact sheet)", src:"World Health Organization", year:"2026", doi:"", url:"https://www.who.int/news-room/fact-sheets/detail/sodium-reduction", check:"finding"},
+  ntp_bha: {title:"Butylated Hydroxyanisole, Report on Carcinogens, Fifteenth Edition", src:"US National Toxicology Program", year:"2021", doi:"", url:"https://ntp.niehs.nih.gov/sites/default/files/ntp/roc/content/profiles/butylatedhydroxyanisole.pdf", check:"finding"},
+  efsa_bha: {title:"Scientific Opinion on the re-evaluation of butylated hydroxyanisole – BHA (E 320) as a food additive", src:"EFSA Journal 9(10):2392", year:"2011", doi:"10.2903/j.efsa.2011.2392", url:"https://www.efsa.europa.eu/en/efsajournal/pub/2392", check:"finding"},
   efsa_pg: {title:"Scientific Opinion on the re-evaluation of propyl gallate (E 310) as a food additive", src:"EFSA Journal 12(4):3642", year:"2014", doi:"10.2903/j.efsa.2014.3642", url:"https://www.efsa.europa.eu/en/efsajournal/pub/3642", check:"finding"},
   efsa_al: {title:"Safety of aluminium from dietary intake", src:"EFSA Journal 754", year:"2008", doi:"10.2903/j.efsa.2008.754", url:"https://www.efsa.europa.eu/en/efsajournal/pub/754", check:"finding"},
   fda_red3: {title:"Color Additive Petition From Center for Science in the Public Interest, et al.; Request To Revoke Color Additive Listing for Use of FD&C Red No. 3 in Food and Ingested Drugs (90 FR 4628)", src:"US FDA, Federal Register", year:"2025", doi:"", url:"https://www.federalregister.gov/documents/2025/01/16/2025-00830/color-additive-petition-from-center-for-science-in-the-public-interest-et-al-request-to-revoke-color", check:"finding"},
@@ -323,6 +329,11 @@ const ENTRIES = [
   {id:"aluminium", name:"Aluminium-containing additives", codes:["e173","e520","e521","e522","e523","e541","e554","e555","e556","e559"], aliases:["sodium aluminum phosphate","sodium aluminium phosphate","sodium aluminum sulfate","aluminum sulfate","aluminium sulphate","potassium aluminum sulfate","sodium aluminosilicate","aluminum silicate","aluminium","aluminum lake","aluminum lakes"], reviewed:"2026-11-02",
    summary:"Raising agents, anti-caking agents and dye 'lakes'. Total aluminium intake from all food is often above the safety limit.",
    claims:[{dir:"concern", grade:"A", text:"EFSA set a tolerable weekly intake of 1 mg of aluminium per kg of body weight per week and concluded this limit “is therefore likely to be exceeded in a significant part of the European population”. That limit covers aluminium from all food, of which additives are one source.", cites:["efsa_al"]}]},
+  {id:"bha", name:"BHA (butylated hydroxyanisole)", codes:["e320"], aliases:["bha","butylated hydroxyanisole"], reviewed:"2026-11-02",
+   summary:"Antioxidant preservative for fats, cereals and snacks. Causes tumours in animals; EFSA judges it safe within a daily limit.",
+   claims:[
+     {dir:"concern", grade:"C", text:"The US National Toxicology Program lists BHA as “reasonably anticipated to be a human carcinogen” based on animal studies, in which BHA in the diet caused benign and malignant tumours of the forestomach in rats, mice and hamsters. Humans have no forestomach, which is why this is graded Possible.", cites:["ntp_bha"]},
+     {dir:"ok", grade:"A", text:"EFSA set an acceptable daily intake of 1.0 mg per kg of body weight per day and considered that the forestomach changes seen in rodents “may no longer be relevant for human risk assessment”.", cites:["efsa_bha"]}]},
   {id:"pgallate", name:"Propyl gallate", codes:["e310"], aliases:["propyl gallate"], reviewed:"2026-11-02",
    summary:"Antioxidant preservative for fats and oils. Safe within its daily limit.",
    claims:[{dir:"ok", grade:"A", text:"EFSA re-evaluated propyl gallate and derived an acceptable daily intake of 0.5 mg per kg of body weight per day.", cites:["efsa_pg"]}]},
@@ -332,7 +343,19 @@ const ENTRIES = [
 const GRADE_PTS = {A:20, B:12, C:6, D:2};
 const GRADE_NAME = {A:"Established", B:"Probable", C:"Possible", D:"Preliminary"};
 const GRADE_ORDER = {A:0, B:1, C:2, D:3, OK:4, N:5};
-const NUTRI = {sugars:{lim:22.5,label:"sugars",unit:"g"}, salt:{lim:1.5,label:"salt",unit:"g"}, "saturated-fat":{lim:5,label:"saturated fat",unit:"g"}};
+// UK front-of-pack "high" thresholds (DH/FSA 2016), per 100 g of food or per 100 ml of drink.
+const NUTRI = [
+  {k:"sugars", label:"sugars", food:22.5, drink:11.25},
+  {k:"salt", label:"salt", food:1.5, drink:0.75},
+  {k:"fat", label:"fat", food:17.5, drink:8.75},
+  {k:"sat", label:"saturated fat", food:5, drink:2.5}];
+const NUTRI_PTS = 10;
+function nutriHighs(n){
+  if (!n) return [];
+  const per = n.drink ? "100 ml" : "100 g";
+  return NUTRI.filter(t => typeof n[t.k] === "number" && n[t.k] > (n.drink ? t.drink : t.food))
+    .map(t => ({...t, val:n[t.k], lim:n.drink ? t.drink : t.food, per}));
+}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -404,15 +427,24 @@ function score(matched, nutriments, autoHits){
     const g = topGrade(e);
     if (GRADE_PTS[g]) { s -= GRADE_PTS[g]; rows.push([`${e.name}: strongest concern is grade ${g}`, -GRADE_PTS[g]]); }
   }
-  let nutriUsed = false;
-  if (nutriments){
-    for (const [k,v] of Object.entries(NUTRI)){
-      const val = nutriments[`${k}_100g`];
-      if (typeof val === "number"){ nutriUsed = true;
-        if (val > v.lim){ s -= 10; rows.push([`High ${v.label}: ${val.toFixed(1)} ${v.unit} per 100 g (over ${v.lim})`, -10]); } }
-    }
-  }
-  return {score: Math.max(0, s), rows, nutriUsed};
+  const highs = nutriHighs(nutriments);
+  for (const h of highs){ s -= NUTRI_PTS; rows.push([`High in ${h.label}: ${h.val.toFixed(1)} g per ${h.per} (UK “high” is over ${h.lim} g)`, -NUTRI_PTS]); }
+  return {score: Math.max(0, s), rows, highs, nutriUsed: !!nutriments};
+}
+function nutriPanel(n){
+  const per = n.drink ? "100 ml" : "100 g";
+  const rows = NUTRI.filter(t => typeof n[t.k] === "number").map(t => {
+    const lim = n.drink ? t.drink : t.food, high = n[t.k] > lim;
+    return `<tr><td>${t.label[0].toUpperCase()+t.label.slice(1)}</td><td>${n[t.k].toFixed(1)} g</td><td>${high?'<span class="chip g-B">High</span>':`<span class="muted" style="font-size:12px">under ${lim} g</span>`}</td></tr>`;
+  }).join("");
+  if (!rows) return "";
+  return `<div class="panel stack"><div class="label">Nutrition per ${per}${n.drink?" (drink)":""}</div>
+    <table class="breakdown nutri">${rows}</table>
+    <div class="claims" style="margin-top:0">
+      <div class="claim"><p>“High” uses the UK government's front-of-pack thresholds: over 22.5 g sugars, 1.5 g salt, 17.5 g fat or 5 g saturated fat per 100 g (half those amounts per 100 ml for drinks). Each “high” costs ${NUTRI_PTS} points.</p><ul class="cites">${citeHTML("uk_fop")}</ul></div>
+      <div class="claim"><p>The WHO advises limiting free sugars to less than 10% of daily energy, about 50 g for an adult eating 2,000 calories, and adults to less than 2,000 mg of sodium (5 g of salt) a day, because high sodium raises blood pressure and the risk of cardiovascular disease.</p><ul class="cites">${citeHTML("who_diet")}${citeHTML("who_sodium")}</ul></div>
+    </div>
+    <p class="disclaimer">Values from the product database; check them against the pack.</p></div>`;
 }
 function band(s){ return s>=80 ? ["Few concerns","var(--ok)"] : s>=50 ? ["Some concerns","var(--gC)"] : ["Several concerns","var(--gA)"]; }
 
@@ -432,7 +464,8 @@ function renderResult(args){
   const C = 2*Math.PI*42, off = C*(1-sc.score/100);
   const counts = {}; matched.forEach(e=>{const g=topGrade(e); counts[g]=(counts[g]||0)+1;});
   autoHits.forEach(a=>counts[a.grade]=(counts[a.grade]||0)+1); if (autoOK.length) counts.OK=(counts.OK||0)+autoOK.length;
-  const concernCount = matched.filter(e=>topGrade(e)!=="OK").length + autoHits.length;
+  const ingConcerns = matched.filter(e=>topGrade(e)!=="OK").length + autoHits.length;
+  const concernCount = ingConcerns + sc.highs.length;
   // Three states: checking (lookup still running, nothing bad yet), clear (nothing derogatory found), scored.
   const clear = concernCount === 0, checking = clear && pending.length > 0;
   const plural = (n, w) => `${n} ingredient${n>1?"s":""} ${w}`;
@@ -442,7 +475,8 @@ function renderResult(args){
     : clear ? ["Nothing derogatory found in our evidence library or in FDA, WHO and IARC records.",
         okCount ? `${plural(okCount, okCount>1?"were":"was")} reviewed as reassuring or listed as permitted.` : "",
         noRec ? `${plural(noRec, noRec>1?"have":"has")} no record anywhere (common for basic foods like potatoes, oil and salt), so this is not a guarantee of safety.` : ""].filter(Boolean).join(" ")
-    : `${concernCount} ingredient${concernCount>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}`;
+    : [ingConcerns ? `${ingConcerns} ingredient${ingConcerns>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}` : "",
+        sc.highs.length ? `High in ${sc.highs.map(h=>h.label).join(", ").replace(/, ([^,]*)$/, " and $1")}.` : ""].filter(Boolean).join(" ");
   const ringLabel = checking ? "Checking records" : clear ? "No concerns found" : `Score ${sc.score} of 100, show breakdown`;
   const ringNum = checking ? `…<span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
   const ringOff = checking ? C : clear ? 0 : off;
@@ -467,7 +501,7 @@ function renderResult(args){
         <table class="breakdown"><tr><td>Starting score</td><td>100</td></tr>
         ${sc.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${r[1]}</td></tr>`).join("")}
         <tr><td><b>Score</b></td><td><b>${sc.score}</b></td></tr></table>
-        <p class="disclaimer" style="margin-top:6px">Checked findings from the evidence library and IARC cancer classifications found by the automatic lookup affect the score; nutrition is not scored yet. See Method for the formula.</p>
+        <p class="disclaimer" style="margin-top:6px">${sc.nutriUsed ? "" : "No nutrition data for this product, so sugar, salt and fat aren't scored. "}See Method for the formula.</p>
       </div>
     </div>
     ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map((e,i)=>entryRow(e, i===0 && topGrade(e)!=="OK")).join("")}</div>`:""}
@@ -476,6 +510,7 @@ function renderResult(args){
       ${[...autoHits, ...autoOK].map(r=>r.html).join("")}</div>`:""}
     ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe."}</p><div class="unreviewed">${unrev.map(u=>{const r=regCache.get(cleanName(u));return `<span class="chip g-N">${esc(u)}</span>`;}).join("")}</div>
       ${!pending.length?`<p class="muted" style="font-size:12.5px">Whole foods and blends (flours, oils, natural flavours) usually have no single official record. <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">Search PubChem yourself</a>.</p>`:""}</div>`:""}
+    ${nutriments?nutriPanel(nutriments):""}
     ${text?`<details class="panel"><summary><span class="label">Ingredients checked</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${esc(text)}</p></details>`:""}
     ${source?`<p class="disclaimer">${source}</p>`:""}
     <p class="disclaimer">General information from published science, not medical advice.</p>`;
@@ -590,10 +625,10 @@ function checkEntered(text){
   // A list typed, pasted or read from a photo. If it belongs to a scanned barcode, remember it.
   let source = "";
   if (current?.code){
-    const ok = saveList(current.code, {name:current.name||"", brand:current.brand||"", text, saved:new Date().toISOString().slice(0,10)});
+    const ok = saveList(current.code, {name:current.name||"", brand:current.brand||"", nutr:current.nutr||null, text, saved:new Date().toISOString().slice(0,10)});
     if (ok) source = `Saved on this phone for barcode ${esc(current.code)}, so the next scan uses it.`;
   }
-  renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text, tags:[], source});
+  renderResult({name:current?.name || "Your ingredient list", brand:current?.brand, text, tags:[], nutriments:current?.nutr||null, source});
 }
 window.forgetSaved = code => { forget(code); lookup(code, true); };
 function renderMissing(info, code){
@@ -616,11 +651,16 @@ function renderMissing(info, code){
 const FDC_KEY = (() => { try { return localStorage.getItem("fdcKey") || "DEMO_KEY"; } catch(_) { return "DEMO_KEY"; } })();
 const digits = c => String(c||"").replace(/\D/g,"").replace(/^0+/,"");
 async function fromOFF(code){
-  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,ingredients_text,ingredients_text_en,additives_tags`);
+  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,ingredients_text,ingredients_text_en,additives_tags,nutriments,categories_tags`);
   const j = await r.json();
   if (j.status !== 1 || !j.product) return null;
   const p = j.product;
-  return {db:"Open Food Facts", name:p.product_name, brand:p.brands, text:(p.ingredients_text_en || p.ingredients_text || "").trim(), tags:p.additives_tags||[],
+  const nm = p.nutriments || {}, num = v => (typeof v === "number" ? v : (v!=null && v!=="" && !isNaN(+v) ? +v : undefined));
+  const cats = p.categories_tags || [];
+  const nutr = {sugars:num(nm.sugars_100g), salt:num(nm.salt_100g), fat:num(nm.fat_100g), sat:num(nm["saturated-fat_100g"]),
+    drink: cats.includes("en:beverages") && !cats.includes("en:alcoholic-beverages")};
+  const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
+  return {db:"Open Food Facts", name:p.product_name, brand:p.brands, text:(p.ingredients_text_en || p.ingredients_text || "").trim(), tags:p.additives_tags||[], nutr: hasN ? nutr : null,
     source:`Ingredients from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), a volunteer-built open database. Check them against the pack.`};
 }
 async function fromUSDA(code){
@@ -631,7 +671,12 @@ async function fromUSDA(code){
   const f = (j.foods||[]).find(x => digits(x.gtinUpc) === digits(code));
   if (!f) return null;
   const title = s => s ? s.toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase()) : s;
-  return {db:"the USDA database", name:title(f.description), brand:title(f.brandName || f.brandOwner), text:(f.ingredients||"").trim(), tags:[],
+  // Branded-food nutrient values are per 100 g (or 100 ml). Sodium is in mg; salt = sodium x 2.5.
+  const fn = n => { const x = (f.foodNutrients||[]).find(y => String(y.nutrientNumber) === n); return x && typeof x.value === "number" ? x.value : undefined; };
+  const sod = fn("307");
+  const nutr = {sugars:fn("269"), salt: sod!==undefined ? sod*2.5/1000 : undefined, fat:fn("204"), sat:fn("606"), drink:/ml|mlt/i.test(f.servingSizeUnit||"")};
+  const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
+  return {db:"the USDA database", name:title(f.description), brand:title(f.brandName || f.brandOwner), text:(f.ingredients||"").trim(), tags:[], nutr: hasN ? nutr : null,
     source:`Ingredients from <a href="https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients" target="_blank" rel="noopener">USDA FoodData Central</a> (supplied by the manufacturer${f.publishedDate?`, published ${esc(f.publishedDate)}`:""}). Recipes change, so check them against the pack.`};
 }
 async function lookup(code, skipSaved){
@@ -640,9 +685,9 @@ async function lookup(code, skipSaved){
   current = null;
   const mine = !skipSaved && savedAll()[code];
   if (mine){
-    current = {code, name:mine.name, brand:mine.brand};
+    current = {code, name:mine.name, brand:mine.brand, nutr:mine.nutr||null};
     status(""); $("#ingredients").value = mine.text;
-    renderResult({name:mine.name || "Product " + code, brand:mine.brand, text:mine.text, tags:[],
+    renderResult({name:mine.name || "Product " + code, brand:mine.brand, text:mine.text, tags:[], nutriments:mine.nutr||null,
       source:`Ingredients you added on ${esc(mine.saved)}, saved on this phone. <a href="#scan" onclick="forgetSaved('${code}');return false">Forget it and look up again</a>.`});
     return;
   }
@@ -655,11 +700,11 @@ async function lookup(code, skipSaved){
   }
   const hit = (off && off.text) ? off : (usda && usda.text) ? usda : null;
   const info = hit || off || usda;
-  current = {code, name:info?.name, brand:info?.brand};
+  current = {code, name:info?.name, brand:info?.brand, nutr:(off&&off.nutr)||(usda&&usda.nutr)||null};
   if (hit){
     status("");
     $("#ingredients").value = hit.text;
-    renderResult({name:hit.name, brand:hit.brand, text:hit.text, tags:hit.tags, source:hit.source});
+    renderResult({name:hit.name, brand:hit.brand, text:hit.text, tags:hit.tags, nutriments:hit.nutr, source:hit.source});
     return;
   }
   status(usdaErr ? "The USDA database is busy right now (free lookups are limited per hour)." : "", usdaErr);
@@ -765,7 +810,7 @@ function renderLibrary(){
   $("#library").innerHTML = list.map(e=>entryRow(e,false)).join("") || '<p class="muted">Nothing at this grade.</p>';
 }
 function renderSources(){
-  const used = new Set(ENTRIES.flatMap(e=>e.claims.flatMap(c=>c.cites)));
+  const used = new Set([...ENTRIES.flatMap(e=>e.claims.flatMap(c=>c.cites)), "uk_fop", "who_diet", "who_sodium"]);
   $("#sourceList").innerHTML = `<h3>All sources (${used.size})</h3><ul class="cites">${[...used].sort((a,b)=>CITES[a].src.localeCompare(CITES[b].src)).map(citeHTML).join("")}</ul>`;
 }
 function route(){
