@@ -84,6 +84,11 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) mark.alg.mine{color:#1a0505}}
 .alg-ok-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .alg-ok{background:#fff;color:var(--neg);border:0;font-size:13.5px;padding:8px 12px}
+.alg-add-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.alg-add{font-size:13.5px;padding:7px 12px;border-color:var(--neg);color:var(--neg);background:var(--surface)}
+.alg-add-row.on-red .alg-add{background:transparent;color:inherit;border:2px solid currentColor}
+.alg-kept{margin-top:8px!important;font-weight:600}
+.alg-banner .linkbtn{color:inherit;font-weight:700}
 .alg-okd{border-color:var(--ok);background:var(--ok-bg)}
 .ok-list{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
 .ok-list li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
@@ -641,6 +646,20 @@ window.algOK = id => {
   if (!e.allergens.includes(id)) e.allergens.push(id);
   all[algCtx.code] = e; okSave(all); if (lastArgs) renderResult(lastArgs);
 };
+// "Keep in my allergens": add an allergen found on this product to the user's list, with Undo.
+let algAdded = null; // {ids, fp} for the product on screen
+window.algAdd = id => {
+  if (!SET.allergens.includes(id)) SET.allergens.push(id);
+  saveSet();
+  const fp = algCtx?.fp || "";
+  algAdded = {ids: algAdded && algAdded.fp === fp ? [...new Set([...algAdded.ids, id])] : [id], fp};
+  if (lastArgs) renderResult(lastArgs);
+};
+window.algAddUndo = () => {
+  if (!algAdded) return;
+  SET.allergens = SET.allergens.filter(x => !algAdded.ids.includes(x)); saveSet();
+  algAdded = null; if (lastArgs) renderResult(lastArgs);
+};
 window.algUndo = code => { const all = okAll(); delete all[code]; okSave(all); if (lastArgs) renderResult(lastArgs); if (window.renderOKList) renderOKList(); };
 const niceDate = d => { try { return new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); } catch(_) { return d; } };
 const algName = id => ALLERGENS.find(a=>a.id===id)?.label.replace(/ \(.*/,"").toLowerCase() || id;
@@ -673,7 +692,7 @@ function allergenReport(text, offTags, offTraces, info={}){
   const why = id => { const w = (contains.get(id)||[]).filter(x => !algName(id).startsWith(x) && !x.startsWith(algName(id))); return w.length ? ` (${w.slice(0,3).join(", ")})` : ""; };
   // "OK for me": approvals hold only while the ingredient list is unchanged.
   const fp = fingerprint(raw), code = info.code || "";
-  algCtx = code ? {code, name:info.name, fp} : null;
+  algCtx = {code, name:info.name, fp};
   const ok = code ? okAll()[code] : null, okValid = ok && ok.fp === fp;
   const approved = okValid ? ok.allergens : [];
   const changed = ok && !okValid ? ok : null;
@@ -687,20 +706,24 @@ function allergenReport(text, offTags, offTraces, info={}){
       ${cRed.length?`<p><b>Contains ${listWhy(cRed)}.</b></p>`:""}
       ${tRed.length?`<p${cRed.length?' class="small"':""}><b>May contain ${esc(list(tRed))}</b> (traces or shared equipment).</p>`:""}
       ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
+      ${algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id)) ? `<p class="alg-kept">✓ ${esc(list(algAdded.ids).replace(/^./, c=>c.toUpperCase()))} added to your allergens. <button type="button" class="linkbtn" onclick="algAddUndo()">Undo</button></p>` : ""}
       <p class="small">Matches your allergen list. Always check the pack.</p>
       ${code?`<div class="alg-ok-row">${red.map(id=>`<button type="button" class="alg-ok" onclick="algOK('${id}')">${red.length>1?`${esc(algName(id)[0].toUpperCase()+algName(id).slice(1))} is OK for me here`:"This one is OK for me"}</button>`).join("")}</div>`:""}
-      </div></div>`;
+      <!--ADD--></div></div>`;
   }
   if (okShown.length){
     html += `<div class="alg-note alg-okd">✓ Contains ${esc(list(okShown))}. You marked this product OK for you on ${esc(niceDate(ok.date))}. <button type="button" class="linkbtn" onclick="algUndo('${esc(code)}')">Undo</button></div>`;
   }
+  const addable = [...new Set([...contains.keys(), ...traces.keys()])].filter(id => id !== "lactose" && !mine.includes(id));
+  const addRow = addable.length ? `<div class="alg-add-row">${addable.map(id=>`<button type="button" class="alg-add" onclick="algAdd('${id}')">+ Keep ${esc(algName(id))} in my allergens</button>`).join("")}</div>` : "";
+  html = html.replace("<!--ADD-->", addRow.replace("alg-add-row", "alg-add-row on-red"));
   if (!html && mine.length){
     const others = [...contains.keys()];
     const lacNote = lfree && mine.includes("lactose") ? " Labelled lactose-free, so no lactose warning." : "";
-    html = `<div class="alg-note">None of your allergens (${esc(list(mine))}) found in the listed ingredients.${lacNote} This is not a guarantee: always check the pack.${others.length?` Other allergens listed: ${esc(list(others.filter(x=>x!=="lactose")))}.`:""}</div>`;
+    html = `<div class="alg-note">None of your allergens (${esc(list(mine))}) found in the listed ingredients.${lacNote} This is not a guarantee: always check the pack.${others.length?` Other allergens listed: ${esc(list(others.filter(x=>x!=="lactose")))}.`:""}${addRow}</div>`;
   } else if (!html && (contains.size || traces.size)){
     const cs = [...contains.keys()].filter(x=>x!=="lactose"), ts = [...traces.keys()].filter(x=>x!=="lactose");
-    html = `<div class="alg-note">${cs.length?`<b>Allergens:</b> ${esc(list(cs))}.`:""}${ts.length?` <b>May contain:</b> ${esc(list(ts))}.`:""} <button type="button" class="linkbtn" onclick="openSettings()">Set my allergens</button> to get a warning for the ones that matter to you.</div>`;
+    html = `<div class="alg-note">${cs.length?`<b>Allergens:</b> ${esc(list(cs))}.`:""}${ts.length?` <b>May contain:</b> ${esc(list(ts))}.`:""} Tap one to keep it in your allergens and get a warning whenever it appears.${addRow}</div>`;
   }
   // Highlight allergen words inside the ingredient list.
   const words = [];
