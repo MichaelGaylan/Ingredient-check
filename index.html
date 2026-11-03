@@ -95,7 +95,7 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .hist-list li.swiping{background:var(--neg)}
 .hist-list li:not(.swiping) .hist-del-bg{display:none}
 .hist-list li.empty{background:none;color:var(--muted);font-size:14px}
-.hist-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;touch-action:pan-y;transition:transform .18s ease}
+.hist-row{position:relative;z-index:1;display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;touch-action:pan-y;transition:transform .18s ease}
 .hist-row.dragging{transition:none}
 .hist-open{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
 .hist-badge{flex:none;width:44px;height:44px;border-radius:50%;border:4px solid var(--c);display:grid;place-items:center;font:600 14px var(--mono);color:var(--ink)}
@@ -103,7 +103,7 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .hist-txt b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hist-txt small{display:block;color:var(--muted);font-size:12.5px}
 .hist-tag{display:inline-block;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:5px;background:var(--gC-bg);color:var(--gC);margin-top:3px}
-.hist-x,.fav-btn{flex:none;background:none;border:0;padding:6px 8px;font-size:22px;line-height:1;color:var(--muted);cursor:pointer}
+.hist-x,.fav-btn{flex:none;background:none;border:0;padding:0;min-width:44px;min-height:44px;font-size:22px;line-height:1;color:var(--muted);cursor:pointer}
 .fav-btn[aria-pressed="true"]{color:var(--gC)}
 .hist-del-bg{position:absolute;inset:0 16px 0 auto;display:flex;align-items:center;color:#fff;font-weight:600;font-size:14px}
 .saved-note{font-size:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--accent-soft)}
@@ -1178,7 +1178,7 @@ function renderHistory(){
   // Swipe left to delete.
   $("#histList").querySelectorAll(".hist-row").forEach(row => {
     let x0 = null, dx = 0;
-    row.addEventListener("pointerdown", e => { if (e.pointerType === "mouse") return; x0 = e.clientX; dx = 0; row.classList.add("dragging"); row.parentElement.classList.add("swiping"); });
+    row.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" || e.target.closest(".hist-x,.fav-btn")) return; x0 = e.clientX; dx = 0; row.classList.add("dragging"); row.parentElement.classList.add("swiping"); });
     row.addEventListener("pointermove", e => { if (x0 === null) return; dx = Math.min(0, e.clientX - x0); row.style.transform = `translateX(${dx}px)`; });
     const end = () => { if (x0 === null) return; row.classList.remove("dragging"); x0 = null;
       if (dx < -90){ row.style.transform = "translateX(-110%)"; setTimeout(()=>deleteHistory(row.dataset.code, which), 180); } else { row.style.transform = ""; setTimeout(()=>row.parentElement.classList.remove("swiping"), 200); } };
