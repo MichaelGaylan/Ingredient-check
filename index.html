@@ -728,7 +728,7 @@ function allergenReport(text, offTags, offTraces, info={}){
       ${tRed.length?`<p${cRed.length?' class="small"':""}><b>May contain ${esc(list(tRed))}</b> (traces or shared equipment).</p>`:""}
       ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
       ${algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id)) ? `<p class="alg-kept">✓ ${esc(list(algAdded.ids).replace(/^./, c=>c.toUpperCase()))} added to your allergens. <button type="button" class="linkbtn" onclick="algAddUndo()">Undo</button></p>` : ""}
-      <p class="small">Matches your allergen list. Always check the pack.</p>
+      ${avoided?"":`<p class="small">Matches your allergen list. Always check the pack.</p>`}
       ${code && avoided ? `<p class="alg-kept">✓ Kept as allergen on ${esc(niceDate(avoided.date))}. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button></p>` : ""}
       ${code?`<div class="alg-ok-row">${avoided?"":`<button type="button" class="alg-ok" onclick="algKeep('${red.join(",")}')">Keep as allergen</button>`}${red.map(id=>`<button type="button" class="alg-ok" onclick="algOK('${id}')">${red.length>1?`${esc(algName(id)[0].toUpperCase()+algName(id).slice(1))} is OK for me here`:"This one is OK for me"}</button>`).join("")}</div>`:""}
       <!--ADD--></div></div>`;
