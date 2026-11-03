@@ -89,6 +89,9 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alg-add-row.on-red .alg-add{background:transparent;color:inherit;border:2px solid currentColor}
 .alg-kept{margin-top:8px!important;font-weight:600}
 .alg-banner .linkbtn{color:inherit;font-weight:700}
+.alg-banner.kept{background:#6e0f16;box-shadow:inset 0 0 0 3px #ff9a9a}
+:root[data-theme="dark"] .alg-banner.kept{background:#ffb3b3}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner.kept{background:#ffb3b3}}
 .alg-okd{border-color:var(--ok);background:var(--ok-bg)}
 .ok-list{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
 .ok-list li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
@@ -252,6 +255,11 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <label class="label" for="fdcKeyIn">USDA API key</label>
         <input type="text" id="fdcKeyIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your free key (optional)">
         <p class="set-help">Used when Open Food Facts doesn't have a product. Without a key, everyone shares a small demo allowance that runs out quickly. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">Get a free key</a> (name and email, arrives by email right away). Saved on this phone only.</p>
+      </div>
+      <div class="set-row">
+        <span class="label">Kept as allergen</span>
+        <ul class="ok-list" id="avoidList"></ul>
+        <p class="set-help">Products you marked “Keep as allergen”. Their warning always shows, in a darker red, even if the ingredients change. Saved on this phone only.</p>
       </div>
       <div class="set-row">
         <span class="label">My OK products</span>
@@ -640,12 +648,24 @@ function fingerprint(t){ let h = 5381; for (const c of norm(t||"")) h = ((h<<5) 
 let algCtx = null; // what the allergen banner on screen refers to
 window.algOK = id => {
   if (!algCtx?.code) return;
+  { const av = avoidAll(); if (av[algCtx.code]){ delete av[algCtx.code]; avoidSave(av); } }
   const all = okAll(), e = all[algCtx.code] || {name:algCtx.name||"", allergens:[], fp:algCtx.fp, date:""};
   if (e.fp !== algCtx.fp) e.allergens = [];
   e.fp = algCtx.fp; e.name = algCtx.name || e.name; e.date = new Date().toISOString().slice(0,10);
   if (!e.allergens.includes(id)) e.allergens.push(id);
   all[algCtx.code] = e; okSave(all); if (lastArgs) renderResult(lastArgs);
 };
+/* Products the user confirmed as "Keep as allergen" (stays flagged), per barcode, on this phone only. */
+const AVOID_KEY = "sourced.avoid.v1";
+const avoidAll = () => { try { return JSON.parse(localStorage.getItem(AVOID_KEY) || "{}"); } catch(_) { return {}; } };
+const avoidSave = all => { try { localStorage.setItem(AVOID_KEY, JSON.stringify(all)); } catch(_) {} };
+window.algKeep = ids => {
+  if (!algCtx?.code) return;
+  const all = avoidAll(); all[algCtx.code] = {name:algCtx.name||"", allergens:ids.split(","), date:new Date().toISOString().slice(0,10)}; avoidSave(all);
+  const ok = okAll(); if (ok[algCtx.code]){ delete ok[algCtx.code]; okSave(ok); } // keeping it flagged cancels any "OK for me"
+  if (lastArgs) renderResult(lastArgs);
+};
+window.avoidUndo = code => { const all = avoidAll(); delete all[code]; avoidSave(all); if (lastArgs) renderResult(lastArgs); if (window.renderOKList) renderOKList(); };
 // "Keep in my allergens": add an allergen found on this product to the user's list, with Undo.
 let algAdded = null; // {ids, fp} for the product on screen
 window.algAdd = id => {
@@ -693,6 +713,7 @@ function allergenReport(text, offTags, offTraces, info={}){
   // "OK for me": approvals hold only while the ingredient list is unchanged.
   const fp = fingerprint(raw), code = info.code || "";
   algCtx = {code, name:info.name, fp};
+  const avoided = code ? avoidAll()[code] : null;
   const ok = code ? okAll()[code] : null, okValid = ok && ok.fp === fp;
   const approved = okValid ? ok.allergens : [];
   const changed = ok && !okValid ? ok : null;
@@ -702,13 +723,14 @@ function allergenReport(text, offTags, offTraces, info={}){
   let html = "";
   if (cRed.length || tRed.length){
     const red = [...cRed, ...tRed];
-    html = `<div class="alg-banner" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
+    html = `<div class="alg-banner${avoided?" kept":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
       ${cRed.length?`<p><b>Contains ${listWhy(cRed)}.</b></p>`:""}
       ${tRed.length?`<p${cRed.length?' class="small"':""}><b>May contain ${esc(list(tRed))}</b> (traces or shared equipment).</p>`:""}
       ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
       ${algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id)) ? `<p class="alg-kept">✓ ${esc(list(algAdded.ids).replace(/^./, c=>c.toUpperCase()))} added to your allergens. <button type="button" class="linkbtn" onclick="algAddUndo()">Undo</button></p>` : ""}
       <p class="small">Matches your allergen list. Always check the pack.</p>
-      ${code?`<div class="alg-ok-row">${red.map(id=>`<button type="button" class="alg-ok" onclick="algOK('${id}')">${red.length>1?`${esc(algName(id)[0].toUpperCase()+algName(id).slice(1))} is OK for me here`:"This one is OK for me"}</button>`).join("")}</div>`:""}
+      ${code && avoided ? `<p class="alg-kept">✓ Kept as allergen on ${esc(niceDate(avoided.date))}. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button></p>` : ""}
+      ${code?`<div class="alg-ok-row">${avoided?"":`<button type="button" class="alg-ok" onclick="algKeep('${red.join(",")}')">Keep as allergen</button>`}${red.map(id=>`<button type="button" class="alg-ok" onclick="algOK('${id}')">${red.length>1?`${esc(algName(id)[0].toUpperCase()+algName(id).slice(1))} is OK for me here`:"This one is OK for me"}</button>`).join("")}</div>`:""}
       <!--ADD--></div></div>`;
   }
   if (okShown.length){
@@ -1310,6 +1332,8 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   }));
   window.renderOKList=()=>{
     const all=okAll(), ks=Object.keys(all);
+    const av=avoidAll(), aks=Object.keys(av);
+    $("#avoidList").innerHTML = aks.length ? aks.map(k=>`<li><span>${esc(av[k].name||"Product "+k)}<small>${esc(av[k].allergens.map(algName).join(", "))} · barcode ${esc(k)} · ${esc(niceDate(av[k].date))}</small></span><button type="button" onclick="avoidUndo('${esc(k)}')">Remove</button></li>`).join("") : `<li class="muted">None yet.</li>`;
     $("#okList").innerHTML = ks.length ? ks.map(k=>`<li><span>${esc(all[k].name||"Product "+k)}<small>${esc(all[k].allergens.map(algName).join(", "))} · barcode ${esc(k)} · ${esc(niceDate(all[k].date))}</small></span><button type="button" onclick="algUndo('${esc(k)}')">Remove</button></li>`).join("") : `<li class="muted">None yet.</li>`;
   };
   const keyIn=$("#fdcKeyIn");
