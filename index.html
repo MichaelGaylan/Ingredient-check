@@ -864,6 +864,13 @@ $("#labelPhoto").onchange = async (ev) => {
   finally{ btn.disabled = false; }
 };
 $("#lookupBtn").onclick = () => lookup($("#barcode").value);
+// While a barcode is typed by hand, Look up becomes the green (main) button and Scan barcode turns plain.
+function barcodeMode(){
+  const typing = $("#barcode").value.trim() !== "" && !stream;
+  $("#lookupBtn").classList.toggle("primary", typing);
+  $("#scanBtn").classList.toggle("primary", !typing);
+}
+$("#barcode").addEventListener("input", barcodeMode);
 $("#barcode").addEventListener("keydown", e => { if (e.key === "Enter") lookup(e.target.value); });
 // No Check button: a pasted list is checked at once, a typed one after a short pause.
 let typeTimer = null, lastChecked = "";
