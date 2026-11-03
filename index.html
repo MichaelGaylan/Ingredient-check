@@ -244,6 +244,11 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <p class="set-help">Tick the ones that matter to you. Any product containing them, or labelled “may contain” them, gets a red warning at the top of the result. Allergens don't change the score. The app can miss an allergen if the database or label text is incomplete, so always check the pack.</p>
       </div>
       <div class="set-row">
+        <label class="label" for="fdcKeyIn">USDA API key</label>
+        <input type="text" id="fdcKeyIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your free key (optional)">
+        <p class="set-help">Used when Open Food Facts doesn't have a product. Without a key, everyone shares a small demo allowance that runs out quickly. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">Get a free key</a> (name and email, arrives by email right away). Saved on this phone only.</p>
+      </div>
+      <div class="set-row">
         <span class="label">My OK products</span>
         <ul class="ok-list" id="okList"></ul>
         <p class="set-help">Products you marked “OK for me” on the allergen warning. They show a green note instead of the red banner, until their ingredient list changes. Saved on this phone only.</p>
@@ -934,7 +939,7 @@ function renderMissing(info, code){
     ${info && info.db === "Open Food Facts" ? `<p class="disclaimer">You can also add the ingredients to <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> so the next scan finds them.</p>` : ""}</div>`;
   $("#ingredients").focus();
 }
-const FDC_KEY = (() => { try { return localStorage.getItem("fdcKey") || "DEMO_KEY"; } catch(_) { return "DEMO_KEY"; } })();
+const fdcKey = () => { try { return (localStorage.getItem("fdcKey") || "").trim() || "DEMO_KEY"; } catch(_) { return "DEMO_KEY"; } };
 const digits = c => String(c||"").replace(/\D/g,"").replace(/^0+/,"");
 async function fromOFF(code){
   const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,lang,ingredients_text,ingredients_text_en,ingredients_text_${SET.lang},product_name_en,product_name_${SET.lang},ingredients,additives_tags,allergens_tags,traces_tags,labels_tags,nutriments,categories_tags`);
@@ -957,7 +962,7 @@ async function fromOFF(code){
 }
 async function fromUSDA(code){
   // USDA FoodData Central, Branded Foods: ingredient lists supplied by manufacturers.
-  const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(FDC_KEY)}&dataType=Branded&pageSize=10&query=${code}`);
+  const r = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(fdcKey())}&dataType=Branded&pageSize=10&query=${code}`);
   if (r.status === 429) throw new Error("rate");
   const j = await r.json();
   const f = (j.foods||[]).find(x => digits(x.gtinUpc) === digits(code));
@@ -998,7 +1003,7 @@ async function lookup(code, skipSaved){
     present({...hit, text: hit.orig || hit.text, nutriments:hit.nutr});
     return;
   }
-  status(usdaErr ? "The USDA database is busy right now (free lookups are limited per hour)." : "", usdaErr);
+  status(usdaErr ? (fdcKey()==="DEMO_KEY" ? "The USDA database's shared free lookups are used up for now. Add your own free USDA key in Settings (gear icon) to fix this." : "The USDA database didn't answer (or your key's hourly limit was reached). Try again shortly.") : "", usdaErr);
   renderMissing(info, code);
 }
 
@@ -1284,7 +1289,9 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
     const all=okAll(), ks=Object.keys(all);
     $("#okList").innerHTML = ks.length ? ks.map(k=>`<li><span>${esc(all[k].name||"Product "+k)}<small>${esc(all[k].allergens.map(algName).join(", "))} · barcode ${esc(k)} · ${esc(niceDate(all[k].date))}</small></span><button type="button" onclick="algUndo('${esc(k)}')">Remove</button></li>`).join("") : `<li class="muted">None yet.</li>`;
   };
-  window.openSettings=()=>{ renderOKList(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal(); };
+  const keyIn=$("#fdcKeyIn");
+  keyIn.addEventListener("input",()=>{ try { const v=keyIn.value.trim(); if (v) localStorage.setItem("fdcKey", v); else localStorage.removeItem("fdcKey"); } catch(_) {} });
+  window.openSettings=()=>{ renderOKList(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal(); };
   $("#settingsBtn").addEventListener("click",()=>openSettings());
   dlg.addEventListener("click",e=>{ if (e.target===dlg) dlg.close(); });
   paint();
