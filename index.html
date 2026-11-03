@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sourced">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1f6f5c">
 <title>Sourced</title>
 <script>try{var t=localStorage.getItem("sourced.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -38,7 +44,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:env(safe-area-inset-top,0px) 48px}
 .wrap{max-width:680px;margin:0 auto}
 header.top{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 12px;padding-block:18px 10px}
 header.top nav{grid-column:1/-1;justify-self:start}
@@ -1410,6 +1416,9 @@ async function present(d, opt={}){
   if (!opt.keepBox) $("#ingredients").value = shown;
   renderResult({name, brand:d.brand, text:scoreText, tags:d.tags||[], nutriments:d.nutriments||null, source:d.source, trNote, allergens:d.allergens||[], traces:d.traces||[], labels:d.labels||[], cats:d.cats||[]});
 }
+
+/* ---------- offline support when added to the Home Screen ---------- */
+if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 
 </body>
