@@ -62,7 +62,25 @@ dialog.settings h2{font:700 20px var(--display);margin:0}
 .seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
 .set-help{font-size:13px;color:var(--muted);margin:0}
-.set-foot{display:flex;justify-content:flex-end}
+.set-foot{display:flex;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface);padding-top:8px}
+dialog.settings{overflow:auto}
+.alg-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.alg-grid label{display:flex;align-items:center;gap:8px;font-size:14.5px;min-height:32px;cursor:pointer}
+.alg-grid input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.alg-banner{background:var(--neg);color:#fff;border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.alg-banner .ic{font-size:22px;line-height:1.1}
+.alg-banner b{font-weight:700}
+.alg-banner p{margin:0}
+.alg-banner .small{font-size:13px;opacity:.92;margin-top:4px}
+:root[data-theme="dark"] .alg-banner{color:#1a0505}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner{color:#1a0505}}
+.alg-note{font-size:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface)}
+.alg-note b{font-weight:600}
+mark.alg{background:var(--gC-bg);color:inherit;border-radius:3px;padding:0 2px}
+mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
+:root[data-theme="dark"] mark.alg.mine{color:#1a0505}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) mark.alg.mine{color:#1a0505}}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
 nav a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
 h2{font-size:22px;font-weight:700}
@@ -186,6 +204,11 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <label class="label" for="langSel">Show product text in</label>
         <select id="langSel"></select>
         <p class="set-help">Product names and ingredient lists are shown in this language. When the database has no version in it, the text is machine-translated (MyMemory), so check it against the pack. Scoring always uses the English names, whatever language you pick.</p>
+      </div>
+      <div class="set-row">
+        <span class="label" id="algLbl">My allergens</span>
+        <div class="alg-grid" id="algGrid" role="group" aria-labelledby="algLbl"></div>
+        <p class="set-help">Tick the ones that matter to you. Any product containing them, or labelled “may contain” them, gets a red warning at the top of the result. Allergens don't change the score. The app can miss an allergen if the database or label text is incomplete, so always check the pack.</p>
       </div>
       <div class="set-foot"><button class="primary" value="close">Done</button></div>
     </form>
@@ -523,6 +546,88 @@ function searchChip(u){
   const q = `${u.replace(/\s+/g," ").trim()} food ingredient safety`;
   return `<a class="chip g-N chip-link" href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" title="Search the web for ${esc(u)}">${esc(u)} <span aria-hidden="true">↗</span><span class="sr">, search the web (opens in a new tab)</span></a>`;
 }
+/* ---------- allergens ---------- */
+// The major allergens on US (FALCPA + sesame) and EU (Regulation 1169/2011, Annex II) labels.
+// terms: words in an ingredient list that mean the allergen is present; not: look-alike phrases that don't.
+const ALLERGENS = [
+  {id:"milk", label:"Milk", off:["en:milk"], terms:["milk","whey","casein","caseinate","caseinates","lactose","butter","buttermilk","cream","cheese","yogurt","yoghurt","ghee","lactalbumin","lactoglobulin","curd","curds","milkfat","milk fat","milk solids","kefir","paneer"],
+   not:["cocoa butter","shea butter","peanut butter","nut butter","almond butter","apple butter","coconut milk","coconut cream","cream of tartar","almond milk","oat milk","soy milk","soya milk","rice milk","cashew milk","coconut butter","creamer non dairy","non dairy"]},
+  {id:"eggs", label:"Eggs", off:["en:eggs"], terms:["egg","eggs","albumin","albumen","ovalbumin","lysozyme","mayonnaise","meringue","egg white","egg yolk"], not:[]},
+  {id:"fish", label:"Fish", off:["en:fish"], terms:["fish","anchovy","anchovies","cod","salmon","tuna","sardine","sardines","pollock","haddock","tilapia","trout","mackerel","herring","bonito"], not:[]},
+  {id:"crustaceans", label:"Shellfish (crustaceans)", off:["en:crustaceans"], terms:["shrimp","shrimps","prawn","prawns","crab","lobster","crayfish","krill","langoustine","crustacean","crustaceans"], not:[]},
+  {id:"molluscs", label:"Molluscs", off:["en:molluscs"], terms:["mussel","mussels","oyster","oysters","clam","clams","scallop","scallops","squid","octopus","calamari","snail","snails","mollusc","molluscs"], not:["oyster mushroom","oyster mushrooms"]},
+  {id:"nuts", label:"Tree nuts", off:["en:nuts"], terms:["almond","almonds","hazelnut","hazelnuts","walnut","walnuts","cashew","cashews","pecan","pecans","pistachio","pistachios","brazil nut","brazil nuts","macadamia","praline","marzipan","tree nuts","nut","nuts","filbert","filberts"],
+   not:["nutmeg","coconut","coconuts","water chestnut","water chestnuts","butternut","peanut","peanuts","doughnut","donut"]},
+  {id:"peanuts", label:"Peanuts", off:["en:peanuts"], terms:["peanut","peanuts","groundnut","groundnuts","arachis"], not:[]},
+  {id:"gluten", label:"Wheat / gluten", off:["en:gluten"], terms:["wheat","barley","rye","oat","oats","spelt","semolina","durum","farro","kamut","malt","triticale","seitan","couscous","bulgur","gluten","enriched flour","bleached flour","all purpose flour","graham"],
+   not:["buckwheat","gluten free","oat free","malted milk free"]},
+  {id:"soy", label:"Soy", off:["en:soybeans"], terms:["soy","soya","soybean","soybeans","edamame","tofu","miso","tempeh","shoyu","tamari"], not:[]},
+  {id:"sesame", label:"Sesame", off:["en:sesame-seeds"], terms:["sesame","tahini","tahina","benne","gingelly"], not:[]},
+  {id:"mustard", label:"Mustard", off:["en:mustard"], terms:["mustard"], not:[]},
+  {id:"celery", label:"Celery", off:["en:celery"], terms:["celery","celeriac"], not:[]},
+  {id:"lupin", label:"Lupin", off:["en:lupin"], terms:["lupin","lupine","lupini"], not:[]},
+  {id:"sulphites", label:"Sulphites", off:["en:sulphur-dioxide-and-sulphites"], terms:["sulphite","sulphites","sulfite","sulfites","sulphur dioxide","sulfur dioxide","metabisulphite","metabisulfite","bisulphite","bisulfite","e220","e221","e222","e223","e224","e225","e226","e227","e228"], not:[]}
+];
+const algName = id => ALLERGENS.find(a=>a.id===id)?.label.replace(/ \(.*/,"").toLowerCase() || id;
+function algScan(t){ // t: normalised text; returns Map id -> [terms found]
+  const out = new Map();
+  for (const a of ALLERGENS){
+    let tt = t; for (const n of a.not) tt = tt.split(" "+n+" ").join(" ~ ");
+    const hits = a.terms.filter(w => tt.includes(" "+w+" "));
+    if (hits.length) out.set(a.id, hits);
+  }
+  return out;
+}
+function allergenReport(text, offTags, offTraces){
+  const raw = text || "";
+  // Split "may contain" / facility statements off from the ingredients proper.
+  const cut = raw.search(/may contain|may also contain|traces? of|made on (shared )?equipment|(produced|processed|manufactured|made) in a (facility|factory|plant)/i);
+  const main = cut >= 0 ? raw.slice(0, cut) : raw, tail = cut >= 0 ? raw.slice(cut) : "";
+  const contains = algScan(norm(main)), traces = algScan(norm(tail));
+  for (const a of ALLERGENS){
+    if (a.off.some(x => offTags.includes(x)) && !contains.has(a.id)) contains.set(a.id, []);
+    if (a.off.some(x => offTraces.includes(x)) && !contains.has(a.id) && !traces.has(a.id)) traces.set(a.id, []);
+  }
+  for (const k of contains.keys()) traces.delete(k);
+  const mine = SET.allergens || [];
+  const list = ids => ids.map(algName).join(", ").replace(/, ([^,]*)$/, " and $1");
+  const cMine = [...contains.keys()].filter(k=>mine.includes(k)), tMine = [...traces.keys()].filter(k=>mine.includes(k));
+  const why = id => { const w = contains.get(id)||[]; return w.length && !(w.length===1 && algName(id).startsWith(w[0])) ? ` (${w.slice(0,3).join(", ")})` : ""; };
+  let html = "";
+  if (cMine.length || tMine.length){
+    html = `<div class="alg-banner" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
+      ${cMine.length?`<p><b>Contains ${esc(cMine.map(id=>algName(id)+why(id)).join(", ").replace(/, ([^,]*)$/, " and $1"))}.</b></p>`:""}
+      ${tMine.length?`<p${cMine.length?' class="small"':""}><b>May contain ${esc(list(tMine))}</b> (traces or shared equipment).</p>`:""}
+      <p class="small">Matches your allergen list. Always check the pack.</p></div></div>`;
+  } else if (mine.length){
+    const others = [...contains.keys()];
+    html = `<div class="alg-note">None of your allergens (${esc(list(mine))}) found in the listed ingredients. This is not a guarantee: always check the pack.${others.length?` Other allergens listed: ${esc(list(others))}.`:""}</div>`;
+  } else if (contains.size || traces.size){
+    html = `<div class="alg-note">${contains.size?`<b>Allergens:</b> ${esc(list([...contains.keys()]))}.`:""}${traces.size?` <b>May contain:</b> ${esc(list([...traces.keys()]))}.`:""} <button type="button" class="linkbtn" onclick="openSettings()">Set my allergens</button> to get a warning for the ones that matter to you.</div>`;
+  }
+  // Highlight allergen words inside the ingredient list.
+  const words = [];
+  for (const a of ALLERGENS) for (const w of a.terms) words.push([w, a]);
+  words.sort((x,y)=>y[0].length-x[0].length);
+  const re = new RegExp("\\b(" + words.map(([w])=>w.replace(/ /g,"[\\s-]+")).join("|") + ")\\b", "gi");
+  // Spans of look-alike phrases (cocoa butter, coconut milk, buckwheat...) are never highlighted.
+  const skip = [];
+  for (const al of ALLERGENS) for (const n of al.not){
+    const r2 = new RegExp("\\b" + n.replace(/ /g,"[\\s-]+") + "\\b", "gi"); let k;
+    while ((k = r2.exec(raw))) skip.push([k.index, k.index + k[0].length, al.id]);
+  }
+  let marked = "", last = 0, m;
+  while ((m = re.exec(raw))){
+    const w = m[0].toLowerCase().replace(/[\s-]+/g," ");
+    const a = words.find(([x])=>x===w)?.[1];
+    if (!a || skip.some(([x,y,id]) => id === a.id && m.index < y && m.index + m[0].length > x)) continue;
+    marked += esc(raw.slice(last, m.index)) + `<mark class="alg${mine.includes(a.id)?" mine":""}" title="${esc(a.label)}">${esc(m[0])}</mark>`;
+    last = m.index + m[0].length;
+  }
+  marked += esc(raw.slice(last));
+  return {html, marked, mineHit: cMine.length + tMine.length > 0};
+}
+
 function renderResult(args){
   const {name, brand, example, text, tags, nutriments, source, _auto} = args;
   if (!_auto){ renderToken++; lastArgs = args; }
@@ -554,7 +659,9 @@ function renderResult(args){
   const ringLabel = checking ? "Checking records" : clear ? "No concerns found" : `Score ${sc.score} of 100, show breakdown`;
   const ringNum = checking ? `…<span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
   const ringOff = checking ? C : clear ? 0 : off;
+  const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[]);
   $("#result").innerHTML = `
+    ${alg ? alg.html : ""}
     <div class="panel stack">
       <div class="result-head">
         <button class="ring" id="ringBtn" type="button" aria-label="${ringLabel}" style="padding:0;border:0;background:none">
@@ -585,7 +692,7 @@ function renderResult(args){
     ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe."}</p><div class="unreviewed">${unrev.map(searchChip).join("")}</div>
       ${!pending.length?`<p class="muted" style="font-size:12.5px">Whole foods and blends (flours, oils, natural flavours) usually have no single official record. <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">Search PubChem yourself</a>.</p>`:""}</div>`:""}
     ${nutriments?nutriPanel(nutriments):""}
-    ${text?`<details class="panel"><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${esc(text)}</p></details>`:""}
+    ${text?`<details class="panel"${alg&&alg.mineHit?" open":""}><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${alg ? alg.marked : esc(text)}</p></details>`:""}
     ${source?`<p class="disclaimer">${source}</p>`:""}
     ${args.trNote?`<p class="disclaimer">${args.trNote}</p>`:""}
     <p class="disclaimer">General information from published science, not medical advice.</p>`;
@@ -726,7 +833,7 @@ function renderMissing(info, code){
 const FDC_KEY = (() => { try { return localStorage.getItem("fdcKey") || "DEMO_KEY"; } catch(_) { return "DEMO_KEY"; } })();
 const digits = c => String(c||"").replace(/\D/g,"").replace(/^0+/,"");
 async function fromOFF(code){
-  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,lang,ingredients_text,ingredients_text_en,ingredients_text_${SET.lang},product_name_en,product_name_${SET.lang},ingredients,additives_tags,nutriments,categories_tags`);
+  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,lang,ingredients_text,ingredients_text_en,ingredients_text_${SET.lang},product_name_en,product_name_${SET.lang},ingredients,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags`);
   const j = await r.json();
   if (j.status !== 1 || !j.product) return null;
   const p = j.product;
@@ -740,6 +847,7 @@ async function fromOFF(code){
   const top = Array.isArray(p.ingredients) ? p.ingredients : [];
   const ids = top.length && top.every(i => /^en:/.test(i.id||"")) ? top.map(i => i.id.slice(3).replace(/-/g," ")).join(", ") : "";
   return {db:"Open Food Facts", name:clean(p.product_name), brand:p.brands, text:clean(p.ingredients_text_en || p.ingredients_text), tags:p.additives_tags||[], nutr: hasN ? nutr : null,
+    allergens:p.allergens_tags||[], traces:p.traces_tags||[],
     lang:(p.lang||"").toLowerCase(), en:clean(p.ingredients_text_en), ids, local:clean(p["ingredients_text_"+T]), nameEn:clean(p.product_name_en), nameLocal:clean(p["product_name_"+T]), orig:clean(p.ingredients_text),
     source:`Ingredients from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), a volunteer-built open database. Check them against the pack.`};
 }
@@ -915,8 +1023,8 @@ const LANGS = {en:"English", es:"Spanish (Español)", fr:"French (Français)", d
 const langName = c => (LANGS[c]||c||"").replace(/ \(.*/,"");
 const SET = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem("sourced.settings") || "{}"); } catch(_) {}
   let t = null; try { t = localStorage.getItem("sourced.theme"); } catch(_) {}
-  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en"}; })();
-function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang}));
+  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: Array.isArray(o.allergens) ? o.allergens : []}; })();
+function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang, allergens:SET.allergens}));
   if (SET.theme==="system") localStorage.removeItem("sourced.theme"); else localStorage.setItem("sourced.theme", SET.theme); } catch(_) {} }
 (function(){
   const btn=$("#themeBtn"), root=document.documentElement, dlg=$("#settings");
@@ -945,7 +1053,14 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
     if (current?.code) lookup(current.code);
     else if ($("#ingredients").value.trim().length >= 4){ lastChecked=""; autoCheck(); }
   });
-  $("#settingsBtn").addEventListener("click",()=>{ paint(); sel.value=SET.lang; dlg.showModal(); });
+  const grid=$("#algGrid");
+  grid.innerHTML=ALLERGENS.map(a=>`<label><input type="checkbox" value="${a.id}">${esc(a.label)}</label>`).join("");
+  grid.querySelectorAll("input").forEach(cb=>cb.addEventListener("change",()=>{
+    SET.allergens=[...grid.querySelectorAll("input:checked")].map(x=>x.value); saveSet();
+    if (lastArgs && !lastArgs.example) renderResult(lastArgs);
+  }));
+  window.openSettings=()=>{ paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal(); };
+  $("#settingsBtn").addEventListener("click",()=>openSettings());
   dlg.addEventListener("click",e=>{ if (e.target===dlg) dlg.close(); });
   paint();
 })();
@@ -1014,7 +1129,7 @@ async function present(d, opt={}){
   if (seq !== presentSeq) return; // a newer lookup started meanwhile
   status(failed ? `Couldn't reach the translation service (it allows a limited number of free translations a day), so some text is shown as printed on the label.` : "", failed);
   if (!opt.keepBox) $("#ingredients").value = shown;
-  renderResult({name, brand:d.brand, text:scoreText, tags:d.tags||[], nutriments:d.nutriments||null, source:d.source, trNote});
+  renderResult({name, brand:d.brand, text:scoreText, tags:d.tags||[], nutriments:d.nutriments||null, source:d.source, trNote, allergens:d.allergens||[], traces:d.traces||[]});
 }
 </script>
 
