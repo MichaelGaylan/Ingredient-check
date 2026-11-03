@@ -79,6 +79,8 @@ input#barcode{font-family:var(--mono);letter-spacing:.04em}
 textarea{min-height:92px;resize:vertical}
 button{font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.ic-btn{display:inline-flex;align-items:center;gap:8px}
+.btn-ic{width:18px;height:18px;flex:none}
 button:disabled{opacity:.55;cursor:default}
 .label{font:500 11.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .status{font-size:13.5px;color:var(--muted);min-height:1.2em}
@@ -204,7 +206,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <input id="photo" type="file" accept="image/*" capture="environment" hidden>
         <div class="or">or paste the ingredient list from the label</div>
         <textarea id="ingredients" aria-label="Ingredient list" placeholder="Ingredients: water, sugar, citric acid, ..."></textarea>
-        <div class="row"><button id="labelBtn" type="button">Read label from photo</button></div>
+        <div class="row"><button id="labelBtn" type="button" class="ic-btn">Read label from photo <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button></div>
         <input id="labelPhoto" type="file" accept="image/*" capture="environment" hidden>
         <p class="status" id="status" role="status"></p>
       </div>
@@ -713,7 +715,7 @@ function renderMissing(info, code){
     : `<p><b>Barcode ${esc(code)} isn't in Open Food Facts or the USDA database yet.</b></p>`}
     <p>Add the ingredients any of these ways and the app checks them as soon as they're in the box:</p>
     <div class="row">
-      <button type="button" class="primary" onclick="document.getElementById('labelPhoto').click()">Read label from photo</button>
+      <button type="button" class="primary ic-btn" onclick="document.getElementById('labelPhoto').click()">Read label from photo <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
       <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q.replace(/ ingredients$/, "") + " SmartLabel")}" target="_blank" rel="noopener">Find it on SmartLabel</a>
       <a class="btnlink" href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">Search the web</a>
     </div>
