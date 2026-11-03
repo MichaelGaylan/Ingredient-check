@@ -132,6 +132,10 @@ details[open] .f-neg{display:none}
 .nutri td:nth-child(2){font-family:var(--mono);text-align:right;padding-right:12px}
 .breakdown td:last-child{text-align:right;font-family:var(--mono);white-space:nowrap;padding-left:12px}
 .unreviewed{display:flex;flex-wrap:wrap;gap:6px}
+a.chip-link{text-decoration:none;display:inline-flex;align-items:center;gap:4px;min-height:28px}
+a.chip-link span[aria-hidden]{color:var(--accent)}
+a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var(--ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .chipbtn{cursor:pointer;font:500 12px var(--mono);padding:3px 8px;border-radius:6px}
 .reg-item{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .reg-item h4{margin:0;font:600 14.5px var(--body)}
@@ -512,6 +516,11 @@ function nutriPanel(n){
 function band(s){ return s>=80 ? ["Few concerns","var(--ok)"] : s>=50 ? ["Some concerns","var(--gC)"] : ["Several concerns","var(--gA)"]; }
 
 /* ---------- render result ---------- */
+// Not-yet-reviewed ingredients link to a plain web search, so you can look them up yourself.
+function searchChip(u){
+  const q = `${u.replace(/\s+/g," ").trim()} food ingredient safety`;
+  return `<a class="chip g-N chip-link" href="https://www.google.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener" title="Search the web for ${esc(u)}">${esc(u)} <span aria-hidden="true">↗</span><span class="sr">, search the web (opens in a new tab)</span></a>`;
+}
 function renderResult(args){
   const {name, brand, example, text, tags, nutriments, source, _auto} = args;
   if (!_auto){ renderToken++; lastArgs = args; }
@@ -557,7 +566,7 @@ function renderResult(args){
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
           <div class="counts">${["A","B","C","D","OK"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g}">${counts[g]} × ${g==="OK"?"reassuring":g}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
-          ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(u=>`<span class="chip g-N">${esc(u)}</span>`).join("")}</div>`:""}
+          ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(searchChip).join("")}</div>`:""}
         </div>
       </div>
       <div id="breakdown" hidden>
@@ -571,7 +580,7 @@ function renderResult(args){
     ${(autoHits.length||autoOK.length)?`<div class="panel stack"><div class="label">Automatic findings from FDA, WHO and IARC records</div>
       <p class="auto-note">Looked up automatically in PubChem, which carries the FDA Substances Added to Food inventory, WHO/FAO JECFA evaluations and IARC classifications. Shown as published, not checked by us. IARC classifications lower the score; an FDA or WHO listing means the ingredient is permitted, not that it is proven safe.</p>
       ${[...autoHits, ...autoOK].map(r=>r.html).join("")}</div>`:""}
-    ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe."}</p><div class="unreviewed">${unrev.map(u=>{const r=regCache.get(cleanName(u));return `<span class="chip g-N">${esc(u)}</span>`;}).join("")}</div>
+    ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe."}</p><div class="unreviewed">${unrev.map(searchChip).join("")}</div>
       ${!pending.length?`<p class="muted" style="font-size:12.5px">Whole foods and blends (flours, oils, natural flavours) usually have no single official record. <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">Search PubChem yourself</a>.</p>`:""}</div>`:""}
     ${nutriments?nutriPanel(nutriments):""}
     ${text?`<details class="panel"><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${esc(text)}</p></details>`:""}
