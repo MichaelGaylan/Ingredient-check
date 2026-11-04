@@ -108,6 +108,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - If something goes wrong while building Findings, a short message is shown in its place rather than a blank space.
 - Phones that installed Sourced on the Home Screen now check for the latest version each time the app opens.
 
+## 4.5 (4 Nov 2026): About button
+- An ⓘ About button at the top of the Home screen opens the About information (sources, privacy, version, revision history) in its own pop-up. The same information is still in Settings → About.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
