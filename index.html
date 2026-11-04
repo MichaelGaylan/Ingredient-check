@@ -144,6 +144,16 @@ textarea{min-height:92px;resize:vertical}
 button{font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 #scanBtn{min-width:10em}
 button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ta-wrap{position:relative}
+.ta-wrap textarea{padding-right:56px}
+.ta-cam{position:absolute;right:8px;bottom:8px;width:44px;height:44px;padding:0;display:grid;place-items:center;border-radius:12px;background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.ta-cam svg{width:22px;height:22px}
+.about h3{font:600 15px var(--body);margin:14px 0 4px}
+.about p,.about li{font-size:14px;margin:0 0 6px}
+.about ul{padding-left:18px;margin:0}
+.about a{color:var(--accent)}
+.about .ic-inline{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--accent);color:var(--surface);vertical-align:-5px}
+.about .ic-inline svg{width:14px;height:14px}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .ic-btn{display:inline-flex;align-items:center;gap:8px}
 .btn-ic{width:18px;height:18px;flex:none}
@@ -274,6 +284,30 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <ul class="ok-list" id="okList"></ul>
         <p class="set-help">Products you marked “OK for me” on the allergen warning. They show a green note instead of the red banner, until their ingredient list changes. Saved on this phone only.</p>
       </div>
+      <details class="set-row about">
+        <summary><span class="label">About and help</span></summary>
+        <h3>How to use</h3>
+        <ul>
+          <li><b>Scan barcode</b> opens the camera. Type a number instead and the button becomes <b>Look up barcode</b>.</li>
+          <li>No barcode match? Paste the ingredient list into the box, or tap <span class="ic-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></span> in the box to read it from a photo of the label.</li>
+          <li>Tap the score ring to see exactly where points were lost.</li>
+          <li><b>History</b> keeps every product you scan; tap ☆ to keep a favourite, swipe left or tap × to delete.</li>
+          <li>Under <b>My allergens</b> above, tick what matters to you to get a red warning. On a warning you can mark a product <b>OK for me</b> or <b>Keep as allergen</b>.</li>
+        </ul>
+        <h3>Buttons and icons</h3>
+        <ul>
+          <li>⚙ Settings (this panel). ☾/☀ switches dark and light mode.</li>
+          <li><span class="ic-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></span> Read an ingredient list from a photo.</li>
+          <li>↗ next to an ingredient searches the web for it. ★ favourite. × delete.</li>
+        </ul>
+        <h3>Where the information comes from</h3>
+        <p>Findings come from our evidence library, where every claim links to a checked source (peer-reviewed papers, EFSA, FDA, WHO, IARC). Ingredients we haven't reviewed are checked automatically against FDA, WHO and IARC records in PubChem. Product data comes from Open Food Facts and USDA FoodData Central. See <a href="#method" onclick="document.getElementById('settings').close()">Method</a> for the scoring formula.</p>
+        <h3>Privacy</h3>
+        <p>Everything you save (history, favourites, allergens, settings) stays on this phone. The app has no account and sends nothing about you anywhere. Barcodes and ingredient names are sent to the public databases above to look them up.</p>
+        <h3>Version</h3>
+        <p id="aboutVersion"></p>
+        <p class="muted">General information from published science, not medical advice.</p>
+      </details>
       <div class="set-foot"><button class="primary" value="close">Done</button></div>
     </form>
   </dialog>
@@ -290,9 +324,11 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         </div>
         <div id="camera" hidden><video id="video" playsinline muted></video><div class="frame"></div></div>
         <input id="photo" type="file" accept="image/*" capture="environment" hidden>
-        <div class="or">or paste the ingredient list from the label</div>
-        <textarea id="ingredients" aria-label="Ingredient list" placeholder="Ingredients: water, sugar, citric acid, ..."></textarea>
-        <div class="row"><button id="labelBtn" type="button" class="ic-btn">Read label from photo <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button></div>
+        <div class="or">or paste the ingredient list, or photograph it</div>
+        <div class="ta-wrap">
+          <textarea id="ingredients" aria-label="Ingredient list" placeholder="Ingredients: water, sugar, citric acid, ... or tap the camera to read them from a photo"></textarea>
+          <button id="labelBtn" type="button" class="ta-cam" aria-label="Read the ingredient list from a photo of the label" title="Read label from photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
+        </div>
         <input id="labelPhoto" type="file" accept="image/*" capture="environment" hidden>
         <p class="status" id="status" role="status"></p>
       </div>
@@ -1174,6 +1210,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
+const APP_VERSION = "1.4", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1421,6 +1458,7 @@ async function present(d, opt={}){
   renderResult({name, brand:d.brand, text:scoreText, tags:d.tags||[], nutriments:d.nutriments||null, source:d.source, trNote, allergens:d.allergens||[], traces:d.traces||[], labels:d.labels||[], cats:d.cats||[]});
 }
 
+$("#aboutVersion").textContent = `Sourced ${APP_VERSION} (${niceDate(APP_DATE)}) · scoring rules version ${RULES_VERSION}`;
 /* ---------- offline support when added to the Home Screen ---------- */
 if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
