@@ -142,6 +142,8 @@ input[type=text],textarea{font:inherit;color:var(--ink);background:var(--bg);bor
 input#barcode{font-family:var(--mono);letter-spacing:.04em}
 textarea{min-height:92px;resize:vertical}
 button{font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+#scanBtn{min-width:10em}
+button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .ic-btn{display:inline-flex;align-items:center;gap:8px}
 .btn-ic{width:18px;height:18px;flex:none}
@@ -285,7 +287,6 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
           <label class="row" style="flex:1 1 200px">
             <input id="barcode" type="text" inputmode="numeric" autocomplete="off" placeholder="or type the barcode number" aria-label="Barcode number">
           </label>
-          <button id="lookupBtn" type="button">Look up</button>
         </div>
         <div id="camera" hidden><video id="video" playsinline muted></video><div class="frame"></div></div>
         <input id="photo" type="file" accept="image/*" capture="environment" hidden>
@@ -1081,10 +1082,12 @@ async function startScan(){
 function stopScan(){
   if (zx){ try{zx.reset();}catch(_){} zx = null; }
   if (stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
-  $("#camera").hidden = true; $("#scanBtn").textContent = "Scan barcode";
+  $("#camera").hidden = true; $("#scanBtn").textContent = "Scan barcode"; barcodeMode();
 }
 function found(code){ stopScan(); $("#barcode").value = code; lookup(code); }
-$("#scanBtn").onclick = () => stream ? stopScan() : startScan();
+// One button: scans with the camera, or looks up the number once one is typed in the box.
+const typedCode = () => /\d/.test($("#barcode").value) && !stream;
+$("#scanBtn").onclick = () => typedCode() ? lookup($("#barcode").value) : stream ? stopScan() : startScan();
 $("#photo").onchange = async (ev) => {
   const f = ev.target.files[0]; if (!f) return;
   status("Reading the barcode from your photo…");
@@ -1133,12 +1136,13 @@ $("#labelPhoto").onchange = async (ev) => {
   }catch(e){ status("The text reader couldn't load. Check your connection, or type the ingredients instead.", true); }
   finally{ btn.disabled = false; }
 };
-$("#lookupBtn").onclick = () => lookup($("#barcode").value);
-// While a barcode is typed by hand, Look up becomes the green (main) button and Scan barcode turns plain.
+// While a barcode is typed by hand, the Scan barcode button turns into a dark "Look up barcode" button.
 function barcodeMode(){
-  const typing = /\d/.test($("#barcode").value) && !stream;
-  $("#lookupBtn").classList.toggle("primary", typing);
-  $("#scanBtn").classList.toggle("primary", !typing);
+  if (stream) return;
+  const typing = typedCode(), b = $("#scanBtn");
+  b.classList.toggle("lookup-mode", typing);
+  b.textContent = typing ? "Look up barcode" : "Scan barcode";
+  b.setAttribute("aria-label", typing ? "Look up the typed barcode" : "Scan barcode with the camera");
 }
 ["input","keyup","change","paste"].forEach(ev => $("#barcode").addEventListener(ev, () => setTimeout(barcodeMode, 0)));
 $("#barcode").addEventListener("keydown", e => { if (e.key === "Enter") lookup(e.target.value); });
