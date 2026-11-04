@@ -75,28 +75,28 @@ dialog.settings{overflow:auto}
 .alg-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
 .alg-grid label{display:flex;align-items:center;gap:8px;font-size:14.5px;min-height:32px;cursor:pointer}
 .alg-grid input{width:18px;height:18px;accent-color:var(--accent);flex:none}
-.alg-banner{background:var(--neg);color:#fff;border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
-.alg-banner .ic{font-size:22px;line-height:1.1}
+.alg-banner{background:#f2aba3;color:#4a0b0f;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.4}
+.alg-banner .ic{font-size:18px;line-height:1.2;color:#a3121b}
 .alg-banner b{font-weight:700}
 .alg-banner p{margin:0}
 .alg-banner .small{font-size:13px;opacity:.92;margin-top:4px}
-:root[data-theme="dark"] .alg-banner{color:#1a0505}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner{color:#1a0505}}
+:root[data-theme="dark"] .alg-banner{background:#7d3a35;color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner{background:#7d3a35;color:#fff}}
 .alg-note{font-size:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface)}
 .alg-note b{font-weight:600}
 mark.alg{background:var(--gC-bg);color:inherit;border-radius:3px;padding:0 2px}
 mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 :root[data-theme="dark"] mark.alg.mine{color:#1a0505}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) mark.alg.mine{color:#1a0505}}
-.alg-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
-.alg-chip{background:#fff;color:#a3121b;border:0;border-radius:999px;font-size:14px;font-weight:600;padding:6px 12px;min-height:34px}
-.alg-chip span{opacity:.6;margin-left:2px}
+.alg-word{color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:2px;padding:2px 0}
+.alg-foot{margin-top:4px!important}
+.alg-foot .linkbtn{font-size:inherit;padding:0}
 .alg-silent{margin:6px 2px 0}
 .alg-ok-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .alg-ok{background:#fff;color:var(--neg);border:0;font-size:13.5px;padding:8px 12px}
 .alg-kept{margin-top:8px!important;font-weight:600}
 .alg-banner .linkbtn{color:inherit;font-weight:700}
-.alg-banner.kept{background:#6e0f16;box-shadow:inset 0 0 0 3px #ff9a9a}
+.alg-banner.kept{color:#fff;background:#6e0f16;box-shadow:inset 0 0 0 3px #ff9a9a}
 :root[data-theme="dark"] .alg-banner.kept{background:#ffb3b3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner.kept{background:#ffb3b3}}
 .alg-okd{border-color:var(--ok);background:var(--ok-bg)}
@@ -807,19 +807,19 @@ function allergenReport(text, offTags, offTraces, info={}){
   const cMine = alerted(contains), tMine = alerted(traces);
   const cRed = cMine.filter(id=>!approved.includes(id)), tRed = tMine.filter(id=>!approved.includes(id));
   const okShown = [...cMine, ...tMine].filter(id=>approved.includes(id));
-  const chipRow = (map, ids) => { const seen = new Set(); return ids.flatMap(id => chipsFor(map, id)).filter(c => !seen.has(c.label) && seen.add(c.label))
-    .map(c => `<button type="button" class="alg-chip" onclick="algOff('${esc(c.key)}')" aria-label="Remove ${esc(c.label)} from my allergen alerts">${esc(c.label.charAt(0).toUpperCase()+c.label.slice(1))} <span aria-hidden="true">×</span></button>`).join(""); };
+  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+  // The allergen words as plain inline links; a tapped word disappears (managed in Settings → My allergens).
+  const words = (map, ids) => { const seen = new Set(); return ids.flatMap(id => chipsFor(map, id)).filter(c => !seen.has(c.label) && seen.add(c.label))
+    .map(c => `<a href="#" class="alg-word" onclick="algOff('${esc(c.key)}');return false" aria-label="Remove ${esc(c.label)} from this list">${esc(cap(c.label))}</a>`); };
   let html = "";
-  if (cRed.length || tRed.length){
+  const cw = words(contains, cRed), tw = words(traces, tRed);
+  if (cw.length || tw.length){
     const red = [...cRed, ...tRed];
+    const all = cw;
     html = `<div class="alg-banner${avoided?" kept":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
-      <p><b>Here is a list of ingredients this product may contain.</b> Tap any of them to remove it from your allergen alerts.</p>
-      ${cRed.length?`<div class="alg-chips">${chipRow(contains, cRed)}</div>`:""}
-      ${tRed.length?`<p class="small"><b>May contain traces</b> (shared equipment):</p><div class="alg-chips">${chipRow(traces, tRed)}</div>`:""}
-      ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
-      <p class="small">Removed items can be restored in Settings → My allergens. Always check the pack.</p>
-      ${code && avoided ? `<p class="alg-kept">✓ Kept as allergen on ${esc(niceDate(avoided.date))}. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button></p>` : ""}
-      ${code && !avoided?`<div class="alg-ok-row"><button type="button" class="alg-ok" onclick="algOK('${red.join(",")}')">This product is OK for me</button></div>`:""}
+      <p>Here is a list of ingredients this product may contain. <span class="alg-words">${all.join(", ")}${tw.length?`${all.length?"; ":""}traces of ${tw.join(", ")}`:""}</span>. Click on any of them to remove them from this list.</p>
+      ${changed?`<p class="small"><b>Ingredients changed</b> since you marked this OK. Check the pack.</p>`:""}
+      <p class="small alg-foot">${code && avoided ? `✓ Kept as allergen. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button> · ` : ""}${code && !avoided && red.length ? `<button type="button" class="linkbtn" onclick="algOK('${red.join(",")}')">This product is OK for me</button> · ` : ""}Change in Settings → My allergens. Always check the pack.</p>
       </div></div>`;
   }
   if (okShown.length){
@@ -830,17 +830,17 @@ function allergenReport(text, offTags, offTraces, info={}){
   algCtx.has = found;
   const silenced = [...new Set(found.flatMap(id => !mine.includes(id) ? (id === "lactose" ? [] : [algName(id)]) : [...(contains.get(id)||[]), ...(traces.get(id)||[])].filter(x => off.includes(x))))];
   const silentNote = silenced.length ? `<p class="small muted alg-silent">Not alerting for ${esc(silenced.join(", ").replace(/, ([^,]*)$/, " and $1"))}: removed in Settings → My allergens.</p>` : "";
-  if (html) html += silentNote;
+  if (html) {}
   else if (found.length) html = `<div class="alg-note">No allergen alerts for this product.${silentNote ? " " + silentNote.replace(/<\/?p[^>]*>/g, "") : ""} This is not a guarantee: always check the pack.</div>`;
   else if (mine.length){
     const lacNote = lfree && mine.includes("lactose") ? " Labelled lactose-free, so no lactose warning." : "";
     html = `<div class="alg-note">No major allergens found in the listed ingredients.${lacNote} This is not a guarantee: always check the pack.</div>`;
   }
   // Highlight allergen words inside the ingredient list.
-  const words = [];
-  for (const a of ALLERGENS) if (a.id !== "lactose") for (const w of a.terms) words.push([w, a]);
-  words.sort((x,y)=>y[0].length-x[0].length);
-  const re = new RegExp("\\b(" + words.map(([w])=>w.replace(/ /g,"[\\s-]+")).join("|") + ")\\b", "gi");
+  const hw = [];
+  for (const a of ALLERGENS) if (a.id !== "lactose") for (const w of a.terms) hw.push([w, a]);
+  hw.sort((x,y)=>y[0].length-x[0].length);
+  const re = new RegExp("\\b(" + hw.map(([w])=>w.replace(/ /g,"[\\s-]+")).join("|") + ")\\b", "gi");
   // Spans of look-alike phrases (cocoa butter, coconut milk, buckwheat...) are never highlighted.
   const skip = [];
   for (const al of ALLERGENS) for (const n of al.not){
@@ -850,7 +850,7 @@ function allergenReport(text, offTags, offTraces, info={}){
   let marked = "", last = 0, m;
   while ((m = re.exec(raw))){
     const w = m[0].toLowerCase().replace(/[\s-]+/g," ");
-    const a = words.find(([x])=>x===w)?.[1];
+    const a = hw.find(([x])=>x===w)?.[1];
     if (!a || skip.some(([x,y,id]) => id === a.id && m.index < y && m.index + m[0].length > x)) continue;
     marked += esc(raw.slice(last, m.index)) + `<mark class="alg${(cRed.includes(a.id)||tRed.includes(a.id))&&!off.includes(w)||(a.id==="milk"&&(cRed.includes("lactose")||tRed.includes("lactose")))?" mine":""}" title="${esc(a.label)}">${esc(m[0])}</mark>`;
     last = m.index + m[0].length;
@@ -1327,7 +1327,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.7", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.8", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
