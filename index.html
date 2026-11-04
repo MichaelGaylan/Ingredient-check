@@ -154,6 +154,19 @@ button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:v
 .about a{color:var(--accent)}
 .about .ic-inline{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--accent);color:var(--surface);vertical-align:-5px}
 .about .ic-inline svg{width:14px;height:14px}
+.ftab-row{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:2px solid var(--line);margin:0 -4px;padding:0 4px;-webkit-overflow-scrolling:touch}
+.ftab-row::-webkit-scrollbar{display:none}
+.ftab{flex:none;border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;padding:8px 12px;font:600 13px var(--body);background:var(--bg);color:var(--muted);margin-bottom:-2px;white-space:nowrap}
+.ftab .ftab-n{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;font:600 11.5px var(--mono);background:var(--line);color:var(--ink);margin-left:2px}
+.ftab[aria-selected="true"]{background:var(--surface);border-color:var(--line);border-bottom:2px solid var(--surface)}
+.ftab.ft-A[aria-selected="true"]{color:var(--gA);box-shadow:inset 0 3px 0 var(--gA)} .ftab.ft-A .ftab-n{background:var(--gA-bg);color:var(--gA)}
+.ftab.ft-B[aria-selected="true"]{color:var(--gB);box-shadow:inset 0 3px 0 var(--gB)} .ftab.ft-B .ftab-n{background:var(--gB-bg);color:var(--gB)}
+.ftab.ft-C[aria-selected="true"]{color:var(--gC);box-shadow:inset 0 3px 0 var(--gC)} .ftab.ft-C .ftab-n{background:var(--gC-bg);color:var(--gC)}
+.ftab.ft-D[aria-selected="true"]{color:var(--gD);box-shadow:inset 0 3px 0 var(--gD)} .ftab.ft-D .ftab-n{background:var(--gD-bg);color:var(--gD)}
+.ftab.ft-OK[aria-selected="true"]{color:var(--ok);box-shadow:inset 0 3px 0 var(--ok)} .ftab.ft-OK .ftab-n{background:var(--ok-bg);color:var(--ok)}
+.ftab.ft-N[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
+.ftab.ft-N{background:var(--bg);border:1px solid var(--line);border-bottom:none}
+.fpanel{padding-top:4px}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .ic-btn{display:inline-flex;align-items:center;gap:8px}
 .btn-ic{width:18px;height:18px;flex:none}
@@ -816,6 +829,43 @@ function allergenReport(text, offTags, offTraces, info={}){
   return {html, marked, mineHit: cRed.length + tRed.length > 0};
 }
 
+/* Findings as folder tabs, worst evidence first; opens on the most serious non-empty tab. */
+const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["OK","Reassuring"],["N","Not yet reviewed"]];
+let findTab = null, findTabFor = null;
+function findingsTabs({matched, autoHits, autoOK, unrev, pending}){
+  const autoNote = `<p class="auto-note">Automatic: looked up in PubChem, which carries the FDA Substances Added to Food inventory, WHO/FAO JECFA evaluations and IARC classifications. Shown as published, not checked by us. An FDA or WHO listing means permitted, not proven safe.</p>`;
+  const tabs = FIND_TABS.map(([k, label]) => {
+    if (k === "N"){
+      if (!unrev.length) return null;
+      return {k, label, n:unrev.length, html:`<p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe. Tap one to search the web."}</p><div class="unreviewed">${unrev.map(searchChip).join("")}</div>
+        ${!pending.length?`<p class="muted" style="font-size:12.5px">Whole foods and blends (flours, oils, natural flavours) usually have no single official record. <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">Search PubChem yourself</a>.</p>`:""}`};
+    }
+    const lib = matched.filter(e => topGrade(e) === k);
+    const auto = k === "OK" ? autoOK : autoHits.filter(a => a.grade === k);
+    if (!lib.length && !auto.length) return null;
+    return {k, label, n:lib.length + auto.length, html: lib.map(e => entryRow(e, k !== "OK")).join("") + (auto.length ? autoNote + auto.map(r => r.html).join("") : "")};
+  }).filter(Boolean);
+  if (!tabs.length) return "";
+  const key = lastArgs ? (lastArgs.text||"") : "";
+  if (findTabFor !== key || !tabs.some(t => t.k === findTab)){ if (findTabFor !== key) findTab = null; findTabFor = key; }
+  const active = tabs.some(t => t.k === findTab) ? findTab : tabs[0].k;
+  findTab = active;
+  return `<div class="panel stack find-tabs">
+    <div class="label">Findings, strongest evidence first</div>
+    <div class="ftab-row" role="tablist" aria-label="Findings by strength of evidence">${tabs.map(t => `<button type="button" role="tab" id="ftab-${t.k}" class="ftab ft-${t.k}" aria-selected="${t.k===active}" aria-controls="fpanel-${t.k}" tabindex="${t.k===active?0:-1}" onclick="pickFindTab('${t.k}')">${t.label} <span class="ftab-n">${t.n}</span></button>`).join("")}</div>
+    ${tabs.map(t => `<div role="tabpanel" id="fpanel-${t.k}" aria-labelledby="ftab-${t.k}" class="fpanel"${t.k===active?"":" hidden"}>${t.html}</div>`).join("")}
+  </div>`;
+}
+window.pickFindTab = k => {
+  findTab = k;
+  document.querySelectorAll(".ftab").forEach(b => { const on = b.id === "ftab-"+k; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1; });
+  document.querySelectorAll(".fpanel").forEach(p => p.hidden = p.id !== "fpanel-"+k);
+};
+document.addEventListener("keydown", e => {
+  if (!e.target.classList?.contains("ftab") || !["ArrowLeft","ArrowRight"].includes(e.key)) return;
+  const all = [...document.querySelectorAll(".ftab")], i = all.indexOf(e.target), n = all[(i + (e.key==="ArrowRight"?1:-1) + all.length) % all.length];
+  n.focus(); n.click();
+});
 function renderResult(args){
   const {name, brand, example, text, tags, nutriments, source, _auto} = args;
   if (!_auto){ renderToken++; lastArgs = args; }
@@ -875,12 +925,7 @@ function renderResult(args){
         <p class="disclaimer" style="margin-top:6px">${sc.nutriUsed ? "" : "No nutrition data for this product, so sugar, salt and fat aren't scored. "}See Method for the formula.</p>
       </div>
     </div>
-    ${matched.length?`<div class="panel stack"><div class="label">Findings, strongest evidence first</div>${matched.map(e=>entryRow(e, topGrade(e)!=="OK")).join("")}</div>`:""}
-    ${(autoHits.length||autoOK.length)?`<div class="panel stack"><div class="label">Automatic findings from FDA, WHO and IARC records</div>
-      <p class="auto-note">Looked up automatically in PubChem, which carries the FDA Substances Added to Food inventory, WHO/FAO JECFA evaluations and IARC classifications. Shown as published, not checked by us. IARC classifications lower the score; an FDA or WHO listing means the ingredient is permitted, not that it is proven safe.</p>
-      ${[...autoHits, ...autoOK].map(r=>r.html).join("")}</div>`:""}
-    ${unrev.length?`<div class="panel stack"><div class="label">Not yet reviewed</div><p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe."}</p><div class="unreviewed">${unrev.map(searchChip).join("")}</div>
-      ${!pending.length?`<p class="muted" style="font-size:12.5px">Whole foods and blends (flours, oils, natural flavours) usually have no single official record. <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">Search PubChem yourself</a>.</p>`:""}</div>`:""}
+    ${findingsTabs({matched, autoHits, autoOK, unrev, pending})}
     ${altEligible?`<div class="panel stack" id="alts"><div class="label">Better-scoring alternatives</div><p class="muted" style="font-size:13.5px">Looking for similar products that score better…</p></div>`:""}
     ${nutriments?nutriPanel(nutriments):""}
     ${text?`<details class="panel"${alg&&alg.mineHit?" open":""}><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${alg ? alg.marked : esc(text)}</p></details>`:""}
@@ -1213,7 +1258,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "1.4", APP_DATE = "2026-11-04";
+const APP_VERSION = "1.5", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
