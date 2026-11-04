@@ -46,6 +46,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - The product name, score ring and verdict take the colour of the most serious finding. A product with an Established concern can't be rated better than "Several concerns".
 - "+ Add … to my allergens" buttons sit below the warning, and the warning turns a softer red once added.
 
+## 2.4 (4 Nov 2026): what "permitted" really means
+- Ingredients found in FDA or WHO food-additive records are now labelled "Permitted in food" instead of "Reassuring", with the job they do in food (for example, controlling acidity).
+- Each one explains that approval covers a food-grade version in small, limited amounts, not the substance in any form or amount, and shows the hazard label for the concentrated chemical where one exists (for example, sulfuric acid: "Causes severe skin burns and eye damage").
+- Cancer listings that are about workplace exposure, such as breathing acid mists in factories, are explained and not counted in the score.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
