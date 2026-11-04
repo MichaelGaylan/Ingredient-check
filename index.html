@@ -248,6 +248,7 @@ a.chip-link span[aria-hidden]{color:var(--accent)}
 a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var(--ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .chipbtn{cursor:pointer;font:500 12px var(--mono);padding:3px 8px;border-radius:6px}
+.chipbtn:not(.g-N){border:0}
 .reg-item{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .reg-item h4{margin:0;font:600 14.5px var(--body)}
 .reg-item .src{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
@@ -1003,6 +1004,14 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending, basic}){
     ${tabs.map(t => `<div role="tabpanel" id="fpanel-${t.k}" aria-labelledby="ftab-${t.k}" class="fpanel"${t.k===active?"":" hidden"}>${t.html}</div>`).join("")}
   </div>`;
 }
+// Summary chips under the rating jump down to their Findings tab and open it.
+window.jumpTab = k => {
+  if (!document.getElementById("ftab-"+k)) return;
+  pickFindTab(k);
+  const t = document.getElementById("ftab-"+k);
+  t.closest(".panel")?.scrollIntoView({behavior:"smooth", block:"start"});
+  t.focus({preventScroll:true});
+};
 window.pickFindTab = k => {
   findTab = k;
   document.querySelectorAll(".ftab").forEach(b => { const on = b.id === "ftab-"+k; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1; });
@@ -1073,8 +1082,7 @@ function renderResult(args){
           <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1;color:${nameColor}"${worst?` title="Most serious finding: grade ${worst} (${GRADE_NAME[worst]})"`:""}>${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button>`:""}</div>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
-          <div class="counts">${["A","B","C","D","W","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip-wrap"><span class="chip g-${g==="P"?"OK":g}">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g==="W"?"label warning":g}</span>${g==="P"&&autoOK.some(r=>r.caveat)?CAVEAT:""}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
-          ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(searchChip).join("")}</div>`:""}
+          <div class="counts">${["A","B","C","D","W","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip-wrap"><button type="button" class="chip chipbtn g-${g==="P"?"OK":g}" onclick="jumpTab('${g==="P"?"OK":g}')" title="Show in Findings">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g==="W"?"label warning":g}</button>${g==="P"&&autoOK.some(r=>r.caveat)?CAVEAT:""}</span>`).join("")}${urCount?`<button type="button" class="chip g-N chipbtn" onclick="jumpTab('U')" title="Show in Findings">${urCount} under review</button>`:""}${noRec?`<button type="button" class="chip g-N chipbtn" onclick="jumpTab('N')" title="Show in Findings">${noRec} not reviewed</button>`:""}</div>
         </div>
       </div>
       <div id="breakdown" hidden>
@@ -1101,11 +1109,6 @@ function renderResult(args){
   if (!example && current?.code && !args.savedAt) recordHistory(args, {score:sc.score, clear, checking, bandName, headline, bandColor});
   const fb = $("#favBtn"); if (fb) fb.onclick = () => { toggleFav(current.code); const on = isFav(current.code); fb.setAttribute("aria-pressed", on); fb.textContent = on ? "★" : "☆"; };
   if (altEligible) loadAlternatives(current.code, args.cats, sc.score, renderToken);
-  if (unrev.length) $("#unrevChip").onclick = () => {
-    unrevOpen = !unrevOpen; $("#unrevDrop").hidden = !unrevOpen;
-    $("#unrevChip").setAttribute("aria-expanded", unrevOpen);
-    $("#unrevChip").querySelector("span").textContent = unrevOpen ? "▴" : "▾";
-  };
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
 }
 
@@ -1435,7 +1438,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.2", APP_DATE = "2026-11-04";
+const APP_VERSION = "4.3", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };

@@ -100,6 +100,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 4.2 (4 Nov 2026): tidier Settings
 - Removed the empty "Kept as allergen" and "My OK products" lists from Settings. Their buttons were retired in 2.7 and 3.0, so nothing could be added to them any more.
 
+## 4.3 (4 Nov 2026): summary chips jump to Findings
+- The chips under the rating (such as "1 × B" or "2 not reviewed") now scroll down and open their matching Findings tab. "Under review" and "not reviewed" have separate chips.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
