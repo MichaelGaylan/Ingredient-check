@@ -92,6 +92,7 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alg-foot{margin-top:4px!important}
 .alg-foot .linkbtn{font-size:inherit;padding:0}
 .alg-silent{margin:6px 2px 0}
+.alg-set{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .alg-silent-hd{color:var(--neg);font-weight:600}
 .alg-ok-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .alg-ok{background:#fff;color:var(--neg);border:0;font-size:13.5px;padding:8px 12px}
@@ -820,7 +821,7 @@ function allergenReport(text, offTags, offTraces, info={}){
     html = `<div class="alg-banner${avoided?" kept":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
       <p>Here is a list of ingredients this product may contain. <span class="alg-words">${all.join(", ")}${tw.length?`${all.length?"; ":""}traces of ${tw.join(", ")}`:""}</span>. Click on any of them to remove them from this list.</p>
       ${changed?`<p class="small"><b>Ingredients changed</b> since you marked this OK. Check the pack.</p>`:""}
-      <p class="small alg-foot">${code && avoided ? `✓ Kept as allergen. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button> · ` : ""}Change in Settings → My allergens. Always check the pack.</p>
+      <p class="small alg-foot">${code && avoided ? `✓ Kept as allergen. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button> · ` : ""}Change in <a href="#" class="alg-set" onclick="openSettings('alg');return false">Settings → My allergens</a>. Always check the pack.</p>
       </div></div>`;
   }
   if (okShown.length){
@@ -830,8 +831,8 @@ function allergenReport(text, offTags, offTraces, info={}){
   const found = [...new Set([...contains.keys(), ...traces.keys()])];
   algCtx.has = found;
   const silenced = [...new Set(found.flatMap(id => !mine.includes(id) ? (id === "lactose" ? [] : [algName(id)]) : [...(contains.get(id)||[]), ...(traces.get(id)||[])].filter(x => off.includes(x))))];
-  const silentNote = silenced.length ? `<p class="small muted alg-silent"><span class="alg-silent-hd">Not alerting for ${esc(silenced.join(", ").replace(/, ([^,]*)$/, " and $1"))}:</span> removed in Settings → My allergens.</p>` : "";
-  if (html) {}
+  const silentNote = silenced.length ? `<p class="small muted alg-silent"><span class="alg-silent-hd">Not alerting for ${esc(silenced.join(", ").replace(/, ([^,]*)$/, " and $1"))}:</span> removed in <a href="#" class="alg-set" onclick="openSettings('alg');return false">Settings → My allergens</a>.</p>` : "";
+  if (html) html += silentNote;   // one short line under the alert
   else if (found.length) html = `<div class="alg-note">No allergen alerts for this product.${silentNote ? " " + silentNote.replace(/<\/?p[^>]*>/g, "") : ""} This is not a guarantee: always check the pack.</div>`;
   else if (mine.length){
     const lacNote = lfree && mine.includes("lactose") ? " Labelled lactose-free, so no lactose warning." : "";
@@ -1328,7 +1329,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "3.1", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.2", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1515,7 +1516,8 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   };
   const keyIn=$("#fdcKeyIn");
   keyIn.addEventListener("input",()=>{ try { const v=keyIn.value.trim(); if (v) localStorage.setItem("fdcKey", v); else localStorage.removeItem("fdcKey"); } catch(_) {} });
-  window.openSettings=()=>{ renderOKList(); renderAlgOff(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal(); };
+  window.openSettings=section=>{ renderOKList(); renderAlgOff(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal();
+    if (section === "alg") requestAnimationFrame(() => $("#algLbl").scrollIntoView({block:"start"})); };
   $("#settingsBtn").addEventListener("click",()=>openSettings());
   dlg.addEventListener("click",e=>{ if (e.target===dlg) dlg.close(); });
   paint();
