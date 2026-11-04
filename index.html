@@ -302,7 +302,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <div class="alg-grid" id="algGrid" role="group" aria-labelledby="algLbl"></div>
         <p class="set-help">Every major allergen is on by default. Any product containing a ticked allergen, or labelled “may contain” it, gets a red alert at the top of the result. Tap an item in an alert to remove it, or untick it here. Allergens don't change the score. The app can miss an allergen if the database or label text is incomplete, so always check the pack.</p>
         <span class="label" style="margin-top:10px">Removed from alerts</span>
-        <ul class="ok-list" id="algOffList"></ul>
+        <p class="set-help" id="algOffList" style="margin-top:2px;font-size:14px;color:inherit"></p>
         <p class="set-help">Where this list comes from: the 9 major allergens in US law (<a href="https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies" target="_blank" rel="noopener">FDA, FALCPA and FASTER Act</a>) and the 14 allergens EU labels must highlight (<a href="https://eur-lex.europa.eu/eli/reg/2011/1169/oj" target="_blank" rel="noopener">EU Regulation 1169/2011, Annex II</a>). They overlap, giving 14 in all. Lactose (intolerance) is our own addition and is not a legal allergen.</p>
       </div>
       <div class="set-row">
@@ -1327,7 +1327,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.8", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.9", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1502,7 +1502,8 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   window.renderAlgOff=()=>{
     const cats = ALLERGENS.filter(a => a.id !== "lactose" && !SET.allergens.includes(a.id)).map(a => ({key:"cat:"+a.id, label:a.label, sub:"whole allergen"}));
     const words = SET.algOffWords.map(w => ({key:"w:"+w, label:w.charAt(0).toUpperCase()+w.slice(1), sub:"ingredient word"}));
-    $("#algOffList").innerHTML = [...cats, ...words].length ? [...cats, ...words].map(r=>`<li><span>${esc(r.label)}<small>${r.sub}</small></span><button type="button" onclick="algOn('${esc(r.key)}')">Undo</button></li>`).join("") : `<li class="muted">Nothing removed. You get alerts for every allergen above.</li>`;
+    const rows = [...cats, ...words];
+    $("#algOffList").innerHTML = rows.length ? `${rows.map(r=>`<a href="#" class="alg-word" onclick="algOn('${esc(r.key)}');return false" aria-label="Put ${esc(r.label)} back on the allergen alert">${esc(r.label)}</a>`).join(", ")}. <span class="muted">Tap one to put it back on the alert.</span>` : `<span class="muted">Nothing removed.</span>`;
     grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value));
   };
   window.renderOKList=()=>{

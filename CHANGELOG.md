@@ -63,8 +63,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Removed items are listed in Settings → My allergens, each with Undo.
 - One "This product is OK for me" button replaces the per-allergen ones. The "+ Add … to my allergens" and "Keep as allergen" buttons are gone, as they are no longer needed.
 
-## 2.8 (4 Nov 2026): shorter allergen alert
+## 2.8 – 2.9 (4 Nov 2026): shorter allergen alert
 - The allergen alert is now a short, light red box with one sentence. The allergen words are links, and tapping one removes it from the list. Changes are managed in Settings → My allergens.
+- 2.9: Settings → My allergens shows removed words as a short list; tap one to put it back on the alert.
 
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
