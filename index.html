@@ -252,6 +252,10 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
 .reg-item .src{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .reg-item ul{margin:0;padding-left:18px}
 .reg-item a{color:var(--accent)}
+.caveat-red li,.caveat-red .src{color:var(--neg);font-weight:600}
+.caveat-text{color:var(--neg);font-weight:600}
+.chip-wrap{display:inline-flex;align-items:center;gap:4px}
+.caveat-tri{display:inline-flex;vertical-align:middle;flex:none}
 .perm-note{font-size:13px;line-height:1.45;background:var(--bg);border-left:3px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0}
 .auto-note{font-size:12.5px;color:var(--muted);background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
 .btnlink{display:inline-flex;align-items:center;font:600 14px var(--body);border-radius:10px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
@@ -880,7 +884,7 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending}){
     const auto = k === "OK" ? autoOK : autoHits.filter(a => a.grade === k);
     if (!lib.length && !auto.length) return null;
     const autoRow = r => { const key = "auto:"+r.raw; return `<div class="finding"><details data-key="${esc(key)}"${openFinding===key?" open":""}><summary>
-      <div><span class="f-name">${esc(r.raw)}</span> <span class="f-code">automatic lookup</span></div><div>${r.grade?chip(r.grade):'<span class="chip g-OK">Permitted in food</span>'}</div>
+      <div><span class="f-name">${esc(r.raw)}</span> <span class="f-code">automatic lookup</span></div><div class="chip-wrap">${r.grade?chip(r.grade):'<span class="chip g-OK">Permitted in food</span>'}${r.caveat?CAVEAT:""}</div>
       <p class="f-sum">${r.grade?`IARC Group ${esc(r.iarc)}: ${esc(IARC_WORDS[r.iarc])}.`:`Allowed in food in small, regulated amounts${r.uses?` as ${esc(r.uses)}`:""}. Not a safety rating for the chemical itself.${r.hazards?.length?` Concentrated chemical: ${esc(r.hazards[0])}.`:""}`}</p></summary>${r.html}</details></div>`; };
     if (k === "OK") label = !lib.length ? "Permitted" : auto.length ? "Reassuring / permitted" : label;
     return {k, label, n:lib.length + auto.length, html: lib.map(e => entryRow(e, openFinding===e.id, e.id)).join("") + (auto.length ? autoNote + auto.map(autoRow).join("") : "")};
@@ -941,6 +945,7 @@ function renderResult(args){
   const headline = checking ? "Nothing derogatory so far. Checking FDA, WHO and IARC records for the rest…"
     : clear ? ["Nothing derogatory found in our evidence library or in FDA, WHO and IARC records.",
         okCount ? `${plural(okCount, okCount>1?"were":"was")} reviewed as reassuring or listed as permitted.` : "",
+        autoOK.some(r=>r.caveat) ? `${autoOK.filter(r=>r.caveat).length} permitted ingredient${autoOK.filter(r=>r.caveat).length>1?"s have":" has"} a caveat (red triangle): see Findings.` : "",
         noRec ? `${plural(noRec, noRec>1?"have":"has")} no record anywhere (common for basic foods like potatoes, oil and salt), so this is not a guarantee of safety.` : ""].filter(Boolean).join(" ")
     : [ingConcerns ? `${ingConcerns} ingredient${ingConcerns>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}` : "",
         sc.highs.length ? `High in ${sc.highs.map(h=>h.label).join(", ").replace(/, ([^,]*)$/, " and $1")}.` : ""].filter(Boolean).join(" ");
@@ -964,7 +969,7 @@ function renderResult(args){
           <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1;color:${nameColor}"${worst?` title="Most serious finding: grade ${worst} (${GRADE_NAME[worst]})"`:""}>${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button>`:""}</div>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
-          <div class="counts">${["A","B","C","D","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g==="P"?"OK":g}">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
+          <div class="counts">${["A","B","C","D","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip-wrap"><span class="chip g-${g==="P"?"OK":g}">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g}</span>${g==="P"&&autoOK.some(r=>r.caveat)?CAVEAT:""}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
           ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(searchChip).join("")}</div>`:""}
         </div>
       </div>
@@ -1036,6 +1041,8 @@ function regBlock(title, data, filter){
   const srcs = [...new Set(items.map(i => data.refs[i.ref]).filter(Boolean).map(r => r.URL ? `<a href="${esc(r.URL)}" target="_blank" rel="noopener">${esc(r.SourceName)}</a>` : esc(r.SourceName)))].join(", ");
   return `<div><div class="src">${esc(title)}</div><ul>${lines.join("")}</ul>${srcs ? `<div class="muted" style="font-size:12px">Source: ${srcs}</div>` : ""}</div>`;
 }
+// Red warning triangle beside a grade tag: the tag stands, but there's a caveat in the details.
+const CAVEAT = `<span class="caveat-tri" role="img" aria-label="Caveat: see the red lines in the details" title="Caveat: see the red lines in the details"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 2.8 1.6 20.6a1 1 0 0 0 .9 1.5h19a1 1 0 0 0 .9-1.5L12 2.8z" fill="var(--neg)"/><path d="M12 9v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="18" r="1.4" fill="#fff"/></svg></span>`;
 const IARC_GRADE = {"1":"A","2A":"B","2B":"C"};
 const IARC_WORDS = {"1":"carcinogenic to humans","2A":"probably carcinogenic to humans","2B":"possibly carcinogenic to humans"};
 async function regOne(raw){
@@ -1056,9 +1063,13 @@ async function regOne(raw){
   await sleep(200);
   const ghs = await pcHeading(cid, "GHS Classification").catch(()=>({items:[],refs:{}}));
   // Health hazard statements (H3xx) for the pure chemical (workplace labelling), e.g. "Causes severe skin burns and eye damage".
-  const hz = new Set();
-  ghs.items.filter(i => /hazard statement/i.test(i.name)).forEach(i => { for (const m of i.text.matchAll(/H3\d{2}[^:]*:\s*([^\[;]+?)\s*(?=\[|;|H\d{3}|$)/g)) hz.add(m[1].trim().replace(/\.$/,"")); });
-  res.hazards = [...hz].slice(0, 3);
+  const hz = new Map();
+  ghs.items.filter(i => /hazard statement/i.test(i.name)).forEach(i => { for (const m of i.text.matchAll(/(H3\d{2})[^:]*:\s*([^\[;]+?)\s*(?=\[|;|H\d{3}|$)/g)) { const t = m[2].trim().replace(/\.$/,""); if (![...hz.values()].includes(t)) hz.set(m[1] + ":" + hz.size, t); } });
+  // Serious health hazards: toxic or fatal, corrosive, cancer, genetic, reproductive, organ damage. Mild irritation is not flagged.
+  const SERIOUS = /^H(30[01]|31[014]|33[01]|34[01]|35[01]|36[01]|37[02])/;
+  const hzList = [...hz].map(([k, t]) => ({serious: SERIOUS.test(k), t})).sort((a, b) => b.serious - a.serious);
+  res.hazards = hzList.slice(0, 3).map(h => h.t);
+  res.seriousHazard = hzList.some(h => h.serious);
   const eff = food.items.find(i => /technical effect/i.test(i.name));
   if (eff) res.uses = eff.text.toLowerCase().replace(/\s*,\s*/g, ", ").replace(/, ([^,]*)$/, " or $1").replace(/\bph\b/g, "pH");
   const isFDA = i => /fda|substances added|cfr|regs|technical effect/i.test(i.heading + " " + i.name) || /CFR/.test(i.text);
@@ -1078,11 +1089,13 @@ async function regOne(raw){
   if (res.iarc) res.grade = IARC_GRADE[res.iarc];
   res.ok = !res.grade && !!(fda || jecfa);
   const iarc = regBlock("Cancer classification", carc, () => true);
+  // Caveat: any cancer listing (even workplace-only) or a serious hazard for the pure chemical.
+  res.caveat = !!(iarc || res.seriousHazard);
   res.cid = cid;
   res.html = `<div class="reg-item"><h4>${esc(raw)} <a class="f-code" href="https://pubchem.ncbi.nlm.nih.gov/compound/${cid}" target="_blank" rel="noopener">PubChem ${cid}</a></h4>
-    ${res.grade ? `<p style="--gc:var(--g${res.grade})">${chip(res.grade)} <span class="neg">IARC Group ${res.iarc}: ${IARC_WORDS[res.iarc]}.</span> This rates how strong the evidence of a cancer hazard is, not the risk at normal intake.</p>` : res.ok ? `<p><span class="chip g-OK">Permitted in food</span> Allowed in food by ${[fda?"the FDA":"", jecfa?"the WHO/FAO expert committee":""].filter(Boolean).join(" and ")}${res.uses?`, used as ${esc(res.uses)}`:""}.</p>
-      <div class="perm-note"><b>What “permitted” means.</b> Regulators approve a food-grade version, in the small amounts needed for one job, and set a limit. It does not mean the substance is safe in any form or amount. The dose and the form make the difference.${res.hazards?.length?` <br><b>Hazard label for the concentrated chemical:</b> <span class="neg">${esc(res.hazards.join(". "))}.</span> That label is about handling the pure substance, not eating food that contains a trace of it.`:""}</div>` : ""}
-    ${fda}${jecfa}${res.workplace?`<p class="muted" style="font-size:12.5px">The cancer listing below is about breathing it in at work (for example acid mists in factories), not eating it, so it is not counted in the score.</p>`:""}${iarc || `<div><div class="src">Cancer classification</div><p class="muted">None listed (IARC or similar).</p></div>`}</div>`;
+    ${res.grade ? `<p style="--gc:var(--g${res.grade})">${chip(res.grade)} <span class="neg">IARC Group ${res.iarc}: ${IARC_WORDS[res.iarc]}.</span> This rates how strong the evidence of a cancer hazard is, not the risk at normal intake.</p>` : res.ok ? `<p><span class="chip g-OK">Permitted in food</span>${res.caveat?CAVEAT:""} Allowed in food by ${[fda?"the FDA":"", jecfa?"the WHO/FAO expert committee":""].filter(Boolean).join(" and ")}${res.uses?`, used as ${esc(res.uses)}`:""}.</p>
+      <div class="perm-note"><b>What “permitted” means.</b> Regulators approve a food-grade version, in the small amounts needed for one job, and set a limit. It does not mean the substance is safe in any form or amount. The dose and the form make the difference.${res.hazards?.length?` <br><b>Hazard label for the concentrated chemical:</b> <span class="caveat-text">${esc(res.hazards.join(". "))}.</span> That label is about handling the pure substance, not eating food that contains a trace of it.`:""}</div>` : ""}
+    ${fda}${jecfa}${res.workplace?`<p class="muted" style="font-size:12.5px">The cancer listing below is about breathing it in at work (for example acid mists in factories), not eating it, so it is not counted in the score.</p>`:""}${iarc ? `<div class="caveat-red">${iarc}</div>` : `<div><div class="src">Cancer classification</div><p class="muted">None listed (IARC or similar).</p></div>`}</div>`;
   return res;
 }
 function data_src(d, it){ const r = d.refs[it.ref]; return r ? (r.SourceName||"") : ""; }
@@ -1318,7 +1331,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.4", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.5", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };

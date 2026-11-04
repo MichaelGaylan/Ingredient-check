@@ -51,6 +51,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Each one explains that approval covers a food-grade version in small, limited amounts, not the substance in any form or amount, and shows the hazard label for the concentrated chemical where one exists (for example, sulfuric acid: "Causes severe skin burns and eye damage").
 - Cancer listings that are about workplace exposure, such as breathing acid mists in factories, are explained and not counted in the score.
 
+## 2.5 (4 Nov 2026): red caveat warnings
+- A red warning triangle appears beside an ingredient's rating when its records include a cancer listing or a serious hazard for the pure chemical, even if the ingredient is permitted in food. The rating keeps its own colour.
+- Those lines are shown in red in the ingredient's details, and the summary says how many ingredients have a caveat.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
