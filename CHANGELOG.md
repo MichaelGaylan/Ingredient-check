@@ -70,6 +70,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - 3.1: "Not alerting for …" is shown in red so removed allergens are easy to notice.
 - 3.2: "Settings → My allergens" in the alert is a link that opens straight to My allergens. The red "Not alerting for …" line also shows under the alert.
 
+## 3.4 (4 Nov 2026): every ingredient shows in Findings
+- New "Everyday foods" tab in Findings. Basic foods such as milk, eggs, fish, peanuts and celery used to be skipped silently because there is nothing to check. They are now listed there, with a note that they don't change the score and that any allergens are covered by the allergen alert.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

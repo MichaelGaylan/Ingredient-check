@@ -167,8 +167,8 @@ button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:v
 .ftab.ft-C[aria-selected="true"]{color:var(--gC);box-shadow:inset 0 3px 0 var(--gC)} .ftab.ft-C .ftab-n{background:var(--gC-bg);color:var(--gC)}
 .ftab.ft-D[aria-selected="true"]{color:var(--gD);box-shadow:inset 0 3px 0 var(--gD)} .ftab.ft-D .ftab-n{background:var(--gD-bg);color:var(--gD)}
 .ftab.ft-OK[aria-selected="true"]{color:var(--ok);box-shadow:inset 0 3px 0 var(--ok)} .ftab.ft-OK .ftab-n{background:var(--ok-bg);color:var(--ok)}
-.ftab.ft-N[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
-.ftab.ft-N{background:var(--bg);border:1px solid var(--line);border-bottom:none}
+.ftab.ft-N[aria-selected="true"],.ftab.ft-F[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
+.ftab.ft-N,.ftab.ft-F{background:var(--bg);border:1px solid var(--line);border-bottom:none}
 .fpanel{padding-top:4px}
 /* Collapsed rows: exactly 3 lines (name + grade, then a 2-line preview). */
 .find-tabs .finding{padding-top:8px}
@@ -637,7 +637,7 @@ function entryRow(e, open, key){
 }
 
 /* ---------- matching ---------- */
-const BASIC = ["water","salt","flour","wheat flour","milk","eggs","egg","butter","cream","tomato","tomatoes","vinegar","spices","spice","onion","garlic","yeast","rice","oats","cocoa","cocoa butter","vegetable oil","sunflower oil","olive oil","rapeseed oil","canola oil","corn oil","soybean oil","sunflower","canola","safflower oil","peanut oil","lemon juice","honey","natural flavor","natural flavors","natural flavour","natural flavouring","flavouring","flavoring","skimmed milk","whole milk","potatoes","potato","corn","peanuts","almonds","hazelnuts","soy","soybeans","beans","chickpeas","lentils","carrots","celery","pepper","black pepper","paprika","cinnamon","vanilla","barley malt","malt","starch","corn starch","modified starch","citric acid","ascorbic acid","lactic acid","pectin","sugar"];
+const BASIC = ["water","salt","flour","wheat flour","milk","eggs","egg","butter","cream","tomato","tomatoes","vinegar","spices","spice","onion","garlic","yeast","rice","oats","cocoa","cocoa butter","vegetable oil","sunflower oil","olive oil","rapeseed oil","canola oil","corn oil","soybean oil","sunflower","canola","safflower oil","peanut oil","lemon juice","honey","natural flavor","natural flavors","natural flavour","natural flavouring","flavouring","flavoring","skimmed milk","whole milk","potatoes","potato","corn","peanuts","almonds","hazelnuts","soy","soybeans","beans","chickpeas","lentils","carrots","celery","pepper","black pepper","paprika","cinnamon","vanilla","barley malt","malt","starch","corn starch","modified starch","citric acid","ascorbic acid","lactic acid","pectin","sugar","whey","fish","sesame","sesame seeds","lupin","lupin flour","mustard","mustard seeds","shrimp","prawns","crab","lobster","mussels","oysters","clams","squid","walnuts","cashews","pecans","pistachios","egg yolk","egg white","cheese","yogurt","yoghurt","skim milk","milk powder","buttermilk"];
 function norm(t){return " " + t.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9%]+/g," ").replace(/\s+/g," ").trim() + " ";}
 function codeVariants(code){ // "e171" -> ["e171","e 171","ins 171"]
   const n = code.slice(1); return [`e${n}`,`e ${n}`,`ins ${n}`];
@@ -650,6 +650,16 @@ function matchEntries(text, tags){
     if (hit) found.set(e.id, e);
   }
   return [...found.values()];
+}
+function ingParts(text){
+  return text.replace(/^\s*ingredients?\s*:/i,"").split(/[,;()\[\]]|\band\/or\b|\bor\b|\band\b|\.\s|\.$/i).map(s=>s.replace(/[*_]/g,"").replace(/\d+(\.\d+)?\s*%/g,"").trim()).filter(s=>s && s.length<60);
+}
+// Everyday foods in the list (milk, eggs, celery...): no additive record to check, shown so nothing silently disappears.
+function basicFound(text){
+  if (!text) return [];
+  const out = [];
+  for (const p of ingParts(text)){ const n = norm(p).trim(); if (BASIC.includes(n) && !out.some(o => norm(o).trim() === n)) out.push(p); }
+  return out;
 }
 function unreviewed(text, matched){
   if (!text) return [];
@@ -862,7 +872,7 @@ function allergenReport(text, offTags, offTraces, info={}){
 }
 
 /* Findings as folder tabs, worst evidence first; opens on the most serious non-empty tab. */
-const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["OK","Reassuring"],["N","Not yet reviewed"]];
+const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["OK","Reassuring"],["N","Not yet reviewed"],["F","Everyday foods"]];
 let findTab = null, findTabFor = null, openFinding = null;
 // Accordion: opening one finding closes the others; the open one survives automatic re-renders.
 document.addEventListener("toggle", e => {
@@ -870,9 +880,13 @@ document.addEventListener("toggle", e => {
   if (d.open){ openFinding = d.dataset.key || null; d.closest(".find-tabs").querySelectorAll("details[open]").forEach(o => { if (o !== d) o.open = false; }); }
   else if (openFinding === d.dataset.key) openFinding = null;
 }, true);
-function findingsTabs({matched, autoHits, autoOK, unrev, pending}){
+function findingsTabs({matched, autoHits, autoOK, unrev, pending, basic}){
   const autoNote = `<p class="auto-note">Automatic: looked up in PubChem, which carries the FDA Substances Added to Food inventory, WHO/FAO JECFA evaluations and IARC classifications. Shown as published, not checked by us. An FDA or WHO listing means the ingredient is allowed in food at set amounts for a specific job. It is not a promise that the substance is safe in any form or amount.</p>`;
   const tabs = FIND_TABS.map(([k, label]) => {
+    if (k === "F"){
+      if (!basic?.length) return null;
+      return {k, label, n:basic.length, html:`<p class="muted" style="font-size:13.5px">Everyday foods and basic ingredients. There is no additive or safety record to check, so they don't change the score. Any allergens in them are covered by the allergen alert.</p><div class="unreviewed">${basic.map(b => `<span class="chip g-N">${esc(b)}</span>`).join("")}</div>`};
+    }
     if (k === "N"){
       if (!unrev.length) return null;
       return {k, label, n:unrev.length, html:`<p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe. Tap one to search the web."}</p><div class="unreviewed">${unrev.map(searchChip).join("")}</div>
@@ -978,7 +992,7 @@ function renderResult(args){
         <p class="disclaimer" style="margin-top:6px">${sc.nutriUsed ? "" : "No nutrition data for this product, so sugar, salt and fat aren't scored. "}See Method for the formula.</p>
       </div>
     </div>
-    ${findingsTabs({matched, autoHits, autoOK, unrev, pending})}
+    ${findingsTabs({matched, autoHits, autoOK, unrev, pending, basic: basicFound(text)})}
     ${altEligible?`<div class="panel stack" id="alts"><div class="label">Better-scoring alternatives</div><p class="muted" style="font-size:13.5px">Looking for similar products that score better…</p></div>`:""}
     ${nutriments?nutriPanel(nutriments):""}
     ${text?`<details class="panel"${alg&&alg.mineHit?" open":""}><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${alg ? alg.marked : esc(text)}</p></details>`:""}
@@ -1329,7 +1343,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "3.3", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.4", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
