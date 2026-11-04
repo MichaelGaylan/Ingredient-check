@@ -315,16 +315,6 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <input type="text" id="fdcKeyIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your free key (optional)">
         <p class="set-help">Used when Open Food Facts doesn't have a product. Without a key, everyone shares a small demo allowance that runs out quickly. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener">Get a free key</a> (name and email, arrives by email right away). Saved on this phone only.</p>
       </div>
-      <div class="set-row">
-        <span class="label">Kept as allergen</span>
-        <ul class="ok-list" id="avoidList"></ul>
-        <p class="set-help">Products you marked “Keep as allergen”. Their warning always shows, in a darker red, even if the ingredients change. Saved on this phone only.</p>
-      </div>
-      <div class="set-row">
-        <span class="label">My OK products</span>
-        <ul class="ok-list" id="okList"></ul>
-        <p class="set-help">Products you marked “OK for me” on the allergen warning. They show a green note instead of the red banner, until their ingredient list changes. Saved on this phone only.</p>
-      </div>
       <details class="set-row about">
         <summary><span class="label">Under review</span></summary>
         <p class="set-help">Ingredients on our own research list. We're checking the sources on each one before it gets a rating. Until then they show under <b>Under review</b> in Findings, with no rating and no effect on the score. This is our own ongoing research, not medical or scientific advice.</p>
@@ -898,8 +888,8 @@ function allergenReport(text, offTags, offTraces, info={}){
   // "OK for me": approvals hold only while the ingredient list is unchanged.
   const fp = fingerprint(raw), code = info.code || "";
   algCtx = {code, name:info.name, fp};
-  const avoided = code ? avoidAll()[code] : null;
-  const ok = code ? okAll()[code] : null, okValid = ok && ok.fp === fp;
+  const avoided = null; // "Keep as allergen" retired
+  const ok = null, okValid = false; // "OK for me" retired
   const approved = okValid ? ok.allergens : [];
   const changed = ok && !okValid ? ok : null;
   // Chips: each allergen word found (whey, oats...), or the allergen's name when only the database flags it.
@@ -1445,7 +1435,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.1", APP_DATE = "2026-11-04";
+const APP_VERSION = "4.2", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1633,12 +1623,7 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
       el.textContent = ex.length ? `except ${ex.join(", ")}` : ""; });
   };
   $("#urList").textContent = UNDER_REVIEW.map(u => u.name).sort().join(", ") + ".";
-  window.renderOKList=()=>{
-    const all=okAll(), ks=Object.keys(all);
-    const av=avoidAll(), aks=Object.keys(av);
-    $("#avoidList").innerHTML = aks.length ? aks.map(k=>`<li><span>${esc(av[k].name||"Product "+k)}<small>${esc(av[k].allergens.map(algName).join(", "))} · barcode ${esc(k)} · ${esc(niceDate(av[k].date))}</small></span><button type="button" onclick="avoidUndo('${esc(k)}')">Remove</button></li>`).join("") : `<li class="muted">None yet.</li>`;
-    $("#okList").innerHTML = ks.length ? ks.map(k=>`<li><span>${esc(all[k].name||"Product "+k)}<small>${esc(all[k].allergens.map(algName).join(", "))} · barcode ${esc(k)} · ${esc(niceDate(all[k].date))}</small></span><button type="button" onclick="algUndo('${esc(k)}')">Remove</button></li>`).join("") : `<li class="muted">None yet.</li>`;
-  };
+  window.renderOKList=()=>{}; // "Keep as allergen" and "OK for me" lists retired (buttons removed in 2.7 and 3.0)
   const keyIn=$("#fdcKeyIn");
   keyIn.addEventListener("input",()=>{ try { const v=keyIn.value.trim(); if (v) localStorage.setItem("fdcKey", v); else localStorage.removeItem("fdcKey"); } catch(_) {} });
   window.openSettings=section=>{ renderOKList(); renderAlgOff(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal();

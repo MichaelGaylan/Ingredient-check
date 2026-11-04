@@ -97,6 +97,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 4.1 (4 Nov 2026): regional and Latin allergen names
 - About 100 more names, including Middle Eastern and South Asian foods (knafeh, kataifi, atta, sooji, laban, jameed, hummus, za'atar), dishes and sauces that contain allergens (aioli, hollandaise, Worcestershire sauce, Caesar dressing, pesto, frangipane), botanical names used on labels (Triticum, Hordeum, Juglans regia, Glycine max) and INS sulphite codes (INS 220–228). Rice vermicelli and sunflower lecithin are excluded.
 
+## 4.2 (4 Nov 2026): tidier Settings
+- Removed the empty "Kept as allergen" and "My OK products" lists from Settings. Their buttons were retired in 2.7 and 3.0, so nothing could be added to them any more.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
