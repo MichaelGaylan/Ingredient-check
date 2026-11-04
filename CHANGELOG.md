@@ -80,6 +80,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 3.6 (4 Nov 2026): US and UK spellings
 - Allergen alerts now recognise US and UK spellings and common names, such as mollusks and molluscs, sulfites and sulphites, shellfish, crawfish, soya beans and lupine.
 
+## 3.7 (4 Nov 2026): five new library entries
+- New verified entries: sulphites (EFSA 2022), sugar alcohols such as sorbitol and maltitol, liquorice, caffeine (EFSA 2015) and sodium/potassium nitrate (EFSA 2017).
+- New "⚠ Label warning" rating for ingredients where the law requires a pack warning at high amounts (sugar alcohols, liquorice, caffeine). These lower the score only slightly and have their own Findings tab.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

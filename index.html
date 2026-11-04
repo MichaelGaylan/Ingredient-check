@@ -23,8 +23,8 @@
 :root{
   --bg:#f3f5f2; --surface:#ffffff; --ink:#18221d; --muted:#5b6862; --line:#d8ded9;
   --accent:#1f6f5c; --accent-soft:#e1efe9;
-  --neg:#c0161f; --gA:#7a1f2b; --gB:#b04a1c; --gC:#a8780e; --gD:#5f6b78; --gN:#8a948f; --ok:#2f7a45;
-  --gA-bg:#f6e4e6; --gB-bg:#f8e8df; --gC-bg:#f6efd9; --gD-bg:#e8ecf0; --ok-bg:#e2f1e6;
+  --neg:#c0161f; --gA:#7a1f2b; --gB:#b04a1c; --gC:#a8780e; --gD:#5f6b78; --gW:#a8780e; --gN:#8a948f; --ok:#2f7a45;
+  --gA-bg:#f6e4e6; --gB-bg:#f8e8df; --gC-bg:#f6efd9; --gD-bg:#e8ecf0; --gW-bg:#f6efd9; --ok-bg:#e2f1e6;
   --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -32,14 +32,14 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111613; --surface:#18201c; --ink:#e6ece8; --muted:#9aa8a1; --line:#2c3732;
   --accent:#5fc4a8; --accent-soft:#1c3029;
-  --neg:#ff6b6b; --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
-  --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --ok-bg:#183020;
+  --neg:#ff6b6b; --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gW:#e2c065; --gN:#7d8984; --ok:#7fd096;
+  --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --gW-bg:#352d14; --ok-bg:#183020;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111613; --surface:#18201c; --ink:#e6ece8; --muted:#9aa8a1; --line:#2c3732;
   --accent:#5fc4a8; --accent-soft:#1c3029;
-  --neg:#ff6b6b; --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gN:#7d8984; --ok:#7fd096;
-  --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --ok-bg:#183020;
+  --neg:#ff6b6b; --gA:#f08a97; --gB:#f0a27a; --gC:#e2c065; --gD:#a9b6c3; --gW:#e2c065; --gN:#7d8984; --ok:#7fd096;
+  --gA-bg:#3a1d22; --gB-bg:#3a2519; --gC-bg:#352d14; --gD-bg:#232b33; --gW-bg:#352d14; --ok-bg:#183020;
   color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -168,6 +168,7 @@ button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:v
 .ftab.ft-B[aria-selected="true"]{color:var(--gB);box-shadow:inset 0 3px 0 var(--gB)} .ftab.ft-B .ftab-n{background:var(--gB-bg);color:var(--gB)}
 .ftab.ft-C[aria-selected="true"]{color:var(--gC);box-shadow:inset 0 3px 0 var(--gC)} .ftab.ft-C .ftab-n{background:var(--gC-bg);color:var(--gC)}
 .ftab.ft-D[aria-selected="true"]{color:var(--gD);box-shadow:inset 0 3px 0 var(--gD)} .ftab.ft-D .ftab-n{background:var(--gD-bg);color:var(--gD)}
+.ftab.ft-W[aria-selected="true"]{color:var(--gW);box-shadow:inset 0 3px 0 var(--gW)} .ftab.ft-W .ftab-n{background:var(--gW-bg);color:var(--gW)}
 .ftab.ft-OK[aria-selected="true"]{color:var(--ok);box-shadow:inset 0 3px 0 var(--ok)} .ftab.ft-OK .ftab-n{background:var(--ok-bg);color:var(--ok)}
 .ftab.ft-N[aria-selected="true"],.ftab.ft-F[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
 .ftab.ft-N,.ftab.ft-F{background:var(--bg);border:1px solid var(--line);border-bottom:none}
@@ -211,7 +212,7 @@ button:disabled{opacity:.55;cursor:default}
 .counts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .chip{font:500 12px var(--mono);padding:3px 8px;border-radius:6px;white-space:nowrap}
 .g-A{background:var(--gA-bg);color:var(--gA)} .g-B{background:var(--gB-bg);color:var(--gB)}
-.g-C{background:var(--gC-bg);color:var(--gC)} .g-D{background:var(--gD-bg);color:var(--gD)}
+.g-C{background:var(--gC-bg);color:var(--gC)} .g-D{background:var(--gD-bg);color:var(--gD)} .g-W{background:var(--gW-bg);color:var(--gW)}
 .g-OK{background:var(--ok-bg);color:var(--ok)} .g-N{background:var(--bg);color:var(--gN);border:1px solid var(--line)}
 .finding{border-top:1px solid var(--line);padding-top:12px}
 .finding:first-child{border-top:0;padding-top:0}
@@ -412,6 +413,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
           <tr><td><span class="chip g-B">B · Probable</span></td><td>Several good human studies point the same way, or a regulator acted on the evidence, but there is no full consensus.</td></tr>
           <tr><td><span class="chip g-C">C · Possible</span></td><td>Limited or mixed human data, a single large observational study, or IARC Group 2B.</td></tr>
           <tr><td><span class="chip g-D">D · Preliminary</span></td><td>Cell or animal studies only, often at doses far above normal intake.</td></tr>
+          <tr><td><span class="chip g-W">⚠ Label warning</span></td><td>The law requires a warning on the pack when there is a lot of it (for example sugar alcohols, liquorice, caffeine). Harmful mainly in large amounts.</td></tr>
           <tr><td><span class="chip g-OK">Reassuring</span></td><td>An authority reviewed it and found it safe at normal intake, usually with an acceptable daily intake (ADI).</td></tr>
           <tr><td><span class="chip g-N">Not yet reviewed</span></td><td>We have not assessed it. This is not the same as safe.</td></tr>
         </table>
@@ -468,6 +470,11 @@ const CITES = {
   fda_red3: {title:"Color Additive Petition From Center for Science in the Public Interest, et al.; Request To Revoke Color Additive Listing for Use of FD&C Red No. 3 in Food and Ingested Drugs (90 FR 4628)", src:"US FDA, Federal Register", year:"2025", doi:"", url:"https://www.federalregister.gov/documents/2025/01/16/2025-00830/color-additive-petition-from-center-for-science-in-the-public-interest-et-al-request-to-revoke-color", check:"finding"},
   fda_bvo: {title:"Revocation of Authorization for Use of Brominated Vegetable Oil in Food (89 FR 55040)", src:"US FDA, Federal Register", year:"2024", doi:"", url:"https://www.federalregister.gov/documents/2024/07/03/2024-14300/revocation-of-authorization-for-use-of-brominated-vegetable-oil-in-food", check:"finding"},
   fda_pho: {title:"Final Determination Regarding Partially Hydrogenated Oils (80 FR 34650)", src:"US FDA, Federal Register", year:"2015", doi:"", url:"https://www.federalregister.gov/documents/2015/06/17/2015-14883/final-determination-regarding-partially-hydrogenated-oils", check:"finding"},
+  efsa_so2: {title:"Follow-up of the re-evaluation of sulfur dioxide (E 220) and sulfites (E 221–228)", src:"EFSA Journal 20(11):7594", year:"2022", doi:"10.2903/j.efsa.2022.7594", url:"https://www.efsa.europa.eu/en/efsajournal/pub/7594", check:"finding"},
+  cfr_bisulfite: {title:"21 CFR 182.3739 Sodium bisulfite", src:"US Code of Federal Regulations (eCFR)", year:"2026", doi:"", url:"https://www.ecfr.gov/current/title-21/chapter-I/subchapter-B/part-182/subpart-D/section-182.3739", check:"finding"},
+  eu1169_annex3: {title:"Regulation (EU) No 1169/2011, Annex III: foods whose labelling must include additional particulars", src:"EU law (UK legislation.gov.uk copy)", year:"2011", doi:"", url:"https://www.legislation.gov.uk/eur/2011/1169/annex/III", check:"finding"},
+  efsa_caffeine: {title:"Scientific Opinion on the safety of caffeine", src:"EFSA (topic page summarising EFSA Journal 13(5):4102)", year:"2015", doi:"10.2903/j.efsa.2015.4102", url:"https://www.efsa.europa.eu/en/topics/topic/caffeine", check:"finding"},
+  efsa_nitrate: {title:"Re-evaluation of sodium nitrate (E 251) and potassium nitrate (E 252) as food additives", src:"EFSA Journal 15(6):4787", year:"2017", doi:"10.2903/j.efsa.2017.4787", url:"https://www.efsa.europa.eu/en/efsajournal/pub/4787", check:"finding"},
 };
 const R = "2026-11-01";
 const WHO_NSS = {dir:"concern", grade:"C", text:"The World Health Organization advises against using non-sugar sweeteners as a way to control body weight (2023 guideline). This is advice that they do not help with weight control over the long term, not a finding that the sweetener is toxic.", cites:["who_nss"]};
@@ -571,12 +578,38 @@ const ENTRIES = [
   {id:"pgallate", name:"Propyl gallate", codes:["e310"], aliases:["propyl gallate"], reviewed:"2026-11-02",
    summary:"Antioxidant preservative for fats and oils. Safe within its daily limit.",
    claims:[{dir:"ok", grade:"A", text:"EFSA re-evaluated propyl gallate and derived an acceptable daily intake of 0.5 mg per kg of body weight per day.", cites:["efsa_pg"]}]},
+  {id:"sulphites", name:"Sulphites (sulfites) and sulphur dioxide", codes:["e220","e221","e222","e223","e224","e225","e226","e227","e228"], aliases:["sulphites","sulfites","sulphite","sulfite","sulphur dioxide","sulfur dioxide","sodium sulfite","sodium sulphite","sodium bisulfite","sodium bisulphite","sodium metabisulfite","sodium metabisulphite","potassium metabisulfite","potassium metabisulphite","potassium bisulfite","potassium bisulphite","calcium sulfite","calcium sulphite","calcium bisulfite","calcium bisulphite"], reviewed:"2026-11-04",
+   summary:"Preservatives in wine, dried fruit, some juices and sausages. EFSA withdrew their daily limit in 2022 and found that typical intakes raise a safety concern. Also a listed allergen.",
+   claims:[
+     {dir:"concern", grade:"B", text:"In its 2022 follow-up re-evaluation, EFSA withdrew the temporary group acceptable daily intake of 0.7 mg per kg of body weight per day, used a margin-of-exposure approach instead, and concluded that estimated dietary exposure “raises a safety concern” in both exposure scenarios it assessed.", cites:["efsa_so2"]}],
+   reg:{us:"The FDA does not allow sulphiting agents in meats or on fruit and vegetables served or sold raw or presented as fresh."}},
+  {id:"polyols", name:"Sugar alcohols (polyols)", codes:["e420","e421","e953","e964","e965","e966","e967"], aliases:["sorbitol","sorbitol syrup","mannitol","maltitol","maltitol syrup","xylitol","isomalt","lactitol","hydrogenated starch hydrolysate","hydrogenated starch hydrolysates","polyglycitol syrup","sugar alcohol","sugar alcohols","polyols"], reviewed:"2026-11-04",
+   summary:"Sweeteners in sugar-free sweets, gum and protein bars. In large amounts they have a laxative effect, which EU law requires labels to warn about.",
+   claims:[
+     {dir:"concern", grade:"W", text:"EU law requires foods containing more than 10% added polyols to carry the warning “excessive consumption may produce laxative effects”.", cites:["eu1169_annex3"]}],
+   reg:{eu:"Laxative warning required on foods with more than 10% added polyols."}},
+  {id:"liquorice", name:"Liquorice (glycyrrhizin)", codes:["e958"], aliases:["liquorice","licorice","liquorice extract","licorice extract","liquorice root","licorice root","glycyrrhizin","glycyrrhizic acid","glycyrrhizinic acid","ammonium glycyrrhizinate","monoammonium glycyrrhizinate"], reviewed:"2026-11-04",
+   summary:"Flavouring in sweets, drinks and herbal teas. EU law requires a warning for people with high blood pressure on products with a lot of it.",
+   claims:[
+     {dir:"concern", grade:"W", text:"EU law requires confectionery with 4 g/kg or more of glycyrrhizinic acid, and drinks with 50 mg/l or more, to be labelled “contains liquorice – people suffering from hypertension should avoid excessive consumption”. Smaller amounts (from 100 mg/kg or 10 mg/l) must be labelled “contains liquorice”.", cites:["eu1169_annex3"]}],
+   reg:{eu:"“Contains liquorice” label from 100 mg/kg; high-blood-pressure warning from 4 g/kg (sweets) or 50 mg/l (drinks)."}},
+  {id:"caffeine", name:"Caffeine", codes:[], aliases:["caffeine","added caffeine","caffeine anhydrous","anhydrous caffeine"], reviewed:"2026-11-04",
+   summary:"Stimulant added to energy drinks and colas. Safe for healthy adults up to about 400 mg a day; lower limits apply in pregnancy, and EU labels must warn above 150 mg/l.",
+   claims:[
+     {dir:"ok", grade:"A", text:"EFSA concluded that single doses up to 200 mg, and intakes up to 400 mg a day spread through the day, “do not raise safety concerns for healthy adults in the general population, except pregnant women”. For pregnancy, intakes up to 200 mg a day do not raise safety concerns for the foetus.", cites:["efsa_caffeine"]},
+     {dir:"concern", grade:"W", text:"EU law requires drinks (other than coffee or tea) with more than 150 mg/l of caffeine to carry the warning “High caffeine content. Not recommended for children or pregnant or breast-feeding women”.", cites:["eu1169_annex3"]}],
+   reg:{eu:"“High caffeine content” warning required on drinks above 150 mg/l."}},
+  {id:"nitrate", name:"Sodium or potassium nitrate", codes:["e251","e252"], aliases:["sodium nitrate","potassium nitrate"], reviewed:"2026-11-04",
+   summary:"Curing agent in some hams, sausages and cheeses. Has a daily limit; processed meat itself is a known cause of bowel cancer.",
+   claims:[
+     {dir:"concern", grade:"A", text:"IARC classifies processed meat (meat preserved by curing, salting or smoking, which is where nitrate is used) as carcinogenic to humans (Group 1), based on colorectal cancer.", cites:["iarc_meat"]},
+     {dir:"ok", grade:"A", text:"The acceptable daily intake for nitrate is 3.7 mg per kg of body weight per day (SCF 1997, JECFA 2002). EFSA noted this limit would be exceeded in all age groups when nitrate from every source, mostly vegetables, is counted.", cites:["efsa_nitrate"]}]},
 ];
 
 
-const GRADE_PTS = {A:20, B:12, C:6, D:2};
-const GRADE_NAME = {A:"Established", B:"Probable", C:"Possible", D:"Preliminary"};
-const GRADE_ORDER = {A:0, B:1, C:2, D:3, OK:4, N:5};
+const GRADE_PTS = {A:20, B:12, C:6, D:2, W:2};
+const GRADE_NAME = {A:"Established", B:"Probable", C:"Possible", D:"Preliminary", W:"Label warning"};
+const GRADE_ORDER = {A:0, B:1, C:2, D:3, W:4, OK:5, N:6};
 // UK front-of-pack "high" thresholds (DH/FSA 2016), per 100 g of food or per 100 ml of drink.
 const NUTRI = [
   {k:"sugars", label:"sugars", food:22.5, drink:11.25},
@@ -601,7 +634,7 @@ function topGrade(e){
 function chip(g){
   if (g === "OK") return '<span class="chip g-OK">Reassuring</span>';
   if (g === "N") return '<span class="chip g-N">Not yet reviewed</span>';
-  return `<span class="chip g-${g}">${g} · ${GRADE_NAME[g]}</span>`;
+  return g === "W" ? `<span class="chip g-W">⚠ Label warning</span>` : `<span class="chip g-${g}">${g} · ${GRADE_NAME[g]}</span>`;
 }
 function citeHTML(id){
   const c = CITES[id]; if (!c) return "";
@@ -683,7 +716,7 @@ function score(matched, nutriments, autoHits){
   for (const a of (autoHits||[])){ s -= GRADE_PTS[a.grade]; rows.push([`${a.raw}: IARC Group ${a.iarc} (automatic lookup)`, -GRADE_PTS[a.grade]]); }
   for (const e of matched){
     const g = topGrade(e);
-    if (GRADE_PTS[g]) { s -= GRADE_PTS[g]; rows.push([`${e.name}: strongest concern is grade ${g}`, -GRADE_PTS[g]]); }
+    if (GRADE_PTS[g]) { s -= GRADE_PTS[g]; rows.push([g === "W" ? `${e.name}: warning label required in large amounts` : `${e.name}: strongest concern is grade ${g}`, -GRADE_PTS[g]]); }
   }
   const highs = nutriHighs(nutriments);
   for (const h of highs){ s -= NUTRI_PTS; rows.push([`High in ${h.label}: ${h.val.toFixed(1)} g per ${h.per} (UK “high” is over ${h.lim} g)`, -NUTRI_PTS]); }
@@ -879,7 +912,7 @@ function allergenReport(text, offTags, offTraces, info={}){
 }
 
 /* Findings as folder tabs, worst evidence first; opens on the most serious non-empty tab. */
-const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["OK","Reassuring"],["N","Not yet reviewed"],["F","Everyday foods"]];
+const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["W","Label warnings"],["OK","Reassuring"],["N","Not yet reviewed"],["F","Everyday foods"]];
 let findTab = null, findTabFor = null, openFinding = null;
 // Accordion: opening one finding closes the others; the open one survives automatic re-renders.
 document.addEventListener("toggle", e => {
@@ -952,7 +985,7 @@ function renderResult(args){
   const okCount = matched.length + autoOK.length, noRec = unrev.length;
   // Name, ring and verdict all take the colour of the most serious ingredient finding (grade A in alert red),
   // and the verdict can't sound milder than that finding: A means at least "Several concerns", B at least "Some".
-  const worst = ["A","B","C","D"].find(g => matched.some(e => topGrade(e) === g) || autoHits.some(a => a.grade === g)) || null;
+  const worst = ["A","B","C","D","W"].find(g => matched.some(e => topGrade(e) === g) || autoHits.some(a => a.grade === g)) || null;
   const gradeColor = worst === "A" ? "var(--neg)" : worst ? `var(--g${worst})` : null;
   let [bandName, bandColor] = checking ? ["Checking records","var(--gN)"] : clear ? ["No concerns found","var(--ok)"] : band(sc.score);
   if (!checking && !clear){
@@ -988,7 +1021,7 @@ function renderResult(args){
           <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1;color:${nameColor}"${worst?` title="Most serious finding: grade ${worst} (${GRADE_NAME[worst]})"`:""}>${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button>`:""}</div>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
-          <div class="counts">${["A","B","C","D","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip-wrap"><span class="chip g-${g==="P"?"OK":g}">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g}</span>${g==="P"&&autoOK.some(r=>r.caveat)?CAVEAT:""}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
+          <div class="counts">${["A","B","C","D","W","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip-wrap"><span class="chip g-${g==="P"?"OK":g}">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g==="W"?"label warning":g}</span>${g==="P"&&autoOK.some(r=>r.caveat)?CAVEAT:""}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
           ${unrev.length?`<div id="unrevDrop" class="unreviewed" style="margin-top:8px"${unrevOpen?"":" hidden"}>${unrev.map(searchChip).join("")}</div>`:""}
         </div>
       </div>
@@ -1337,7 +1370,7 @@ $("#ingredients").addEventListener("input", e => {
 /* ---------- library + method ---------- */
 let libFilter = "all";
 function renderLibrary(){
-  const groups = [["all","All"],["A","Grade A"],["B","Grade B"],["C","Grade C"],["D","Grade D"],["OK","Reassuring"]];
+  const groups = [["all","All"],["A","Grade A"],["B","Grade B"],["C","Grade C"],["D","Grade D"],["W","Label warnings"],["OK","Reassuring"]];
   $("#libFilter").innerHTML = groups.map(([k,l])=>`<button type="button" data-f="${k}" aria-pressed="${libFilter===k}">${l}</button>`).join("");
   $("#libFilter").querySelectorAll("button").forEach(b=>b.onclick=()=>{libFilter=b.dataset.f; renderLibrary();});
   const list = ENTRIES.slice().sort((a,b)=>GRADE_ORDER[topGrade(a)]-GRADE_ORDER[topGrade(b)] || a.name.localeCompare(b.name)).filter(e=>libFilter==="all"||topGrade(e)===libFilter);
@@ -1349,8 +1382,8 @@ function renderSources(){
 }
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
-const RULES_VERSION = 1;
-const APP_VERSION = "3.6", APP_DATE = "2026-11-04";
+const RULES_VERSION = 2;
+const APP_VERSION = "3.7", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
