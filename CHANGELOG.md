@@ -1,56 +1,51 @@
 # Sourced: revision history
 
-Major changes to the app, oldest first. Versions 1.0 to 1.3 were numbered afterwards; numbering inside the app started at 1.4. Each line lists the date and the git commit(s) it came from.
+Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered afterwards; the version number has been shown inside the app since 1.4.
 
-## 1.0 — 2 Nov 2026: first version
-- Evidence-graded food scanner web app: barcode scan, 0–100 score, every ingredient claim linked to a checked source (peer-reviewed papers, EFSA, FDA, WHO, IARC). Grades: A Established, B Probable, C Possible, D Preliminary, Reassuring, Not yet reviewed. (`bcbabe6`)
-- Read an ingredient list from a photo of the label (on-phone text recognition). No score is shown when there are no ingredients. (`77d0827`)
-- USDA FoodData Central as a second product database after Open Food Facts. (`e709280`)
-- Ingredient lists you type in are remembered for that barcode; SmartLabel and web search links for missing products. (`c5212fb`)
-- New library entries for additives flagged by EWG, added only after their sources were verified. (`2eadf59`)
+## 1.0 (2 Nov 2026): first version
+- Scan a barcode and get a 0 to 100 score. Every ingredient claim links to a checked source: peer-reviewed research or a food-safety regulator (EFSA, FDA, WHO, IARC).
+- Each finding is graded by how strong the evidence is: Established, Probable, Possible, Preliminary or Reassuring.
+- Read an ingredient list from a photo of the label. The text is read on your phone.
+- Products are looked up in Open Food Facts, with the US Department of Agriculture (USDA) food database as a backup.
+- If a product is missing, you can type its ingredients in and Sourced remembers them for that barcode.
 
-## 1.1 — 2 Nov 2026: automatic checks and nutrition
-- Unreviewed ingredients are looked up in FDA, WHO/JECFA and IARC records (via PubChem). (`ec349c7`)
-- That lookup runs automatically, and IARC cancer classifications count toward the score. (`7b49b0c`)
-- The "Check ingredients" button is removed; lists are checked as soon as they're entered. (`fd755ba`)
-- "No concerns found" rating when nothing derogatory is found. (`89fb253`)
-- The "not reviewed" count opens a dropdown of those ingredients. (`9bab2cd`)
-- Nutrition (sugar, salt, fat, saturated fat) counts toward the score using UK "high" thresholds; BHA added. (`98dba5b`)
+## 1.1 (2 Nov 2026): automatic checks and nutrition
+- Ingredients not yet in our library are checked automatically against FDA, WHO and IARC records, as soon as a list is entered.
+- Cancer classifications from IARC (the WHO cancer agency) count toward the score.
+- A "No concerns found" rating when nothing negative turns up.
+- Tap the "not yet reviewed" count to see which ingredients those are.
+- Sugar, salt, fat and saturated fat count toward the score, using the UK's "high" levels.
 
-## 1.2 — 2 Nov 2026: readability and settings
-- Negative findings made prominent and coloured by evidence grade; EU/US regulatory restrictions in bold red. (`05b3f87`, `f50e9ef`, `39cac32`)
-- Dark mode toggle in the header. (`aa27bc7`)
-- Settings: appearance (automatic/light/dark) and product-text language, with automatic translation of foreign labels. (`7c15c87`)
+## 1.2 (2 Nov 2026): easier to read, and Settings
+- Concerns stand out more and are coloured by how strong the evidence is. EU and US restrictions are shown in bold red.
+- Dark mode.
+- Settings: choose light, dark or automatic appearance, and a language. Labels in other languages are translated automatically.
 
-## 1.3 — 3 Nov 2026: allergens, history and installable app
-- Each not-yet-reviewed ingredient links to a web search. (`5cc139d`)
-- Look up button turns green while a barcode is typed. (`5858244`, `ca13d3d`)
-- Camera icon on the "Read label from photo" buttons. (`ebbef98`)
-- Allergen warnings: "My allergens" in Settings (14 US/EU allergens), red banner for yours, allergen words highlighted. Allergens never change the score. (`f9901b5`)
-- "OK for me" per product, and a Lactose (intolerance) choice that skips lactose-free products. (`755c876`)
-- History tab with favourites, delete and clear all; "What a scan can't tell you" section; better-scoring alternatives for low scores; "Add it to Open Food Facts" link. (`93dba53`)
-- USDA API key field in Settings, to avoid the shared demo limit. (`23356fd`)
-- Fixed the × delete button in History on touch screens. (`7e8e6d8`)
-- "Keep in my allergens" from a product, then "Keep as allergen" per product with Undo, a darker red kept state, and fewer buttons once kept. (`4681495`, `54a3548`, `76259c7`, `383b619`)
-- Installable on the Home Screen: app icon, full-screen mode, works offline. (`597a3b3`)
+## 1.3 (3 Nov 2026): allergens, history and a Home Screen app
+- Each not-yet-reviewed ingredient links to a web search.
+- Allergen warnings: pick your allergens in Settings (the 14 major US and EU allergens, plus lactose intolerance). Products that contain one get a red warning and the words are highlighted. Allergens never change the score.
+- Mark a product "OK for me" (for example, lactose-free milk), or "Keep as allergen", with Undo.
+- History of your scans, with favourites and delete.
+- A "What a scan can't tell you" section.
+- Better-scoring alternatives for low-scoring products.
+- Add your own free USDA key in Settings so lookups aren't slowed by the shared limit.
+- Install Sourced on your Home Screen. It opens full screen and works offline.
 
-## 1.4 — 4 Nov 2026: simpler controls
-- One button: "Scan barcode" becomes a dark "Look up barcode" when a number is typed. (`0ce68cd`)
-- Label photo moved to a camera icon inside the ingredient box; Help and About sections in Settings with version number. (`56bfb92`, `0339567`)
+## 1.4 (4 Nov 2026): simpler controls
+- One button: "Scan barcode" becomes "Look up barcode" when you type a number.
+- Label photo moved to a camera icon inside the ingredient box.
+- Help and About in Settings, with the version number.
 
-## 1.5 – 1.8 — 4 Nov 2026: findings layout
-- 1.5: Findings shown as folder tabs, most serious first (Established → Probable → Possible → Preliminary → Reassuring → Not yet reviewed). (`a10dabd`)
-- 1.6: Findings collapsed by default; opening one closes the others. (`6cf182f`)
-- 1.7: Collapsed findings are exactly three lines tall. (`f8804b9`)
-- 1.8: Bigger, bolder expand arrow. (`e2d5f99`)
+## 1.5 to 1.8 (4 Nov 2026): tidier findings
+- Findings sorted into folder tabs, most serious first.
+- Each finding starts as a short three-line summary. Tap to open it; opening one closes the others.
+- Bigger, bolder arrow for opening a finding.
 
-## 1.9 – 2.3 — 4 Nov 2026: verdict colour and allergen box
-- 1.9: Allergen box offers lactose alongside milk, plus "Remove … from my allergens". (`e0724e4`)
-- 2.0: Product name takes the colour of the most serious ingredient. (`b1a0242`)
-- 2.1: Score ring and verdict match that colour; an Established finding means at least "Several concerns", Probable at least "Some concerns". (`a57f76c`)
-- 2.2: "+ Add … to my allergens" wording; pastel red box right after adding. (`f806a78`)
-- 2.3: Add buttons moved below the allergen box. (`b27e677`)
+## 1.9 to 2.3 (4 Nov 2026): clearer verdicts and allergen controls
+- The allergen warning offers lactose as well as milk, and lets you remove an allergen from your list.
+- The product name, score ring and verdict take the colour of the most serious finding. A product with an Established concern can't be rated better than "Several concerns".
+- "+ Add … to my allergens" buttons sit below the warning, and the warning turns a softer red once added.
 
-## Planned before public release
-- Small server to hold the USDA key and translation service, with caching.
-- Privacy policy page; app store packaging (Google Play first, then Apple).
+## Coming before public release
+- A small server so lookups and translation are faster and don't depend on shared limits.
+- Privacy policy, and release on Google Play, then the Apple App Store.
