@@ -73,6 +73,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 3.4 (4 Nov 2026): every ingredient shows in Findings
 - New "Everyday foods" tab in Findings. Basic foods such as milk, eggs, fish, peanuts and celery used to be skipped silently because there is nothing to check. They are now listed there, with a note that they don't change the score and that any allergens are covered by the allergen alert.
 
+## 3.5 (4 Nov 2026): allergen ticks match the alert
+- Removing an allergen's own name from the alert (Milk, Eggs, Soy…) now unticks it in My allergens.
+- Removing a single ingredient word (whey, oats) keeps the allergen ticked and shows "except whey" under it, so the list always matches what the alert does.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

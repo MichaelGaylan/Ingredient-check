@@ -73,6 +73,8 @@ select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(-
 .set-foot{display:flex;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface);padding-top:8px}
 dialog.settings{overflow:auto}
 .alg-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.alg-except{display:block;font-size:12px;color:var(--neg);line-height:1.2}
+.alg-except:empty{display:none}
 .alg-grid label{display:flex;align-items:center;gap:8px;font-size:14.5px;min-height:32px;cursor:pointer}
 .alg-grid input{width:18px;height:18px;accent-color:var(--accent);flex:none}
 .alg-banner{background:#f2aba3;color:#4a0b0f;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.4}
@@ -762,7 +764,12 @@ window.algKeep = ids => {
 };
 window.avoidUndo = code => { const all = avoidAll(); delete all[code]; avoidSave(all); if (lastArgs) renderResult(lastArgs); if (window.renderOKList) renderOKList(); };
 // Remove an allergen word (w:whey) or a whole allergen (cat:milk) from alerts. Restored in Settings.
+// Tapping an allergen's own name (Milk, Eggs, Soy...) switches that whole allergen off, so its box is unticked.
+// Other words (whey, oats, hazelnuts) are removed one by one and the allergen stays ticked for everything else.
+const ALG_NAME_WORDS = {milk:["milk"], eggs:["egg","eggs"], fish:["fish"], crustaceans:["crustacean","crustaceans"], molluscs:["mollusc","molluscs"], nuts:["nut","nuts","tree nuts"], peanuts:["peanut","peanuts"], gluten:["gluten"], soy:["soy","soya"], sesame:["sesame"], mustard:["mustard"], celery:["celery"], lupin:["lupin","lupine"], sulphites:["sulphite","sulphites","sulfite","sulfites"]};
+const algNameOf = w => Object.keys(ALG_NAME_WORDS).find(id => ALG_NAME_WORDS[id].includes(w));
 window.algOff = key => {
+  if (key.startsWith("w:") && algNameOf(key.slice(2))) key = "cat:" + algNameOf(key.slice(2));
   if (key.startsWith("cat:")) SET.allergens = SET.allergens.filter(x => x !== key.slice(4));
   else if (!SET.algOffWords.includes(key.slice(2))) SET.algOffWords.push(key.slice(2));
   saveSet(); if (lastArgs) renderResult(lastArgs); if (window.renderAlgOff) renderAlgOff();
@@ -1343,7 +1350,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "3.4", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.5", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1479,7 +1486,11 @@ const SET = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem("sour
   const all = ALLERGENS.map(a => a.id).filter(id => id !== "lactose");
   let alg = Array.isArray(o.allergens) ? o.allergens : [];
   if (o.algV !== 2) alg = [...new Set([...all, ...alg.filter(id => id === "lactose")])];
-  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: alg, algOffWords: Array.isArray(o.algOffWords) ? o.algOffWords : []}; })();
+  // Name words removed before 3.5 (e.g. "eggs") become an unticked allergen.
+  const NW = {milk:["milk"],eggs:["egg","eggs"],fish:["fish"],peanuts:["peanut","peanuts"],soy:["soy","soya"],sesame:["sesame"],mustard:["mustard"],celery:["celery"],lupin:["lupin"],sulphites:["sulphites","sulfites"]};
+  let offW = Array.isArray(o.algOffWords) ? o.algOffWords : [];
+  for (const [id, ws] of Object.entries(NW)) if (offW.some(w => ws.includes(w))){ alg = alg.filter(x => x !== id); offW = offW.filter(w => !ws.includes(w)); }
+  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: alg, algOffWords: offW}; })();
 function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang, allergens:SET.allergens, algOffWords:SET.algOffWords, algV:2}));
   if (SET.theme==="system") localStorage.removeItem("sourced.theme"); else localStorage.setItem("sourced.theme", SET.theme); } catch(_) {} }
 (function(){
@@ -1510,7 +1521,7 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
     else if ($("#ingredients").value.trim().length >= 4){ lastChecked=""; autoCheck(); }
   });
   const grid=$("#algGrid");
-  grid.innerHTML=ALLERGENS.map(a=>`<label><input type="checkbox" value="${a.id}">${esc(a.label)}</label>`).join("");
+  grid.innerHTML=ALLERGENS.map(a=>`<label><input type="checkbox" value="${a.id}"><span>${esc(a.label)}<small class="alg-except" data-for="${a.id}"></small></span></label>`).join("");
   grid.querySelectorAll("input").forEach(cb=>cb.addEventListener("change",()=>{
     SET.allergens=[...grid.querySelectorAll("input:checked")].map(x=>x.value); saveSet(); renderAlgOff();
     if (lastArgs && !lastArgs.example) renderResult(lastArgs);
@@ -1521,6 +1532,10 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
     const rows = [...cats, ...words];
     $("#algOffList").innerHTML = rows.length ? `${rows.map(r=>`<a href="#" class="alg-word" onclick="algOn('${esc(r.key)}');return false" aria-label="Put ${esc(r.label)} back on the allergen alert">${esc(r.label)}</a>`).join(", ")}. <span class="muted">Tap one to put it back on the alert.</span>` : `<span class="muted">Nothing removed.</span>`;
     grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value));
+    // A ticked allergen with some words removed says so: "Milk, except whey".
+    grid.querySelectorAll(".alg-except").forEach(el => { const a = ALLERGENS.find(x => x.id === el.dataset.for);
+      const ex = SET.allergens.includes(a.id) && a.id !== "lactose" ? SET.algOffWords.filter(w => a.terms.includes(w)) : [];
+      el.textContent = ex.length ? `except ${ex.join(", ")}` : ""; });
   };
   window.renderOKList=()=>{
     const all=okAll(), ks=Object.keys(all);
