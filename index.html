@@ -1433,11 +1433,22 @@ $("#photo").onchange = async (ev) => {
 };
 /* ---------- read the label from a photo (on-device OCR) ---------- */
 function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = no; document.head.appendChild(el); }); }
-async function shrink(file){ // big phone photos make OCR slow; scale to 2000 px on the long side
+async function shrink(file, enhance){ // scale to about 2000 px on the long side (small photos are enlarged, big ones reduced)
   const img = new Image(); img.src = URL.createObjectURL(file); await img.decode();
-  const k = Math.min(1, 2000 / Math.max(img.width, img.height));
+  const k = Math.min(2, 2000 / Math.max(img.width, img.height));
   const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
-  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(img, 0, 0, c.width, c.height);
+  if (enhance){
+    // Greyscale and stretch the contrast (ignoring the darkest and brightest 1%), which helps with glare,
+    // shadows and coloured packaging. Tesseract reads dark-on-light text best.
+    const d = g.getImageData(0, 0, c.width, c.height), p = d.data, hist = new Uint32Array(256), n = p.length / 4;
+    for (let i = 0; i < p.length; i += 4){ const y = (p[i]*299 + p[i+1]*587 + p[i+2]*114) / 1000 | 0; p[i] = y; hist[y]++; }
+    let lo = 0, hi = 255, acc = 0; while (lo < 255 && (acc += hist[lo]) < n*0.01) lo++; acc = 0; while (hi > 0 && (acc += hist[hi]) < n*0.01) hi--;
+    let mean = 0; for (let v = 0; v < 256; v++) mean += v * hist[v]; mean /= n;
+    const inv = mean < 110, span = Math.max(1, hi - lo); // light text on a dark pack: flip it
+    for (let i = 0; i < p.length; i += 4){ let y = Math.max(0, Math.min(255, (p[i] - lo) * 255 / span)); if (inv) y = 255 - y; p[i] = p[i+1] = p[i+2] = y; }
+    g.putImageData(d, 0, 0);
+  }
   return new Promise(r => c.toBlob(r, "image/jpeg", 0.92));
 }
 function cleanOCR(t){
@@ -1463,14 +1474,21 @@ $("#labelPhoto").onchange = async (ev) => {
     // OCR files are hosted next to this page (vendor/ocr), so it works without third-party servers.
     const base = new URL("vendor/ocr/", location.href).href;
     if (!window.Tesseract) await loadScript(base + "tesseract.min.js");
-    const blob = await shrink(f);
+    let pass = "";
     const worker = await Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base, langPath: base, workerBlobURL: false,
-      logger: m => { if (m.status === "recognizing text") status(`Reading the label… ${Math.round(m.progress*100)}%`); } });
-    const { data } = await worker.recognize(blob); worker.terminate();
-    const text = cleanOCR(data.text || "");
+      logger: m => { if (m.status === "recognizing text") status(`Reading the label${pass}… ${Math.round(m.progress*100)}%`); } });
+    // First read a cleaned-up (greyscale, higher contrast) copy; if that looks garbled, try the original photo and keep the better read.
+    let { data } = await worker.recognize(await shrink(f, true));
+    let text = cleanOCR(data.text || ""), q = ocrQuality(text, data.confidence);
+    if (q.poor || text.length < 8){
+      pass = " (second try)";
+      const r2 = (await worker.recognize(await shrink(f, false))).data, t2 = cleanOCR(r2.text || ""), q2 = ocrQuality(t2, r2.confidence);
+      if (t2.length >= 8 && (text.length < 8 || q2.bad / Math.max(1, q2.total) < q.bad / Math.max(1, q.total))){ data = r2; text = t2; }
+    }
+    worker.terminate();
     if (text.length < 8){ status("Couldn't read any text. Try a closer, well-lit photo of just the ingredient list.", true); return; }
     $("#ingredients").value = text;
-    const q = ocrQuality(text, data.confidence);
+    q = ocrQuality(text, data.confidence);
     if (q.poor) status(`Parts of this photo were hard to read (${q.bad} of ${q.total} words look garbled). For a better result, retake it close up, flat and well lit, with only the ingredient list in the frame. Or fix the words in the box.`, true);
     else status("Here's what the photo says. Fix any misread words in the box and the result updates by itself.");
     checkEntered(text);
@@ -1515,7 +1533,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.6", APP_DATE = "2026-11-04";
+const APP_VERSION = "4.7", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };

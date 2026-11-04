@@ -117,6 +117,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - A small colour key sits under the list.
 - After a label photo, Sourced warns if much of the text looks misread and suggests retaking the photo close up, flat and well lit.
 
+## 4.7 (4 Nov 2026): better label reading
+- Label photos are cleaned up before reading: turned to greyscale, contrast boosted, small photos enlarged, and light-on-dark text flipped. This helps with glare, shadows and coloured packs.
+- If the first read still looks garbled, Sourced tries again with the original photo and keeps the better result.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
