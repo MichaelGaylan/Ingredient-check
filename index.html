@@ -927,6 +927,9 @@ function renderResult(args){
   const ringLabel = checking ? "Checking records" : clear ? "No concerns found" : `Score ${sc.score} of 100, show breakdown`;
   const ringNum = checking ? `…<span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
   const ringOff = checking ? C : clear ? 0 : off;
+  // The product name takes the colour of the most serious ingredient finding (grade A is shown in alert red).
+  const worst = ["A","B","C","D"].find(g => matched.some(e => topGrade(e) === g) || autoHits.some(a => a.grade === g)) || null;
+  const nameColor = worst === "A" ? "var(--neg)" : worst ? `var(--g${worst})` : (clear && !checking ? "var(--ok)" : "var(--ink)");
   const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[], {code:current?.code, name, labels:args.labels||[]});
   const altEligible = !example && !checking && !clear && sc.score < 80 && current?.code && (args.cats||[]).length;
   $("#result").innerHTML = `
@@ -941,7 +944,7 @@ function renderResult(args){
         </button>
         <div style="min-width:0">
           ${example?'<div class="example-tag">Example, not a real product</div>':""}
-          <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1">${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button>`:""}</div>
+          <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1;color:${nameColor}"${worst?` title="Most serious finding: grade ${worst} (${GRADE_NAME[worst]})"`:""}>${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button>`:""}</div>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
           <div class="counts">${["A","B","C","D","OK"].filter(g=>counts[g]).map(g=>`<span class="chip g-${g}">${counts[g]} × ${g==="OK"?"reassuring":g}</span>`).join("")}${unrev.length?`<button type="button" class="chip g-N chipbtn" id="unrevChip" aria-expanded="${unrevOpen}" aria-controls="unrevDrop">${unrev.length} not reviewed <span aria-hidden="true">${unrevOpen?"▴":"▾"}</span></button>`:""}</div>
@@ -1288,7 +1291,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "1.9", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.0", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
