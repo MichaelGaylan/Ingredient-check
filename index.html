@@ -831,7 +831,7 @@ function allergenReport(text, offTags, offTraces, info={}){
   const found = [...new Set([...contains.keys(), ...traces.keys()])];
   algCtx.has = found;
   const silenced = [...new Set(found.flatMap(id => !mine.includes(id) ? (id === "lactose" ? [] : [algName(id)]) : [...(contains.get(id)||[]), ...(traces.get(id)||[])].filter(x => off.includes(x))))];
-  const silentNote = silenced.length ? `<p class="small muted alg-silent"><span class="alg-silent-hd">Not alerting for ${esc(silenced.join(", ").replace(/, ([^,]*)$/, " and $1"))}:</span> removed in <a href="#" class="alg-set" onclick="openSettings('alg');return false">Settings → My allergens</a>.</p>` : "";
+  const silentNote = silenced.length ? `<p class="small muted alg-silent"><span class="alg-silent-hd">Not alerting for ${esc(silenced.join(", ").replace(/, ([^,]*)$/, " and $1"))}:</span> Removed in <a href="#" class="alg-set" onclick="openSettings('alg');return false">Settings → My allergens</a>.</p>` : "";
   if (html) html += silentNote;   // one short line under the alert
   else if (found.length) html = `<div class="alg-note">No allergen alerts for this product.${silentNote ? " " + silentNote.replace(/<\/?p[^>]*>/g, "") : ""} This is not a guarantee: always check the pack.</div>`;
   else if (mine.length){
@@ -1329,7 +1329,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "3.2", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.3", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
