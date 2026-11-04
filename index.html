@@ -167,8 +167,15 @@ button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:v
 .ftab.ft-N[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
 .ftab.ft-N{background:var(--bg);border:1px solid var(--line);border-bottom:none}
 .fpanel{padding-top:4px}
-.find-tabs details:not([open]) .f-sum{display:none}
-.find-tabs details:not([open]) .f-neg{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* Collapsed rows: exactly 3 lines (name + grade, then a 2-line preview). */
+.find-tabs .finding{padding-top:8px}
+.find-tabs .finding:first-child{padding-top:0}
+.find-tabs details:not([open]) > summary{gap:0 10px;align-items:center;line-height:1.4}
+.find-tabs details:not([open]) > summary > div:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.find-tabs details:not([open]) .f-code{display:none}
+.find-tabs details:not([open]) .chip{font-size:11px;padding:1px 6px}
+.find-tabs details:not([open]) .f-neg,.find-tabs details:not([open]) .f-sum{margin:0;font-size:14px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.find-tabs details:not([open]) > summary:has(.f-neg) .f-sum{display:none}
 .find-tabs details > summary{position:relative;padding-right:22px}
 .find-tabs details > summary::after{content:"▾";position:absolute;right:2px;bottom:4px;color:var(--muted);font-size:14px}
 .find-tabs details[open] > summary::after{content:"▴"}
@@ -1272,7 +1279,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "1.6", APP_DATE = "2026-11-04";
+const APP_VERSION = "1.7", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
