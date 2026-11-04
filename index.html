@@ -167,6 +167,11 @@ button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:v
 .ftab.ft-N[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
 .ftab.ft-N{background:var(--bg);border:1px solid var(--line);border-bottom:none}
 .fpanel{padding-top:4px}
+.find-tabs details:not([open]) .f-sum{display:none}
+.find-tabs details:not([open]) .f-neg{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.find-tabs details > summary{position:relative;padding-right:22px}
+.find-tabs details > summary::after{content:"▾";position:absolute;right:2px;bottom:4px;color:var(--muted);font-size:14px}
+.find-tabs details[open] > summary::after{content:"▴"}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .ic-btn{display:inline-flex;align-items:center;gap:8px}
 .btn-ic{width:18px;height:18px;flex:none}
@@ -602,9 +607,9 @@ function topNeg(e){
   const first = c.text.match(/^.*?[.!?](\s|$)/)?.[0].trim() || c.text;
   return `<p class="f-neg" style="--gc:var(--g${c.grade})"><span aria-hidden="true">⚠</span> ${esc(first)}</p>`;
 }
-function entryRow(e, open){
+function entryRow(e, open, key){
   const codes = (e.codes||[]).map(c=>c.toUpperCase()).join(", ");
-  return `<div class="finding"><details${open?" open":""}><summary>
+  return `<div class="finding"><details${open?" open":""}${key?` data-key="${esc(key)}"`:""}><summary>
       <div><span class="f-name">${esc(e.name)}</span> ${codes?`<span class="f-code">${esc(codes)}</span>`:""}</div>
       <div>${chip(topGrade(e))}</div>
       <p class="f-sum">${esc(e.summary)}</p>${topNeg(e)}</summary>${entryDetail(e)}</details></div>`;
@@ -831,7 +836,13 @@ function allergenReport(text, offTags, offTraces, info={}){
 
 /* Findings as folder tabs, worst evidence first; opens on the most serious non-empty tab. */
 const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["OK","Reassuring"],["N","Not yet reviewed"]];
-let findTab = null, findTabFor = null;
+let findTab = null, findTabFor = null, openFinding = null;
+// Accordion: opening one finding closes the others; the open one survives automatic re-renders.
+document.addEventListener("toggle", e => {
+  const d = e.target; if (!(d instanceof HTMLDetailsElement) || !d.closest(".find-tabs")) return;
+  if (d.open){ openFinding = d.dataset.key || null; d.closest(".find-tabs").querySelectorAll("details[open]").forEach(o => { if (o !== d) o.open = false; }); }
+  else if (openFinding === d.dataset.key) openFinding = null;
+}, true);
 function findingsTabs({matched, autoHits, autoOK, unrev, pending}){
   const autoNote = `<p class="auto-note">Automatic: looked up in PubChem, which carries the FDA Substances Added to Food inventory, WHO/FAO JECFA evaluations and IARC classifications. Shown as published, not checked by us. An FDA or WHO listing means permitted, not proven safe.</p>`;
   const tabs = FIND_TABS.map(([k, label]) => {
@@ -843,11 +854,14 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending}){
     const lib = matched.filter(e => topGrade(e) === k);
     const auto = k === "OK" ? autoOK : autoHits.filter(a => a.grade === k);
     if (!lib.length && !auto.length) return null;
-    return {k, label, n:lib.length + auto.length, html: lib.map(e => entryRow(e, k !== "OK")).join("") + (auto.length ? autoNote + auto.map(r => r.html).join("") : "")};
+    const autoRow = r => { const key = "auto:"+r.raw; return `<div class="finding"><details data-key="${esc(key)}"${openFinding===key?" open":""}><summary>
+      <div><span class="f-name">${esc(r.raw)}</span> <span class="f-code">automatic lookup</span></div><div>${chip(r.grade||"OK")}</div>
+      <p class="f-sum">${r.grade?`IARC Group ${esc(r.iarc)}: ${esc(IARC_WORDS[r.iarc])}.`:"Listed as permitted in food by the FDA or WHO/FAO."}</p></summary>${r.html}</details></div>`; };
+    return {k, label, n:lib.length + auto.length, html: lib.map(e => entryRow(e, openFinding===e.id, e.id)).join("") + (auto.length ? autoNote + auto.map(autoRow).join("") : "")};
   }).filter(Boolean);
   if (!tabs.length) return "";
   const key = lastArgs ? (lastArgs.text||"") : "";
-  if (findTabFor !== key || !tabs.some(t => t.k === findTab)){ if (findTabFor !== key) findTab = null; findTabFor = key; }
+  if (findTabFor !== key || !tabs.some(t => t.k === findTab)){ if (findTabFor !== key){ findTab = null; openFinding = null; } findTabFor = key; }
   const active = tabs.some(t => t.k === findTab) ? findTab : tabs[0].k;
   findTab = active;
   return `<div class="panel stack find-tabs">
@@ -1258,7 +1272,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "1.5", APP_DATE = "2026-11-04";
+const APP_VERSION = "1.6", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
