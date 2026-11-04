@@ -170,8 +170,8 @@ button.primary.lookup-mode{background:var(--ink);border-color:var(--ink);color:v
 .ftab.ft-D[aria-selected="true"]{color:var(--gD);box-shadow:inset 0 3px 0 var(--gD)} .ftab.ft-D .ftab-n{background:var(--gD-bg);color:var(--gD)}
 .ftab.ft-W[aria-selected="true"]{color:var(--gW);box-shadow:inset 0 3px 0 var(--gW)} .ftab.ft-W .ftab-n{background:var(--gW-bg);color:var(--gW)}
 .ftab.ft-OK[aria-selected="true"]{color:var(--ok);box-shadow:inset 0 3px 0 var(--ok)} .ftab.ft-OK .ftab-n{background:var(--ok-bg);color:var(--ok)}
-.ftab.ft-N[aria-selected="true"],.ftab.ft-F[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
-.ftab.ft-N,.ftab.ft-F{background:var(--bg);border:1px solid var(--line);border-bottom:none}
+.ftab.ft-N[aria-selected="true"],.ftab.ft-F[aria-selected="true"],.ftab.ft-U[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 3px 0 var(--gN)}
+.ftab.ft-N,.ftab.ft-F,.ftab.ft-U{background:var(--bg);border:1px solid var(--line);border-bottom:none}
 .fpanel{padding-top:4px}
 /* Collapsed rows: exactly 3 lines (name + grade, then a 2-line preview). */
 .find-tabs .finding{padding-top:8px}
@@ -325,6 +325,11 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <ul class="ok-list" id="okList"></ul>
         <p class="set-help">Products you marked “OK for me” on the allergen warning. They show a green note instead of the red banner, until their ingredient list changes. Saved on this phone only.</p>
       </div>
+      <details class="set-row about">
+        <summary><span class="label">Under review</span></summary>
+        <p class="set-help">Ingredients on our own research list. We're checking the sources on each one before it gets a rating. Until then they show under <b>Under review</b> in Findings, with no rating and no effect on the score. This is our own ongoing research, not medical or scientific advice.</p>
+        <p class="set-help" id="urList" style="color:inherit"></p>
+      </details>
       <details class="set-row about">
         <summary><span class="label">Help</span></summary>
         <h3>How to use</h3>
@@ -696,6 +701,56 @@ function basicFound(text){
   for (const p of ingParts(text)){ const n = norm(p).trim(); if (BASIC.includes(n) && !out.some(o => norm(o).trim() === n)) out.push(p); }
   return out;
 }
+/* Our research list: ingredients from Gaylan's 200-item lead list that we have not verified yet.
+   Names only, never a claim or a rating. Each moves into ENTRIES once its sources are checked. */
+const UNDER_REVIEW = [
+  {name:"Carmine (cochineal)", aliases:["carmine","cochineal","cochineal extract","carminic acid","e120"]},
+  {name:"Smoke flavouring", aliases:["smoke flavouring","smoke flavoring","smoke flavour","smoke flavor","liquid smoke","natural smoke flavor","natural smoke flavour"]},
+  {name:"Cyclamate", aliases:["cyclamate","sodium cyclamate","calcium cyclamate","cyclamic acid","e952"]},
+  {name:"Citrus Red No. 2", aliases:["citrus red 2","citrus red no 2","citrus red no. 2"]},
+  {name:"TBHQ", aliases:["tbhq","tertiary butylhydroquinone","tert butylhydroquinone","e319"]},
+  {name:"Neotame", aliases:["neotame","e961"]},
+  {name:"Advantame", aliases:["advantame","e969"]},
+  {name:"Monk fruit extract", aliases:["monk fruit","monk fruit extract","luo han guo","mogrosides"]},
+  {name:"Thaumatin", aliases:["thaumatin","e957"]},
+  {name:"Tagatose", aliases:["tagatose"]},
+  {name:"Propionates", aliases:["calcium propionate","sodium propionate","propionic acid","potassium propionate","e280","e281","e282","e283"]},
+  {name:"Sorbates", aliases:["potassium sorbate","calcium sorbate","sorbic acid","e200","e202","e203"]},
+  {name:"Natamycin", aliases:["natamycin","e235"]},
+  {name:"Nisin", aliases:["nisin","e234"]},
+  {name:"Sodium diacetate", aliases:["sodium diacetate","e262"]},
+  {name:"Sodium erythorbate", aliases:["sodium erythorbate","erythorbic acid","e315","e316"]},
+  {name:"Ascorbyl palmitate", aliases:["ascorbyl palmitate","e304"]},
+  {name:"Polysorbate 60", aliases:["polysorbate 60","e435"]},
+  {name:"Xanthan gum", aliases:["xanthan gum","xanthan","e415"]},
+  {name:"Guar gum", aliases:["guar gum","guar","e412"]},
+  {name:"Locust bean gum", aliases:["locust bean gum","carob bean gum","e410"]},
+  {name:"Gellan gum", aliases:["gellan gum","gellan","e418"]},
+  {name:"Konjac (glucomannan)", aliases:["konjac","konjac gum","glucomannan","e425"]},
+  {name:"Gum arabic (acacia)", aliases:["gum arabic","acacia gum","acacia","e414"]},
+  {name:"Tragacanth", aliases:["tragacanth","gum tragacanth","e413"]},
+  {name:"Propylene glycol", aliases:["propylene glycol","e1520"]},
+  {name:"Gelatin", aliases:["gelatin","gelatine"]},
+  {name:"Blue No. 1 (Brilliant Blue)", aliases:["blue 1","blue no 1","fd c blue no 1","brilliant blue","e133"]},
+  {name:"Blue No. 2 (Indigo carmine)", aliases:["blue 2","blue no 2","fd c blue no 2","indigo carmine","indigotine","e132"]},
+  {name:"Green No. 3 (Fast Green)", aliases:["green 3","green no 3","fd c green no 3","fast green"]},
+  {name:"Annatto", aliases:["annatto","annatto extract","bixin","norbixin","e160b"]},
+  {name:"Paprika extract", aliases:["paprika extract","paprika oleoresin","e160c"]},
+  {name:"Beta-carotene", aliases:["beta carotene","beta-carotene","e160a"]},
+  {name:"Beetroot red", aliases:["beetroot red","beet juice color","beet red","betanin","e162"]},
+  {name:"Spirulina extract", aliases:["spirulina","spirulina extract"]},
+  {name:"Disodium inosinate", aliases:["disodium inosinate","e631"]},
+  {name:"Disodium guanylate", aliases:["disodium guanylate","e627"]},
+  {name:"Hydrolysed vegetable protein", aliases:["hydrolyzed vegetable protein","hydrolysed vegetable protein","hydrolyzed soy protein","hydrolyzed corn protein","hvp"]},
+  {name:"Yeast extract", aliases:["yeast extract","autolyzed yeast extract","autolysed yeast extract","autolyzed yeast"]},
+  {name:"Diacetyl (butter flavouring)", aliases:["diacetyl"]},
+  {name:"Inulin / chicory root fibre", aliases:["inulin","chicory root fiber","chicory root fibre","chicory root extract"]},
+  {name:"Fructooligosaccharides (FOS/GOS)", aliases:["fructooligosaccharides","oligofructose","fos","galactooligosaccharides","gos"]},
+  {name:"Lactulose", aliases:["lactulose"]},
+  {name:"Fructose", aliases:["fructose","crystalline fructose"]},
+  {name:"Maltodextrin", aliases:["maltodextrin"]}
+];
+function underReview(raw){ const n = norm(raw); return UNDER_REVIEW.find(u => u.aliases.some(a => n.includes(" " + norm(a).trim() + " "))) || null; }
 function unreviewed(text, matched){
   if (!text) return [];
   const parts = text.replace(/^\s*ingredients?\s*:/i,"").split(/[,;()\[\]]|\band\/or\b|\bor\b|\band\b|\.\s|\.$/i).map(s=>s.replace(/[*_]/g,"").replace(/\d+(\.\d+)?\s*%/g,"").trim()).filter(s=>s && s.length<60);
@@ -912,7 +967,7 @@ function allergenReport(text, offTags, offTraces, info={}){
 }
 
 /* Findings as folder tabs, worst evidence first; opens on the most serious non-empty tab. */
-const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["W","Label warnings"],["OK","Reassuring"],["N","Not yet reviewed"],["F","Everyday foods"]];
+const FIND_TABS = [["A","Established"],["B","Probable"],["C","Possible"],["D","Preliminary"],["W","Label warnings"],["OK","Reassuring"],["U","Under review"],["N","Not yet reviewed"],["F","Everyday foods"]];
 let findTab = null, findTabFor = null, openFinding = null;
 // Accordion: opening one finding closes the others; the open one survives automatic re-renders.
 document.addEventListener("toggle", e => {
@@ -927,7 +982,13 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending, basic}){
       if (!basic?.length) return null;
       return {k, label, n:basic.length, html:`<p class="muted" style="font-size:13.5px">Everyday foods and basic ingredients. There is no additive or safety record to check, so they don't change the score. Any allergens in them are covered by the allergen alert.</p><div class="unreviewed">${basic.map(b => `<span class="chip g-N">${esc(b)}</span>`).join("")}</div>`};
     }
+    if (k === "U"){
+      const ur = unrev.filter(u => underReview(u));
+      if (!ur.length) return null;
+      return {k, label, n:ur.length, html:`<p class="muted" style="font-size:13.5px"><b>On our research list.</b> We're checking the sources on these before rating them, so there's no rating yet and they don't change the score. This is our own ongoing research, not medical or scientific advice.</p><div class="unreviewed">${ur.map(searchChip).join("")}</div>`};
+    }
     if (k === "N"){
+      unrev = unrev.filter(u => !underReview(u));
       if (!unrev.length) return null;
       return {k, label, n:unrev.length, html:`<p class="muted" style="font-size:13.5px">${pending.length?`Checking FDA, WHO and IARC records for ${pending.length} ingredient${pending.length>1?"s":""}…`:"No graded evidence or official record found for these. That does not mean they are safe or unsafe. Tap one to search the web."}</p><div class="unreviewed">${unrev.map(searchChip).join("")}</div>
         ${!pending.length?`<p class="muted" style="font-size:12.5px">Whole foods and blends (flours, oils, natural flavours) usually have no single official record. <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">Search PubChem yourself</a>.</p>`:""}`};
@@ -936,7 +997,7 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending, basic}){
     const auto = k === "OK" ? autoOK : autoHits.filter(a => a.grade === k);
     if (!lib.length && !auto.length) return null;
     const autoRow = r => { const key = "auto:"+r.raw; return `<div class="finding"><details data-key="${esc(key)}"${openFinding===key?" open":""}><summary>
-      <div><span class="f-name">${esc(r.raw)}</span> <span class="f-code">automatic lookup</span></div><div class="chip-wrap">${r.grade?chip(r.grade):'<span class="chip g-OK">Permitted in food</span>'}${r.caveat?CAVEAT:""}</div>
+      <div><span class="f-name">${esc(r.raw)}</span> <span class="f-code">automatic lookup${underReview(r.raw)?" · on our research list":""}</span></div><div class="chip-wrap">${r.grade?chip(r.grade):'<span class="chip g-OK">Permitted in food</span>'}${r.caveat?CAVEAT:""}</div>
       <p class="f-sum">${r.grade?`IARC Group ${esc(r.iarc)}: ${esc(IARC_WORDS[r.iarc])}.`:`Allowed in food in small, regulated amounts${r.uses?` as ${esc(r.uses)}`:""}. Not a safety rating for the chemical itself.${r.hazards?.length?` Concentrated chemical: ${esc(r.hazards[0])}.`:""}`}</p></summary>${r.html}</details></div>`; };
     if (k === "OK") label = !lib.length ? "Permitted" : auto.length ? "Reassuring / permitted" : label;
     return {k, label, n:lib.length + auto.length, html: lib.map(e => entryRow(e, openFinding===e.id, e.id)).join("") + (auto.length ? autoNote + auto.map(autoRow).join("") : "")};
@@ -982,7 +1043,7 @@ function renderResult(args){
   // Three states: checking (lookup still running, nothing bad yet), clear (nothing derogatory found), scored.
   const clear = concernCount === 0, checking = clear && pending.length > 0;
   const plural = (n, w) => `${n} ingredient${n>1?"s":""} ${w}`;
-  const okCount = matched.length + autoOK.length, noRec = unrev.length;
+  const urCount = unrev.filter(u => underReview(u)).length, okCount = matched.length + autoOK.length, noRec = unrev.length - urCount;
   // Name, ring and verdict all take the colour of the most serious ingredient finding (grade A in alert red),
   // and the verdict can't sound milder than that finding: A means at least "Several concerns", B at least "Some".
   const worst = ["A","B","C","D","W"].find(g => matched.some(e => topGrade(e) === g) || autoHits.some(a => a.grade === g)) || null;
@@ -998,6 +1059,7 @@ function renderResult(args){
     : clear ? ["Nothing derogatory found in our evidence library or in FDA, WHO and IARC records.",
         okCount ? `${plural(okCount, okCount>1?"were":"was")} reviewed as reassuring or listed as permitted.` : "",
         autoOK.some(r=>r.caveat) ? `${autoOK.filter(r=>r.caveat).length} permitted ingredient${autoOK.filter(r=>r.caveat).length>1?"s have":" has"} a caveat (red triangle): see Findings.` : "",
+        urCount ? `${plural(urCount, urCount>1?"are":"is")} on our research list, not yet rated.` : "",
         noRec ? `${plural(noRec, noRec>1?"have":"has")} no record anywhere (common for basic foods like potatoes, oil and salt), so this is not a guarantee of safety.` : ""].filter(Boolean).join(" ")
     : [ingConcerns ? `${ingConcerns} ingredient${ingConcerns>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}` : "",
         sc.highs.length ? `High in ${sc.highs.map(h=>h.label).join(", ").replace(/, ([^,]*)$/, " and $1")}.` : ""].filter(Boolean).join(" ");
@@ -1383,7 +1445,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "3.7", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.8", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1570,6 +1632,7 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
       const ex = SET.allergens.includes(a.id) && a.id !== "lactose" ? SET.algOffWords.filter(w => a.terms.includes(w)) : [];
       el.textContent = ex.length ? `except ${ex.join(", ")}` : ""; });
   };
+  $("#urList").textContent = UNDER_REVIEW.map(u => u.name).sort().join(", ") + ".";
   window.renderOKList=()=>{
     const all=okAll(), ks=Object.keys(all);
     const av=avoidAll(), aks=Object.keys(av);

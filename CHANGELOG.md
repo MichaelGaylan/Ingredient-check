@@ -84,6 +84,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - New verified entries: sulphites (EFSA 2022), sugar alcohols such as sorbitol and maltitol, liquorice, caffeine (EFSA 2015) and sodium/potassium nitrate (EFSA 2017).
 - New "⚠ Label warning" rating for ingredients where the law requires a pack warning at high amounts (sugar alcohols, liquorice, caffeine). These lower the score only slightly and have their own Findings tab.
 
+## 3.8 (4 Nov 2026): our research list
+- 45 ingredients we are still researching (for example carmine, TBHQ, sorbates, gums and smoke flavouring) now show in an "Under review" tab in Findings, by name only, with no rating and no effect on the score. The full list is in Settings → Under review, marked as our own ongoing research and not medical or scientific advice. Each moves into the main library once its sources are checked.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
