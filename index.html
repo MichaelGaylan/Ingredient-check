@@ -993,7 +993,7 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending, basic}){
     if (k === "OK") label = !lib.length ? "Permitted" : auto.length ? "Reassuring / permitted" : label;
     return {k, label, n:lib.length + auto.length, html: lib.map(e => entryRow(e, openFinding===e.id, e.id)).join("") + (auto.length ? autoNote + auto.map(autoRow).join("") : "")};
   }).filter(Boolean);
-  if (!tabs.length) return "";
+  if (!tabs.length) return `<div class="panel stack find-tabs"><div class="label">Findings</div><p class="muted" style="font-size:13.5px">No ingredient list to check for this product yet. Type the ingredients into the box above, or tap the camera icon to read them from the label.</p></div>`;
   const key = lastArgs ? (lastArgs.text||"") : "";
   if (findTabFor !== key || !tabs.some(t => t.k === findTab)){ if (findTabFor !== key){ findTab = null; openFinding = null; } findTabFor = key; }
   const active = tabs.some(t => t.k === findTab) ? findTab : tabs[0].k;
@@ -1004,6 +1004,8 @@ function findingsTabs({matched, autoHits, autoOK, unrev, pending, basic}){
     ${tabs.map(t => `<div role="tabpanel" id="fpanel-${t.k}" aria-labelledby="ftab-${t.k}" class="fpanel"${t.k===active?"":" hidden"}>${t.html}</div>`).join("")}
   </div>`;
 }
+// If anything goes wrong while building Findings, say so instead of leaving the section out.
+function safeFindings(o){ try { return findingsTabs(o); } catch(err){ console.error(err); return `<div class="panel stack find-tabs"><div class="label">Findings</div><p class="muted" style="font-size:13.5px">Findings couldn't be shown for this product (${esc(err && err.message || "unknown error")}). Please try again, or tell us which product it was.</p></div>`; } }
 // Summary chips under the rating jump down to their Findings tab and open it.
 window.jumpTab = k => {
   if (!document.getElementById("ftab-"+k)) return;
@@ -1092,7 +1094,7 @@ function renderResult(args){
         <p class="disclaimer" style="margin-top:6px">${sc.nutriUsed ? "" : "No nutrition data for this product, so sugar, salt and fat aren't scored. "}See Method for the formula.</p>
       </div>
     </div>
-    ${findingsTabs({matched, autoHits, autoOK, unrev, pending, basic: basicFound(text)})}
+    ${safeFindings({matched, autoHits, autoOK, unrev, pending, basic: basicFound(text)})}
     ${altEligible?`<div class="panel stack" id="alts"><div class="label">Better-scoring alternatives</div><p class="muted" style="font-size:13.5px">Looking for similar products that score better…</p></div>`:""}
     ${nutriments?nutriPanel(nutriments):""}
     ${text?`<details class="panel"${alg&&alg.mineHit?" open":""}><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${alg ? alg.marked : esc(text)}</p></details>`:""}
@@ -1438,7 +1440,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.3", APP_DATE = "2026-11-04";
+const APP_VERSION = "4.4", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1705,7 +1707,7 @@ async function present(d, opt={}){
 
 $("#aboutVersion").textContent = `Sourced ${APP_VERSION} (${niceDate(APP_DATE)}) · scoring rules version ${RULES_VERSION}`;
 /* ---------- offline support when added to the Home Screen ---------- */
-if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(()=>{});
+if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(()=>{});
 </script>
 
 </body>

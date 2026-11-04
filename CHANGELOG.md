@@ -103,6 +103,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 4.3 (4 Nov 2026): summary chips jump to Findings
 - The chips under the rating (such as "1 × B" or "2 not reviewed") now scroll down and open their matching Findings tab. "Under review" and "not reviewed" have separate chips.
 
+## 4.4 (4 Nov 2026): Findings always shows
+- The Findings section is now always shown. When a product has no ingredient list yet, it says so and explains how to add one, instead of disappearing.
+- If something goes wrong while building Findings, a short message is shown in its place rather than a blank space.
+- Phones that installed Sourced on the Home Screen now check for the latest version each time the app opens.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
