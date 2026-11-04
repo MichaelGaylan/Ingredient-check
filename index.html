@@ -748,6 +748,11 @@ window.algAdd = id => {
   algAdded = {ids: algAdded && algAdded.fp === fp ? [...new Set([...algAdded.ids, id])] : [id], fp};
   if (lastArgs) renderResult(lastArgs);
 };
+window.algRemove = id => {
+  SET.allergens = SET.allergens.filter(x => x !== id); saveSet();
+  if (algAdded) algAdded.ids = algAdded.ids.filter(x => x !== id);
+  if (lastArgs) renderResult(lastArgs);
+};
 window.algAddUndo = () => {
   if (!algAdded) return;
   SET.allergens = SET.allergens.filter(x => !algAdded.ids.includes(x)); saveSet();
@@ -802,6 +807,7 @@ function allergenReport(text, offTags, offTraces, info={}){
       ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
       ${algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id)) ? `<p class="alg-kept">✓ ${esc(list(algAdded.ids).replace(/^./, c=>c.toUpperCase()))} added to your allergens. <button type="button" class="linkbtn" onclick="algAddUndo()">Undo</button></p>` : ""}
       ${avoided?"":`<p class="small">Matches your allergen list. Always check the pack.</p>`}
+      ${(() => { const rm = red.filter(id => !(algAdded && algAdded.fp === fp && algAdded.ids.includes(id))); return avoided || !rm.length ? "" : `<p class="small alg-rm">Not an allergen for you? ${rm.map(id=>`<button type="button" class="linkbtn" onclick="algRemove('${id}')">Remove ${esc(algName(id))} from my allergens</button>`).join(" · ")}</p>`; })()}
       ${code && avoided ? `<p class="alg-kept">✓ Kept as allergen on ${esc(niceDate(avoided.date))}. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button></p>` : ""}
       ${code && !avoided?`<div class="alg-ok-row">${avoided?"":`<button type="button" class="alg-ok" onclick="algKeep('${red.join(",")}')">Keep as allergen</button>`}${red.map(id=>`<button type="button" class="alg-ok" onclick="algOK('${id}')">${red.length>1?`${esc(algName(id)[0].toUpperCase()+algName(id).slice(1))} is OK for me here`:"This one is OK for me"}</button>`).join("")}</div>`:""}
       <!--ADD--></div></div>`;
@@ -809,7 +815,8 @@ function allergenReport(text, offTags, offTraces, info={}){
   if (okShown.length){
     html += `<div class="alg-note alg-okd">✓ Contains ${esc(list(okShown))}. You marked this product OK for you on ${esc(niceDate(ok.date))}. <button type="button" class="linkbtn" onclick="algUndo('${esc(code)}')">Undo</button></div>`;
   }
-  const addable = [...new Set([...contains.keys(), ...traces.keys()])].filter(id => id !== "lactose" && !mine.includes(id));
+  // Lactose is offered alongside milk (for intolerance), unless milk is already on the list or the product is lactose-free.
+  const addable = [...new Set([...contains.keys(), ...traces.keys()])].filter(id => !mine.includes(id) && (id !== "lactose" || (!mine.includes("milk") && !lfree)));
   const addRow = addable.length ? `<div class="alg-add-row">${addable.map(id=>`<button type="button" class="alg-add" onclick="algAdd('${id}')">+ Keep ${esc(algName(id))} in my allergens</button>`).join("")}</div>` : "";
   html = html.replace("<!--ADD-->", avoided ? "" : addRow.replace("alg-add-row", "alg-add-row on-red"));
   if (!html && mine.length){
@@ -1281,7 +1288,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "1.8", APP_DATE = "2026-11-04";
+const APP_VERSION = "1.9", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
