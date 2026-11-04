@@ -77,6 +77,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Removing an allergen's own name from the alert (Milk, Eggs, Soy…) now unticks it in My allergens.
 - Removing a single ingredient word (whey, oats) keeps the allergen ticked and shows "except whey" under it, so the list always matches what the alert does.
 
+## 3.6 (4 Nov 2026): US and UK spellings
+- Allergen alerts now recognise US and UK spellings and common names, such as mollusks and molluscs, sulfites and sulphites, shellfish, crawfish, soya beans and lupine.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

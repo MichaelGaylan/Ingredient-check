@@ -721,18 +721,18 @@ const ALLERGENS = [
   {id:"lactose", label:"Lactose (intolerance)", off:["en:milk"], terms:[], not:[]},
   {id:"eggs", label:"Eggs", off:["en:eggs"], terms:["egg","eggs","albumin","albumen","ovalbumin","lysozyme","mayonnaise","meringue","egg white","egg yolk"], not:[]},
   {id:"fish", label:"Fish", off:["en:fish"], terms:["fish","anchovy","anchovies","cod","salmon","tuna","sardine","sardines","pollock","haddock","tilapia","trout","mackerel","herring","bonito"], not:[]},
-  {id:"crustaceans", label:"Shellfish (crustaceans)", off:["en:crustaceans"], terms:["shrimp","shrimps","prawn","prawns","crab","lobster","crayfish","krill","langoustine","crustacean","crustaceans"], not:[]},
-  {id:"molluscs", label:"Molluscs", off:["en:molluscs"], terms:["mussel","mussels","oyster","oysters","clam","clams","scallop","scallops","squid","octopus","calamari","snail","snails","mollusc","molluscs"], not:["oyster mushroom","oyster mushrooms"]},
+  {id:"crustaceans", label:"Shellfish (crustaceans)", off:["en:crustaceans"], terms:["shrimp","shrimps","prawn","prawns","crab","lobster","crayfish","krill","langoustine","crustacean","crustaceans","shellfish","crawfish","crawdad","crawdads","scampi"], not:[]},
+  {id:"molluscs", label:"Molluscs", off:["en:molluscs"], terms:["mussel","mussels","oyster","oysters","clam","clams","scallop","scallops","squid","octopus","calamari","snail","snails","mollusc","molluscs","mollusk","mollusks","escargot","cuttlefish","whelk","whelks","abalone","periwinkle","periwinkles"], not:["oyster mushroom","oyster mushrooms"]},
   {id:"nuts", label:"Tree nuts", off:["en:nuts"], terms:["almond","almonds","hazelnut","hazelnuts","walnut","walnuts","cashew","cashews","pecan","pecans","pistachio","pistachios","brazil nut","brazil nuts","macadamia","praline","marzipan","tree nuts","nut","nuts","filbert","filberts"],
    not:["nutmeg","coconut","coconuts","water chestnut","water chestnuts","butternut","peanut","peanuts","doughnut","donut"]},
   {id:"peanuts", label:"Peanuts", off:["en:peanuts"], terms:["peanut","peanuts","groundnut","groundnuts","arachis"], not:[]},
   {id:"gluten", label:"Wheat / gluten", off:["en:gluten"], terms:["wheat","barley","rye","oat","oats","spelt","semolina","durum","farro","kamut","malt","triticale","seitan","couscous","bulgur","gluten","enriched flour","bleached flour","all purpose flour","graham"],
    not:["buckwheat","gluten free","oat free","malted milk free"]},
-  {id:"soy", label:"Soy", off:["en:soybeans"], terms:["soy","soya","soybean","soybeans","edamame","tofu","miso","tempeh","shoyu","tamari"], not:[]},
-  {id:"sesame", label:"Sesame", off:["en:sesame-seeds"], terms:["sesame","tahini","tahina","benne","gingelly"], not:[]},
+  {id:"soy", label:"Soy", off:["en:soybeans"], terms:["soy","soya","soybean","soybeans","soya bean","soya beans","edamame","tofu","miso","tempeh","shoyu","tamari"], not:[]},
+  {id:"sesame", label:"Sesame", off:["en:sesame-seeds"], terms:["sesame","tahini","tahina","benne","gingelly","sesame seed","sesame seeds"], not:[]},
   {id:"mustard", label:"Mustard", off:["en:mustard"], terms:["mustard"], not:[]},
   {id:"celery", label:"Celery", off:["en:celery"], terms:["celery","celeriac"], not:[]},
-  {id:"lupin", label:"Lupin", off:["en:lupin"], terms:["lupin","lupine","lupini"], not:[]},
+  {id:"lupin", label:"Lupin", off:["en:lupin"], terms:["lupin","lupine","lupins","lupines","lupini"], not:[]},
   {id:"sulphites", label:"Sulphites", off:["en:sulphur-dioxide-and-sulphites"], terms:["sulphite","sulphites","sulfite","sulfites","sulphur dioxide","sulfur dioxide","metabisulphite","metabisulfite","bisulphite","bisulfite","e220","e221","e222","e223","e224","e225","e226","e227","e228"], not:[]}
 ];
 { const milk = ALLERGENS[0], lac = ALLERGENS[1]; lac.terms = milk.terms; lac.not = milk.not; }
@@ -766,7 +766,7 @@ window.avoidUndo = code => { const all = avoidAll(); delete all[code]; avoidSave
 // Remove an allergen word (w:whey) or a whole allergen (cat:milk) from alerts. Restored in Settings.
 // Tapping an allergen's own name (Milk, Eggs, Soy...) switches that whole allergen off, so its box is unticked.
 // Other words (whey, oats, hazelnuts) are removed one by one and the allergen stays ticked for everything else.
-const ALG_NAME_WORDS = {milk:["milk"], eggs:["egg","eggs"], fish:["fish"], crustaceans:["crustacean","crustaceans"], molluscs:["mollusc","molluscs"], nuts:["nut","nuts","tree nuts"], peanuts:["peanut","peanuts"], gluten:["gluten"], soy:["soy","soya"], sesame:["sesame"], mustard:["mustard"], celery:["celery"], lupin:["lupin","lupine"], sulphites:["sulphite","sulphites","sulfite","sulfites"]};
+const ALG_NAME_WORDS = {milk:["milk"], eggs:["egg","eggs"], fish:["fish"], crustaceans:["crustacean","crustaceans","shellfish"], molluscs:["mollusc","molluscs","mollusk","mollusks"], nuts:["nut","nuts","tree nuts"], peanuts:["peanut","peanuts"], gluten:["gluten"], soy:["soy","soya"], sesame:["sesame"], mustard:["mustard"], celery:["celery"], lupin:["lupin","lupine"], sulphites:["sulphite","sulphites","sulfite","sulfites"]};
 const algNameOf = w => Object.keys(ALG_NAME_WORDS).find(id => ALG_NAME_WORDS[id].includes(w));
 window.algOff = key => {
   if (key.startsWith("w:") && algNameOf(key.slice(2))) key = "cat:" + algNameOf(key.slice(2));
@@ -1350,7 +1350,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "3.5", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.6", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
