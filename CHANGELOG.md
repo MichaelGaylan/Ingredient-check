@@ -111,6 +111,12 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 4.5 (4 Nov 2026): About button
 - An ⓘ About button at the top of the Home screen opens the About information (sources, privacy, version, revision history) in its own pop-up. The same information is still in Settings → About.
 
+## 4.6 (4 Nov 2026): colour-coded ingredient list
+- In "Ingredients checked", every ingredient with a finding is now shown in its Findings colour with its grade letter (A to D, ⚠ label warning, ✓ reassuring or permitted, ? under review), so colour is never the only clue. Your allergens keep their solid red mark.
+- Tap a coloured ingredient to jump to it in Findings, already opened.
+- A small colour key sits under the list.
+- After a label photo, Sourced warns if much of the text looks misread and suggests retaking the photo close up, flat and well lit.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
