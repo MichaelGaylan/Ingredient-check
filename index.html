@@ -917,7 +917,17 @@ function renderResult(args){
   const clear = concernCount === 0, checking = clear && pending.length > 0;
   const plural = (n, w) => `${n} ingredient${n>1?"s":""} ${w}`;
   const okCount = matched.length + autoOK.length, noRec = unrev.length;
-  const [bandName, bandColor] = checking ? ["Checking records","var(--gN)"] : clear ? ["No concerns found","var(--ok)"] : band(sc.score);
+  // Name, ring and verdict all take the colour of the most serious ingredient finding (grade A in alert red),
+  // and the verdict can't sound milder than that finding: A means at least "Several concerns", B at least "Some".
+  const worst = ["A","B","C","D"].find(g => matched.some(e => topGrade(e) === g) || autoHits.some(a => a.grade === g)) || null;
+  const gradeColor = worst === "A" ? "var(--neg)" : worst ? `var(--g${worst})` : null;
+  let [bandName, bandColor] = checking ? ["Checking records","var(--gN)"] : clear ? ["No concerns found","var(--ok)"] : band(sc.score);
+  if (!checking && !clear){
+    const floor = worst === "A" ? 2 : worst === "B" ? 1 : 0, names = ["Few concerns","Some concerns","Several concerns"];
+    if (names.indexOf(bandName) < floor) bandName = names[floor];
+    if (gradeColor) bandColor = gradeColor;
+  }
+  const nameColor = checking ? "var(--ink)" : bandColor;
   const headline = checking ? "Nothing derogatory so far. Checking FDA, WHO and IARC records for the rest…"
     : clear ? ["Nothing derogatory found in our evidence library or in FDA, WHO and IARC records.",
         okCount ? `${plural(okCount, okCount>1?"were":"was")} reviewed as reassuring or listed as permitted.` : "",
@@ -927,9 +937,6 @@ function renderResult(args){
   const ringLabel = checking ? "Checking records" : clear ? "No concerns found" : `Score ${sc.score} of 100, show breakdown`;
   const ringNum = checking ? `…<span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
   const ringOff = checking ? C : clear ? 0 : off;
-  // The product name takes the colour of the most serious ingredient finding (grade A is shown in alert red).
-  const worst = ["A","B","C","D"].find(g => matched.some(e => topGrade(e) === g) || autoHits.some(a => a.grade === g)) || null;
-  const nameColor = worst === "A" ? "var(--neg)" : worst ? `var(--g${worst})` : (clear && !checking ? "var(--ok)" : "var(--ink)");
   const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[], {code:current?.code, name, labels:args.labels||[]});
   const altEligible = !example && !checking && !clear && sc.score < 80 && current?.code && (args.cats||[]).length;
   $("#result").innerHTML = `
@@ -1291,7 +1298,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.0", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.1", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
