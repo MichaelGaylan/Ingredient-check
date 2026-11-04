@@ -88,18 +88,14 @@ mark.alg{background:var(--gC-bg);color:inherit;border-radius:3px;padding:0 2px}
 mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 :root[data-theme="dark"] mark.alg.mine{color:#1a0505}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) mark.alg.mine{color:#1a0505}}
+.alg-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.alg-chip{background:#fff;color:#a3121b;border:0;border-radius:999px;font-size:14px;font-weight:600;padding:6px 12px;min-height:34px}
+.alg-chip span{opacity:.6;margin-left:2px}
+.alg-silent{margin:6px 2px 0}
 .alg-ok-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .alg-ok{background:#fff;color:var(--neg);border:0;font-size:13.5px;padding:8px 12px}
-.alg-add-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.alg-add-below .alg-add-row{margin-top:0}
-.alg-add{font-size:13.5px;padding:7px 12px;border-color:var(--neg);color:var(--neg);background:var(--surface)}
-.alg-add-row.on-red .alg-add{background:transparent;color:inherit;border:2px solid currentColor}
 .alg-kept{margin-top:8px!important;font-weight:600}
 .alg-banner .linkbtn{color:inherit;font-weight:700}
-.alg-banner.added{background:#f2aba3;color:#4a0b0f}
-.alg-banner.added .alg-ok{background:#fff;color:#8f1d22}
-:root[data-theme="dark"] .alg-banner.added{background:#7d3a35;color:#fff}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner.added{background:#7d3a35;color:#fff}}
 .alg-banner.kept{background:#6e0f16;box-shadow:inset 0 0 0 3px #ff9a9a}
 :root[data-theme="dark"] .alg-banner.kept{background:#ffb3b3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner.kept{background:#ffb3b3}}
@@ -304,7 +300,9 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
       <div class="set-row">
         <span class="label" id="algLbl">My allergens</span>
         <div class="alg-grid" id="algGrid" role="group" aria-labelledby="algLbl"></div>
-        <p class="set-help">Tick the ones that matter to you. Any product containing them, or labelled “may contain” them, gets a red warning at the top of the result. Allergens don't change the score. The app can miss an allergen if the database or label text is incomplete, so always check the pack.</p>
+        <p class="set-help">Every major allergen is on by default. Any product containing a ticked allergen, or labelled “may contain” it, gets a red alert at the top of the result. Tap an item in an alert to remove it, or untick it here. Allergens don't change the score. The app can miss an allergen if the database or label text is incomplete, so always check the pack.</p>
+        <span class="label" style="margin-top:10px">Removed from alerts</span>
+        <ul class="ok-list" id="algOffList"></ul>
         <p class="set-help">Where this list comes from: the 9 major allergens in US law (<a href="https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies" target="_blank" rel="noopener">FDA, FALCPA and FASTER Act</a>) and the 14 allergens EU labels must highlight (<a href="https://eur-lex.europa.eu/eli/reg/2011/1169/oj" target="_blank" rel="noopener">EU Regulation 1169/2011, Annex II</a>). They overlap, giving 14 in all. Lactose (intolerance) is our own addition and is not a legal allergen.</p>
       </div>
       <div class="set-row">
@@ -330,7 +328,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
           <li>No barcode match? Paste the ingredient list into the box, or tap <span class="ic-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></span> in the box to read it from a photo of the label.</li>
           <li>Tap the score ring to see exactly where points were lost.</li>
           <li><b>History</b> keeps every product you scan; tap ☆ to keep a favourite, swipe left or tap × to delete.</li>
-          <li>Under <b>My allergens</b> above, tick what matters to you to get a red warning. On a warning you can mark a product <b>OK for me</b> or <b>Keep as allergen</b>.</li>
+          <li>Every major allergen gets a red alert by default. Tap an item in the alert to remove it from your alerts; restore it under <b>My allergens</b> above. You can also mark one product <b>OK for me</b>.</li>
         </ul>
         <h3>Buttons and icons</h3>
         <ul>
@@ -737,7 +735,7 @@ window.algOK = id => {
   const all = okAll(), e = all[algCtx.code] || {name:algCtx.name||"", allergens:[], fp:algCtx.fp, date:""};
   if (e.fp !== algCtx.fp) e.allergens = [];
   e.fp = algCtx.fp; e.name = algCtx.name || e.name; e.date = new Date().toISOString().slice(0,10);
-  if (!e.allergens.includes(id)) e.allergens.push(id);
+  for (const x of String(id).split(",")) if (!e.allergens.includes(x)) e.allergens.push(x);
   all[algCtx.code] = e; okSave(all); if (lastArgs) renderResult(lastArgs);
 };
 /* Products the user confirmed as "Keep as allergen" (stays flagged), per barcode, on this phone only. */
@@ -751,24 +749,16 @@ window.algKeep = ids => {
   if (lastArgs) renderResult(lastArgs);
 };
 window.avoidUndo = code => { const all = avoidAll(); delete all[code]; avoidSave(all); if (lastArgs) renderResult(lastArgs); if (window.renderOKList) renderOKList(); };
-// "Keep in my allergens": add an allergen found on this product to the user's list, with Undo.
-let algAdded = null; // {ids, fp} for the product on screen
-window.algAdd = id => {
-  if (!SET.allergens.includes(id)) SET.allergens.push(id);
-  saveSet();
-  const fp = algCtx?.fp || "";
-  algAdded = {ids: algAdded && algAdded.fp === fp ? [...new Set([...algAdded.ids, id])] : [id], fp};
-  if (lastArgs) renderResult(lastArgs);
+// Remove an allergen word (w:whey) or a whole allergen (cat:milk) from alerts. Restored in Settings.
+window.algOff = key => {
+  if (key.startsWith("cat:")) SET.allergens = SET.allergens.filter(x => x !== key.slice(4));
+  else if (!SET.algOffWords.includes(key.slice(2))) SET.algOffWords.push(key.slice(2));
+  saveSet(); if (lastArgs) renderResult(lastArgs); if (window.renderAlgOff) renderAlgOff();
 };
-window.algRemove = id => {
-  SET.allergens = SET.allergens.filter(x => x !== id); saveSet();
-  if (algAdded) algAdded.ids = algAdded.ids.filter(x => x !== id);
-  if (lastArgs) renderResult(lastArgs);
-};
-window.algAddUndo = () => {
-  if (!algAdded) return;
-  SET.allergens = SET.allergens.filter(x => !algAdded.ids.includes(x)); saveSet();
-  algAdded = null; if (lastArgs) renderResult(lastArgs);
+window.algOn = key => {
+  if (key.startsWith("cat:")){ if (!SET.allergens.includes(key.slice(4))) SET.allergens.push(key.slice(4)); }
+  else SET.algOffWords = SET.algOffWords.filter(x => x !== key.slice(2));
+  saveSet(); if (lastArgs && !lastArgs.example) renderResult(lastArgs); if (window.renderAlgOff) renderAlgOff();
 };
 window.algUndo = code => { const all = okAll(); delete all[code]; okSave(all); if (lastArgs) renderResult(lastArgs); if (window.renderOKList) renderOKList(); };
 const niceDate = d => { try { return new Date(d+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); } catch(_) { return d; } };
@@ -796,10 +786,8 @@ function allergenReport(text, offTags, offTraces, info={}){
   // Lactose: products labelled lactose-free (in the name, label claims or ingredient text) don't count.
   const lfree = LACTOSE_FREE.test(raw) || LACTOSE_FREE.test(info.name||"") || (info.labels||[]).some(l => /no-lactose|lactose-free/.test(l));
   if (lfree){ contains.delete("lactose"); traces.delete("lactose"); }
-  const mine = SET.allergens || [];
+  const mine = SET.allergens || [], off = SET.algOffWords || [];
   const list = ids => ids.map(algName).join(", ").replace(/, ([^,]*)$/, " and $1");
-  const cMine = [...contains.keys()].filter(k=>mine.includes(k)), tMine = [...traces.keys()].filter(k=>mine.includes(k));
-  const why = id => { const w = (contains.get(id)||[]).filter(x => !algName(id).startsWith(x) && !x.startsWith(algName(id))); return w.length ? ` (${w.slice(0,3).join(", ")})` : ""; };
   // "OK for me": approvals hold only while the ingredient list is unchanged.
   const fp = fingerprint(raw), code = info.code || "";
   algCtx = {code, name:info.name, fp};
@@ -807,39 +795,46 @@ function allergenReport(text, offTags, offTraces, info={}){
   const ok = code ? okAll()[code] : null, okValid = ok && ok.fp === fp;
   const approved = okValid ? ok.allergens : [];
   const changed = ok && !okValid ? ok : null;
+  // Chips: each allergen word found (whey, oats...), or the allergen's name when only the database flags it.
+  // Tapping a word removes that word from alerts; tapping a name chip switches that allergen off. Undo is in Settings.
+  const chipsFor = (map, id) => {
+    if (id === "lactose") return [{key:"cat:lactose", label:"lactose"}];
+    let w = (map.get(id) || []).filter(x => !(id === "milk" && x === "lactose" && mine.includes("lactose")));
+    if (!w.length && !(map.get(id) || []).length) return [{key:"cat:"+id, label:algName(id)}];
+    return w.filter(x => !off.includes(x)).map(x => ({key:"w:"+x, label:x}));
+  };
+  const alerted = map => [...map.keys()].filter(id => mine.includes(id) && (avoided || chipsFor(map, id).length));
+  const cMine = alerted(contains), tMine = alerted(traces);
   const cRed = cMine.filter(id=>!approved.includes(id)), tRed = tMine.filter(id=>!approved.includes(id));
   const okShown = [...cMine, ...tMine].filter(id=>approved.includes(id));
-  const listWhy = ids => esc(ids.map(id=>algName(id)+why(id)).join(", ").replace(/, ([^,]*)$/, " and $1"));
+  const chipRow = (map, ids) => { const seen = new Set(); return ids.flatMap(id => chipsFor(map, id)).filter(c => !seen.has(c.label) && seen.add(c.label))
+    .map(c => `<button type="button" class="alg-chip" onclick="algOff('${esc(c.key)}')" aria-label="Remove ${esc(c.label)} from my allergen alerts">${esc(c.label.charAt(0).toUpperCase()+c.label.slice(1))} <span aria-hidden="true">×</span></button>`).join(""); };
   let html = "";
   if (cRed.length || tRed.length){
     const red = [...cRed, ...tRed];
-    const justAdded = algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id));
-    html = `<div class="alg-banner${avoided?" kept":justAdded?" added":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
-      ${cRed.length?`<p><b>Contains ${listWhy(cRed)}.</b></p>`:""}
-      ${tRed.length?`<p${cRed.length?' class="small"':""}><b>May contain ${esc(list(tRed))}</b> (traces or shared equipment).</p>`:""}
+    html = `<div class="alg-banner${avoided?" kept":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
+      <p><b>Here is a list of ingredients this product may contain.</b> Tap any of them to remove it from your allergen alerts.</p>
+      ${cRed.length?`<div class="alg-chips">${chipRow(contains, cRed)}</div>`:""}
+      ${tRed.length?`<p class="small"><b>May contain traces</b> (shared equipment):</p><div class="alg-chips">${chipRow(traces, tRed)}</div>`:""}
       ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
-      ${algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id)) ? `<p class="alg-kept">✓ ${esc(list(algAdded.ids).replace(/^./, c=>c.toUpperCase()))} added to your allergens. <button type="button" class="linkbtn" onclick="algAddUndo()">Undo</button></p>` : ""}
-      ${avoided?"":`<p class="small">Matches your allergen list. Always check the pack.</p>`}
-      ${(() => { const rm = red.filter(id => !(algAdded && algAdded.fp === fp && algAdded.ids.includes(id))); return avoided || !rm.length ? "" : `<p class="small alg-rm">Not an allergen for you? ${rm.map(id=>`<button type="button" class="linkbtn" onclick="algRemove('${id}')">Remove ${esc(algName(id))} from my allergens</button>`).join(" · ")}</p>`; })()}
+      <p class="small">Removed items can be restored in Settings → My allergens. Always check the pack.</p>
       ${code && avoided ? `<p class="alg-kept">✓ Kept as allergen on ${esc(niceDate(avoided.date))}. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button></p>` : ""}
-      ${code && !avoided?`<div class="alg-ok-row">${avoided?"":`<button type="button" class="alg-ok" onclick="algKeep('${red.join(",")}')">Keep as allergen</button>`}${red.map(id=>`<button type="button" class="alg-ok" onclick="algOK('${id}')">${red.length>1?`${esc(algName(id)[0].toUpperCase()+algName(id).slice(1))} is OK for me here`:"This one is OK for me"}</button>`).join("")}</div>`:""}
-      <!--ADD--></div></div>`;
+      ${code && !avoided?`<div class="alg-ok-row"><button type="button" class="alg-ok" onclick="algOK('${red.join(",")}')">This product is OK for me</button></div>`:""}
+      </div></div>`;
   }
   if (okShown.length){
     html += `<div class="alg-note alg-okd">✓ Contains ${esc(list(okShown))}. You marked this product OK for you on ${esc(niceDate(ok.date))}. <button type="button" class="linkbtn" onclick="algUndo('${esc(code)}')">Undo</button></div>`;
   }
-  // Lactose is offered alongside milk (for intolerance), unless milk is already on the list or the product is lactose-free.
-  const addable = [...new Set([...contains.keys(), ...traces.keys()])].filter(id => !mine.includes(id) && (id !== "lactose" || (!mine.includes("milk") && !lfree)));
-  const addRow = addable.length ? `<div class="alg-add-row">${addable.map(id=>`<button type="button" class="alg-add" onclick="algAdd('${id}')">+ Add ${esc(algName(id))} to my allergens</button>`).join("")}</div>` : "";
-  // Add buttons sit below the warning box, not inside it.
-  if (html.includes("<!--ADD-->")) html = html.replace("<!--ADD-->", "") + (avoided || !addRow ? "" : `<div class="alg-add-below">${addRow}</div>`);
-  if (!html && mine.length){
-    const others = [...contains.keys()];
+  // Allergens found here that the user has removed from alerts: a quiet note, no buttons.
+  const found = [...new Set([...contains.keys(), ...traces.keys()])];
+  algCtx.has = found;
+  const silenced = [...new Set(found.flatMap(id => !mine.includes(id) ? (id === "lactose" ? [] : [algName(id)]) : [...(contains.get(id)||[]), ...(traces.get(id)||[])].filter(x => off.includes(x))))];
+  const silentNote = silenced.length ? `<p class="small muted alg-silent">Not alerting for ${esc(silenced.join(", ").replace(/, ([^,]*)$/, " and $1"))}: removed in Settings → My allergens.</p>` : "";
+  if (html) html += silentNote;
+  else if (found.length) html = `<div class="alg-note">No allergen alerts for this product.${silentNote ? " " + silentNote.replace(/<\/?p[^>]*>/g, "") : ""} This is not a guarantee: always check the pack.</div>`;
+  else if (mine.length){
     const lacNote = lfree && mine.includes("lactose") ? " Labelled lactose-free, so no lactose warning." : "";
-    html = `<div class="alg-note">None of your allergens (${esc(list(mine))}) found in the listed ingredients.${lacNote} This is not a guarantee: always check the pack.${others.length?` Other allergens listed: ${esc(list(others.filter(x=>x!=="lactose")))}.`:""}${addRow}</div>`;
-  } else if (!html && (contains.size || traces.size)){
-    const cs = [...contains.keys()].filter(x=>x!=="lactose"), ts = [...traces.keys()].filter(x=>x!=="lactose");
-    html = `<div class="alg-note">${cs.length?`<b>Allergens:</b> ${esc(list(cs))}.`:""}${ts.length?` <b>May contain:</b> ${esc(list(ts))}.`:""} Tap one to add it to your allergens and get a warning whenever it appears.${addRow}</div>`;
+    html = `<div class="alg-note">No major allergens found in the listed ingredients.${lacNote} This is not a guarantee: always check the pack.</div>`;
   }
   // Highlight allergen words inside the ingredient list.
   const words = [];
@@ -857,7 +852,7 @@ function allergenReport(text, offTags, offTraces, info={}){
     const w = m[0].toLowerCase().replace(/[\s-]+/g," ");
     const a = words.find(([x])=>x===w)?.[1];
     if (!a || skip.some(([x,y,id]) => id === a.id && m.index < y && m.index + m[0].length > x)) continue;
-    marked += esc(raw.slice(last, m.index)) + `<mark class="alg${cRed.includes(a.id)||tRed.includes(a.id)||(a.id==="milk"&&(cRed.includes("lactose")||tRed.includes("lactose")))?" mine":""}" title="${esc(a.label)}">${esc(m[0])}</mark>`;
+    marked += esc(raw.slice(last, m.index)) + `<mark class="alg${(cRed.includes(a.id)||tRed.includes(a.id))&&!off.includes(w)||(a.id==="milk"&&(cRed.includes("lactose")||tRed.includes("lactose")))?" mine":""}" title="${esc(a.label)}">${esc(m[0])}</mark>`;
     last = m.index + m[0].length;
   }
   marked += esc(raw.slice(last));
@@ -1332,7 +1327,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.6", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.7", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1426,8 +1421,8 @@ async function loadAlternatives(code, cats, myScore, token){
           const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
           const sc = score(matchEntries(text, p.additives_tags||[]), hasN ? nutr : null, []);
           if (sc.score < 80 || sc.score <= myScore) return;
-          // Never suggest something containing the user's own allergens.
-          const t = algScan(norm(text)), mine = SET.allergens || [];
+          // Never suggest something that would raise an allergen alert this product doesn't already have.
+          const t = algScan(norm(text)), mine = (SET.allergens || []).filter(id => !(algCtx?.has || []).includes(id));
           const offHit = id => ALLERGENS.find(a=>a.id===id).off.some(x => (p.allergens_tags||[]).includes(x) || (p.traces_tags||[]).includes(x));
           if (mine.some(id => t.has(id) || offHit(id)) && !(mine.length === 1 && mine[0] === "lactose" && LACTOSE_FREE.test(text + " " + p.product_name))) return;
           found.push({code:p.code, name:p.product_name, brand:(p.brands||"").split(",")[0], img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, tier:ti, pop});
@@ -1463,8 +1458,13 @@ const LANGS = {en:"English", es:"Spanish (Español)", fr:"French (Français)", d
 const langName = c => (LANGS[c]||c||"").replace(/ \(.*/,"");
 const SET = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem("sourced.settings") || "{}"); } catch(_) {}
   let t = null; try { t = localStorage.getItem("sourced.theme"); } catch(_) {}
-  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: Array.isArray(o.allergens) ? o.allergens : []}; })();
-function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang, allergens:SET.allergens}));
+  // Since 2.7 every major allergen alerts by default and the user removes what doesn't apply.
+  // Older settings (opt-in lists) move to the new default once; lactose stays opt-in.
+  const all = ALLERGENS.map(a => a.id).filter(id => id !== "lactose");
+  let alg = Array.isArray(o.allergens) ? o.allergens : [];
+  if (o.algV !== 2) alg = [...new Set([...all, ...alg.filter(id => id === "lactose")])];
+  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: alg, algOffWords: Array.isArray(o.algOffWords) ? o.algOffWords : []}; })();
+function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang, allergens:SET.allergens, algOffWords:SET.algOffWords, algV:2}));
   if (SET.theme==="system") localStorage.removeItem("sourced.theme"); else localStorage.setItem("sourced.theme", SET.theme); } catch(_) {} }
 (function(){
   const btn=$("#themeBtn"), root=document.documentElement, dlg=$("#settings");
@@ -1496,9 +1496,15 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   const grid=$("#algGrid");
   grid.innerHTML=ALLERGENS.map(a=>`<label><input type="checkbox" value="${a.id}">${esc(a.label)}</label>`).join("");
   grid.querySelectorAll("input").forEach(cb=>cb.addEventListener("change",()=>{
-    SET.allergens=[...grid.querySelectorAll("input:checked")].map(x=>x.value); saveSet();
+    SET.allergens=[...grid.querySelectorAll("input:checked")].map(x=>x.value); saveSet(); renderAlgOff();
     if (lastArgs && !lastArgs.example) renderResult(lastArgs);
   }));
+  window.renderAlgOff=()=>{
+    const cats = ALLERGENS.filter(a => a.id !== "lactose" && !SET.allergens.includes(a.id)).map(a => ({key:"cat:"+a.id, label:a.label, sub:"whole allergen"}));
+    const words = SET.algOffWords.map(w => ({key:"w:"+w, label:w.charAt(0).toUpperCase()+w.slice(1), sub:"ingredient word"}));
+    $("#algOffList").innerHTML = [...cats, ...words].length ? [...cats, ...words].map(r=>`<li><span>${esc(r.label)}<small>${r.sub}</small></span><button type="button" onclick="algOn('${esc(r.key)}')">Undo</button></li>`).join("") : `<li class="muted">Nothing removed. You get alerts for every allergen above.</li>`;
+    grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value));
+  };
   window.renderOKList=()=>{
     const all=okAll(), ks=Object.keys(all);
     const av=avoidAll(), aks=Object.keys(av);
@@ -1507,7 +1513,7 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   };
   const keyIn=$("#fdcKeyIn");
   keyIn.addEventListener("input",()=>{ try { const v=keyIn.value.trim(); if (v) localStorage.setItem("fdcKey", v); else localStorage.removeItem("fdcKey"); } catch(_) {} });
-  window.openSettings=()=>{ renderOKList(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal(); };
+  window.openSettings=()=>{ renderOKList(); renderAlgOff(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal(); };
   $("#settingsBtn").addEventListener("click",()=>openSettings());
   dlg.addEventListener("click",e=>{ if (e.target===dlg) dlg.close(); });
   paint();

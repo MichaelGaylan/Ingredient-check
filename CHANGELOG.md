@@ -58,6 +58,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 2.6 (4 Nov 2026): allergen list sources
 - Settings → My allergens now says where the list comes from (US FDA and EU labelling law), with links.
 
+## 2.7 (4 Nov 2026): simpler allergen alerts
+- Every major allergen now alerts by default. The alert box lists the allergen ingredients the product may contain (for example eggs, whey, oats), and tapping one removes it from your alerts.
+- Removed items are listed in Settings → My allergens, each with Undo.
+- One "This product is OK for me" button replaces the per-allergen ones. The "+ Add … to my allergens" and "Keep as allergen" buttons are gone, as they are no longer needed.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
