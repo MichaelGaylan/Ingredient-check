@@ -91,6 +91,7 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alg-ok-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .alg-ok{background:#fff;color:var(--neg);border:0;font-size:13.5px;padding:8px 12px}
 .alg-add-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.alg-add-below .alg-add-row{margin-top:0}
 .alg-add{font-size:13.5px;padding:7px 12px;border-color:var(--neg);color:var(--neg);background:var(--surface)}
 .alg-add-row.on-red .alg-add{background:transparent;color:inherit;border:2px solid currentColor}
 .alg-kept{margin-top:8px!important;font-weight:600}
@@ -823,7 +824,8 @@ function allergenReport(text, offTags, offTraces, info={}){
   // Lactose is offered alongside milk (for intolerance), unless milk is already on the list or the product is lactose-free.
   const addable = [...new Set([...contains.keys(), ...traces.keys()])].filter(id => !mine.includes(id) && (id !== "lactose" || (!mine.includes("milk") && !lfree)));
   const addRow = addable.length ? `<div class="alg-add-row">${addable.map(id=>`<button type="button" class="alg-add" onclick="algAdd('${id}')">+ Add ${esc(algName(id))} to my allergens</button>`).join("")}</div>` : "";
-  html = html.replace("<!--ADD-->", avoided ? "" : addRow.replace("alg-add-row", "alg-add-row on-red"));
+  // Add buttons sit below the warning box, not inside it.
+  if (html.includes("<!--ADD-->")) html = html.replace("<!--ADD-->", "") + (avoided || !addRow ? "" : `<div class="alg-add-below">${addRow}</div>`);
   if (!html && mine.length){
     const others = [...contains.keys()];
     const lacNote = lfree && mine.includes("lactose") ? " Labelled lactose-free, so no lactose warning." : "";
@@ -1303,7 +1305,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.2", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.3", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
