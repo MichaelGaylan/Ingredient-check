@@ -305,6 +305,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <span class="label" id="algLbl">My allergens</span>
         <div class="alg-grid" id="algGrid" role="group" aria-labelledby="algLbl"></div>
         <p class="set-help">Tick the ones that matter to you. Any product containing them, or labelled “may contain” them, gets a red warning at the top of the result. Allergens don't change the score. The app can miss an allergen if the database or label text is incomplete, so always check the pack.</p>
+        <p class="set-help">Where this list comes from: the 9 major allergens in US law (<a href="https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies" target="_blank" rel="noopener">FDA, FALCPA and FASTER Act</a>) and the 14 allergens EU labels must highlight (<a href="https://eur-lex.europa.eu/eli/reg/2011/1169/oj" target="_blank" rel="noopener">EU Regulation 1169/2011, Annex II</a>). They overlap, giving 14 in all. Lactose (intolerance) is our own addition and is not a legal allergen.</p>
       </div>
       <div class="set-row">
         <label class="label" for="fdcKeyIn">USDA API key</label>
@@ -1331,7 +1332,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.5", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.6", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };

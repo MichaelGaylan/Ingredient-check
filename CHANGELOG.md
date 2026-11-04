@@ -55,6 +55,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - A red warning triangle appears beside an ingredient's rating when its records include a cancer listing or a serious hazard for the pure chemical, even if the ingredient is permitted in food. The rating keeps its own colour.
 - Those lines are shown in red in the ingredient's details, and the summary says how many ingredients have a caveat.
 
+## 2.6 (4 Nov 2026): allergen list sources
+- Settings → My allergens now says where the list comes from (US FDA and EU labelling law), with links.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
