@@ -94,6 +94,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 4.0 (4 Nov 2026): cheese and regional dairy names
 - Milk alerts now recognise named cheeses (brie, edam, feta, gouda, cheddar, mozzarella, halloumi and more), regional dairy foods (akawi, ashta, ayran, jibna, khoya, labneh, lassi, dahi) and the word "dairy". "Dairy-free", "non-dairy" and vegan cheeses are excluded.
 
+## 4.1 (4 Nov 2026): regional and Latin allergen names
+- About 100 more names, including Middle Eastern and South Asian foods (knafeh, kataifi, atta, sooji, laban, jameed, hummus, za'atar), dishes and sauces that contain allergens (aioli, hollandaise, Worcestershire sauce, Caesar dressing, pesto, frangipane), botanical names used on labels (Triticum, Hordeum, Juglans regia, Glycine max) and INS sulphite codes (INS 220–228). Rice vermicelli and sunflower lecithin are excluded.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
