@@ -91,6 +91,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - About 170 more alternative label names now trigger allergen alerts, taken from Food Allergy Research & Education (FARE) lists. Examples: casein hydrolysate and rennet casein (milk), lysozyme E1105 and ovomucoid (egg), farina and matzo (wheat), natto and TVP (soy), arachis oil (peanut), pine nuts and gianduja (tree nuts), langouste and cockles (shellfish), halibut and fish sauce (fish), gomasio and Sesamum indicum (sesame).
 - Look-alikes such as milk albumin, coconut milk, water chestnut and butternut squash are excluded.
 
+## 4.0 (4 Nov 2026): cheese and regional dairy names
+- Milk alerts now recognise named cheeses (brie, edam, feta, gouda, cheddar, mozzarella, halloumi and more), regional dairy foods (akawi, ashta, ayran, jibna, khoya, labneh, lassi, dahi) and the word "dairy". "Dairy-free", "non-dairy" and vegan cheeses are excluded.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
