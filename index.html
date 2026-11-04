@@ -95,6 +95,10 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alg-add-row.on-red .alg-add{background:transparent;color:inherit;border:2px solid currentColor}
 .alg-kept{margin-top:8px!important;font-weight:600}
 .alg-banner .linkbtn{color:inherit;font-weight:700}
+.alg-banner.added{background:#f2aba3;color:#4a0b0f}
+.alg-banner.added .alg-ok{background:#fff;color:#8f1d22}
+:root[data-theme="dark"] .alg-banner.added{background:#7d3a35;color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner.added{background:#7d3a35;color:#fff}}
 .alg-banner.kept{background:#6e0f16;box-shadow:inset 0 0 0 3px #ff9a9a}
 :root[data-theme="dark"] .alg-banner.kept{background:#ffb3b3}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner.kept{background:#ffb3b3}}
@@ -801,7 +805,8 @@ function allergenReport(text, offTags, offTraces, info={}){
   let html = "";
   if (cRed.length || tRed.length){
     const red = [...cRed, ...tRed];
-    html = `<div class="alg-banner${avoided?" kept":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
+    const justAdded = algAdded && algAdded.fp === fp && algAdded.ids.some(id => cRed.includes(id) || tRed.includes(id));
+    html = `<div class="alg-banner${avoided?" kept":justAdded?" added":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
       ${cRed.length?`<p><b>Contains ${listWhy(cRed)}.</b></p>`:""}
       ${tRed.length?`<p${cRed.length?' class="small"':""}><b>May contain ${esc(list(tRed))}</b> (traces or shared equipment).</p>`:""}
       ${changed?`<p class="small"><b>The ingredients changed</b> since you marked this product OK on ${esc(niceDate(changed.date))}. Check the pack before you approve it again.</p>`:""}
@@ -817,7 +822,7 @@ function allergenReport(text, offTags, offTraces, info={}){
   }
   // Lactose is offered alongside milk (for intolerance), unless milk is already on the list or the product is lactose-free.
   const addable = [...new Set([...contains.keys(), ...traces.keys()])].filter(id => !mine.includes(id) && (id !== "lactose" || (!mine.includes("milk") && !lfree)));
-  const addRow = addable.length ? `<div class="alg-add-row">${addable.map(id=>`<button type="button" class="alg-add" onclick="algAdd('${id}')">+ Keep ${esc(algName(id))} in my allergens</button>`).join("")}</div>` : "";
+  const addRow = addable.length ? `<div class="alg-add-row">${addable.map(id=>`<button type="button" class="alg-add" onclick="algAdd('${id}')">+ Add ${esc(algName(id))} to my allergens</button>`).join("")}</div>` : "";
   html = html.replace("<!--ADD-->", avoided ? "" : addRow.replace("alg-add-row", "alg-add-row on-red"));
   if (!html && mine.length){
     const others = [...contains.keys()];
@@ -825,7 +830,7 @@ function allergenReport(text, offTags, offTraces, info={}){
     html = `<div class="alg-note">None of your allergens (${esc(list(mine))}) found in the listed ingredients.${lacNote} This is not a guarantee: always check the pack.${others.length?` Other allergens listed: ${esc(list(others.filter(x=>x!=="lactose")))}.`:""}${addRow}</div>`;
   } else if (!html && (contains.size || traces.size)){
     const cs = [...contains.keys()].filter(x=>x!=="lactose"), ts = [...traces.keys()].filter(x=>x!=="lactose");
-    html = `<div class="alg-note">${cs.length?`<b>Allergens:</b> ${esc(list(cs))}.`:""}${ts.length?` <b>May contain:</b> ${esc(list(ts))}.`:""} Tap one to keep it in your allergens and get a warning whenever it appears.${addRow}</div>`;
+    html = `<div class="alg-note">${cs.length?`<b>Allergens:</b> ${esc(list(cs))}.`:""}${ts.length?` <b>May contain:</b> ${esc(list(ts))}.`:""} Tap one to add it to your allergens and get a warning whenever it appears.${addRow}</div>`;
   }
   // Highlight allergen words inside the ingredient list.
   const words = [];
@@ -1298,7 +1303,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.1", APP_DATE = "2026-11-04";
+const APP_VERSION = "2.2", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
