@@ -328,7 +328,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
           <li>No barcode match? Paste the ingredient list into the box, or tap <span class="ic-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></span> in the box to read it from a photo of the label.</li>
           <li>Tap the score ring to see exactly where points were lost.</li>
           <li><b>History</b> keeps every product you scan; tap ☆ to keep a favourite, swipe left or tap × to delete.</li>
-          <li>Every major allergen gets a red alert by default. Tap an item in the alert to remove it from your alerts; restore it under <b>My allergens</b> above. You can also mark one product <b>OK for me</b>.</li>
+          <li>Every major allergen gets a red alert by default. Tap an item in the alert to remove it from your alerts; restore it under <b>My allergens</b> above.</li>
         </ul>
         <h3>Buttons and icons</h3>
         <ul>
@@ -819,7 +819,7 @@ function allergenReport(text, offTags, offTraces, info={}){
     html = `<div class="alg-banner${avoided?" kept":""}" role="alert"><span class="ic" aria-hidden="true">⚠</span><div>
       <p>Here is a list of ingredients this product may contain. <span class="alg-words">${all.join(", ")}${tw.length?`${all.length?"; ":""}traces of ${tw.join(", ")}`:""}</span>. Click on any of them to remove them from this list.</p>
       ${changed?`<p class="small"><b>Ingredients changed</b> since you marked this OK. Check the pack.</p>`:""}
-      <p class="small alg-foot">${code && avoided ? `✓ Kept as allergen. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button> · ` : ""}${code && !avoided && red.length ? `<button type="button" class="linkbtn" onclick="algOK('${red.join(",")}')">This product is OK for me</button> · ` : ""}Change in Settings → My allergens. Always check the pack.</p>
+      <p class="small alg-foot">${code && avoided ? `✓ Kept as allergen. <button type="button" class="linkbtn" onclick="avoidUndo('${esc(code)}')">Undo</button> · ` : ""}Change in Settings → My allergens. Always check the pack.</p>
       </div></div>`;
   }
   if (okShown.length){
@@ -1327,7 +1327,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 1;
-const APP_VERSION = "2.9", APP_DATE = "2026-11-04";
+const APP_VERSION = "3.0", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
