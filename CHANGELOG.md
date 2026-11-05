@@ -153,6 +153,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Products without a photo now show a tidy aisle icon instead of a blank box.
 - Tap a product's picture to open it in a small card at the bottom of the screen. Open up to three to compare them side by side. Swipe a card away (or tap ×) to close it, or tap it for the full check. Missing photos (USDA products never have one) are now fetched from Open Food Facts as you scroll, a few at a time, so more products show a picture.
 
+## 5.6 (5 Nov 2026): bigger photos
+- Compare-card photos are about twice as big. With more than one card open, slide sideways between them. Swipe a card down (or up) to close it. List thumbnails are a little bigger too.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

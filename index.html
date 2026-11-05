@@ -172,19 +172,22 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alt-why{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}.alt-why span{font:500 11px var(--mono);padding:1px 6px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
 .alt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .alt-item{display:flex;align-items:stretch;gap:8px}
-.alt-item .alt-img{flex:none;width:60px;padding:4px;display:grid;place-items:center;border-radius:12px}
-.alt-item .alt-img img{width:50px;height:50px}
+.alt-item .alt-img{flex:none;width:72px;padding:4px;display:grid;place-items:center;border-radius:12px}
+.alt-item .alt-img img{width:62px;height:62px;object-fit:contain}
 .alt-item .alt-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
-.alt-noimg{width:50px;height:50px;border-radius:8px;background:var(--bg);flex:none;display:grid;place-items:center;font-size:24px}
-#peekTray{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:8px;justify-content:center;padding:10px 10px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
-.peek{pointer-events:auto;position:relative;width:min(31vw,150px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:8px;display:flex;flex-direction:column;gap:4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;animation:peekin .2s ease-out}
+.alt-noimg{width:62px;height:62px;border-radius:8px;background:var(--bg);flex:none;display:grid;place-items:center;font-size:24px}
+#peekTray{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 12px calc(10px + env(safe-area-inset-bottom));scrollbar-width:none}
+#peekTray::-webkit-scrollbar{display:none}
+#peekTray.one{justify-content:center}
+body.peeking main{padding-bottom:min(70vh,470px)}
+.peek{position:relative;flex:none;width:min(64vw,300px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:10px;display:flex;flex-direction:column;gap:4px;touch-action:pan-x;user-select:none;-webkit-user-select:none;cursor:grab;animation:peekin .2s ease-out}
 @keyframes peekin{from{transform:translateY(30px);opacity:0}}
-.peek .peek-img{height:min(31vw,150px);display:grid;place-items:center;background:#fff;border-radius:10px;overflow:hidden;position:relative}
+.peek .peek-img{height:min(64vw,300px,46vh);display:grid;place-items:center;background:#fff;border-radius:12px;overflow:hidden;position:relative}
 .peek .peek-img img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
-.peek .peek-img .alt-noimg{width:100%;height:100%;font-size:40px;border-radius:0}
+.peek .peek-img .alt-noimg{width:100%;height:100%;font-size:64px;border-radius:0}
 .peek-none{position:absolute;bottom:6px;font-size:11px;color:#667}
-.peek b{font-size:12.5px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.peek small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peek b{font-size:15px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.peek small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .peek .hist-badge{position:absolute;top:4px;left:4px;transform:scale(.8);transform-origin:top left;background:var(--surface)}
 .peek-x{position:absolute;top:2px;right:2px;z-index:2;width:28px;height:28px;padding:0;border-radius:50%;font-size:18px;line-height:1;background:var(--surface);border:1px solid var(--line)}
 #exBody a{color:var(--accent)}
@@ -1671,7 +1674,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.5", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.6", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1873,6 +1876,7 @@ async function thumbPump(){
   thumbBusy = false;
 }
 window.fillThumbs = root => { if (thumbObs) root.querySelectorAll(".alt-img[data-code]").forEach(b => { if (b.querySelector(".alt-noimg")) thumbObs.observe(b); }); };
+function trayState(){ const t = $("#peekTray"); const n = t ? t.children.length : 0; if (t && !n) t.remove(); else if (t) t.classList.toggle("one", n === 1); document.body.classList.toggle("peeking", n > 0); }
 window.peekProduct = async code => {
   const a = PRODUCTS.get(code); if (!a) return;
   let tray = $("#peekTray");
@@ -1882,17 +1886,19 @@ window.peekProduct = async code => {
   const card = document.createElement("div"); card.className = "peek"; card.dataset.code = code;
   card.innerHTML = `<button type="button" class="peek-x" aria-label="Close">×</button><div class="peek-img"><span class="alt-noimg">${a.em||"🛒"}</span></div>
     <span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span><b>${esc(a.name)}</b><small>${esc(a.brand||"")}</small>`;
-  tray.appendChild(card);
-  const close = (dir) => { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = dir; card.style.opacity = "0"; setTimeout(() => { card.remove(); if (!tray.children.length) tray.remove(); }, 200); };
+  tray.appendChild(card); trayState(); card.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+  const close = (dir) => { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = dir; card.style.opacity = "0"; setTimeout(() => { card.remove(); trayState(); }, 200); };
   card.querySelector(".peek-x").onclick = e => { e.stopPropagation(); close("translateY(40px)"); };
   let x0 = null, y0 = 0, dx = 0, dy = 0, moved = false;
-  card.addEventListener("pointerdown", e => { if (e.target.closest(".peek-x")) return; x0 = e.clientX; y0 = e.clientY; dx = dy = 0; moved = false; card.setPointerCapture(e.pointerId); card.style.transition = "none"; });
-  card.addEventListener("pointermove", e => { if (x0 === null) return; dx = e.clientX - x0; dy = Math.max(0, e.clientY - y0); if (Math.abs(dx) + dy > 8) moved = true; card.style.transform = `translate(${dx}px,${dy}px)`; card.style.opacity = String(1 - Math.min(.7, (Math.abs(dx) + dy) / 250)); });
+  card.addEventListener("pointerdown", e => { if (e.target.closest(".peek-x")) return; x0 = e.clientX; y0 = e.clientY; dx = dy = 0; moved = false; card.style.transition = "none"; });
+  // Swipe a card down (or up) to close it; sideways moves between cards.
+  card.addEventListener("pointermove", e => { if (x0 === null) return; dx = e.clientX - x0; dy = e.clientY - y0; if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
+    if (Math.abs(dy) > Math.abs(dx)){ card.style.transform = `translateY(${dy}px)`; card.style.opacity = String(1 - Math.min(.7, Math.abs(dy) / 250)); } });
   const end = () => { if (x0 === null) return; x0 = null;
-    if (Math.abs(dx) > 70 || dy > 60) close(Math.abs(dx) > dy ? `translateX(${dx > 0 ? 120 : -120}%)` : "translateY(120%)");
+    if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx)) close(dy > 0 ? "translateY(120%)" : "translateY(-120%)");
     else { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = ""; card.style.opacity = ""; if (!moved) openProduct(code); } };
   card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
-  card.addEventListener("touchmove", e => { if (x0 !== null && e.cancelable) e.preventDefault(); }, {passive:false});
+  card.addEventListener("touchmove", e => { if (x0 !== null && e.cancelable && Math.abs(dy) > Math.abs(dx)) e.preventDefault(); }, {passive:false});
   const url = await peekImage(a);
   const box = card.querySelector(".peek-img");
   if (url){ const im = new Image(); im.alt = a.name; im.onload = () => { box.replaceChildren(im); }; im.onerror = () => box.insertAdjacentHTML("beforeend", `<small class="peek-none">No photo yet</small>`); im.src = url; }
