@@ -128,6 +128,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - While ingredients are being checked, the score circle shows three bouncing dots and a sweeping arc, so it's clear the app is working and not frozen.
 - Crop step: every edge now has its own drag handle as well as the corners, the handles are bigger and easier to grab with a finger, and you can drag across the photo to draw a new box.
 
+## 5.0 (5 Nov 2026): smoother crop box on phones
+- The crop box no longer fights with the page: while you drag, the screen doesn't scroll or zoom, the photo can't be picked up by mistake, and a second finger is ignored. Resizing is steady on iPhone.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

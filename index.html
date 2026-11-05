@@ -87,7 +87,10 @@ dialog.settings{overflow:auto}
 .alg-note{font-size:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface)}
 .alg-note b{font-weight:600}
 .crop-stage{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;align-self:center;max-width:100%}
-.crop-stage img{display:block;max-width:100%;max-height:58dvh;border-radius:8px}
+.crop-stage img{display:block;max-width:100%;max-height:calc(100dvh - 330px);border-radius:8px;pointer-events:none;-webkit-user-drag:none}
+.crop-stage,.crop-stage *{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+dialog.crop-dlg{overflow:hidden;overscroll-behavior:contain}
+html.cropping,html.cropping body{overflow:hidden;overscroll-behavior:none}
 .crop-box{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.6) inset;cursor:move;border-radius:2px}
 .crop-stage{overflow:hidden;border-radius:8px;padding:0}
 .crop-box .h{position:absolute;width:30px;height:30px;border:5px solid #fff;filter:drop-shadow(0 0 1px rgba(0,0,0,.8));z-index:2}
@@ -392,7 +395,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
     <form method="dialog">
       <h2 id="cropTitle">Crop to the ingredients</h2>
       <p class="set-help" style="margin:0">Drag any edge or corner to fit the box around just the ingredient list. Drag inside it to move it, or drag across the photo to draw a new box.</p>
-      <div class="crop-stage" id="cropStage"><img id="cropImg" alt="Your label photo"><div class="crop-box" id="cropBox"><span class="e t" data-h="t"></span><span class="e b" data-h="b"></span><span class="e l" data-h="l"></span><span class="e r" data-h="r"></span><span class="h tl" data-h="tl"></span><span class="h tr" data-h="tr"></span><span class="h bl" data-h="bl"></span><span class="h br" data-h="br"></span></div></div>
+      <div class="crop-stage" id="cropStage"><img id="cropImg" alt="Your label photo" draggable="false"><div class="crop-box" id="cropBox"><span class="e t" data-h="t"></span><span class="e b" data-h="b"></span><span class="e l" data-h="l"></span><span class="e r" data-h="r"></span><span class="h tl" data-h="tl"></span><span class="h tr" data-h="tr"></span><span class="h bl" data-h="bl"></span><span class="h br" data-h="br"></span></div></div>
       <div class="crop-btns"><button type="button" class="linkbtn" value="cancel" id="cropCancel">Cancel</button><button type="button" id="cropAll">Whole photo</button><button type="button" class="primary" id="cropOK" autofocus>Read this area</button></div>
     </form>
   </dialog>
@@ -1511,15 +1514,16 @@ function cropPhoto(file){
     paint();
     let drag = null;
     const down = e => {
+      if (drag || (e.pointerType === "mouse" && e.button !== 0)) return; // one finger at a time
       e.preventDefault(); stage.setPointerCapture(e.pointerId); const b = stage.getBoundingClientRect();
       let h = box.contains(e.target) ? (e.target.dataset.h || "move") : "new";
       if (h === "new"){ // start a fresh box where the finger lands, then size it by dragging (like the bottom-right corner)
         const px = Math.min(.92, Math.max(0, (e.clientX - b.left)/b.width)), py = Math.min(.92, Math.max(0, (e.clientY - b.top)/b.height));
         r = {x:px, y:py, w:.08, h:.08}; paint();
-        drag = {h:"br", x0:e.clientX, y0:e.clientY, r0:{x:px, y:py, w:0, h:0}, W:b.width, H:b.height}; return;
+        drag = {id:e.pointerId, h:"br", x0:e.clientX, y0:e.clientY, r0:{x:px, y:py, w:0, h:0}, W:b.width, H:b.height}; return;
       }
-      drag = {h, x0:e.clientX, y0:e.clientY, r0:{...r}, W:b.width, H:b.height}; };
-    const move = e => { if (!drag) return; const dx = (e.clientX - drag.x0)/drag.W, dy = (e.clientY - drag.y0)/drag.H, o = drag.r0, MIN = .08;
+      drag = {id:e.pointerId, h, x0:e.clientX, y0:e.clientY, r0:{...r}, W:b.width, H:b.height}; };
+    const move = e => { if (!drag || e.pointerId !== drag.id) return; const dx = (e.clientX - drag.x0)/drag.W, dy = (e.clientY - drag.y0)/drag.H, o = drag.r0, MIN = .08;
       let {x, y, w, h} = o;
       if (drag.h === "move"){ x = Math.min(1-w, Math.max(0, o.x+dx)); y = Math.min(1-h, Math.max(0, o.y+dy)); }
       else {
@@ -1529,9 +1533,14 @@ function cropPhoto(file){
         if (drag.h.includes("b")){ h = Math.min(1-o.y, Math.max(MIN, o.h+dy)); }
       }
       r = {x, y, w, h}; paint(); };
-    const up = () => { drag = null; };
-    stage.addEventListener("pointerdown", down); stage.addEventListener("pointermove", move); stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
-    const finish = val => { stage.removeEventListener("pointerdown", down); stage.removeEventListener("pointermove", move); stage.removeEventListener("pointerup", up); stage.removeEventListener("pointercancel", up);
+    const up = e => { if (drag && e.pointerId === drag.id) drag = null; };
+    // iPhone Safari: stop the page or dialog from scrolling or zooming under the finger while the box is dragged.
+    const noScroll = e => { if (e.cancelable) e.preventDefault(); };
+    stage.addEventListener("touchstart", noScroll, {passive:false}); stage.addEventListener("touchmove", noScroll, {passive:false});
+    document.documentElement.classList.add("cropping");
+    stage.addEventListener("pointerdown", down); stage.addEventListener("pointermove", move); stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up); stage.addEventListener("lostpointercapture", up);
+    const finish = val => { stage.removeEventListener("touchstart", noScroll); stage.removeEventListener("touchmove", noScroll); document.documentElement.classList.remove("cropping");
+      stage.removeEventListener("pointerdown", down); stage.removeEventListener("pointermove", move); stage.removeEventListener("pointerup", up); stage.removeEventListener("pointercancel", up); stage.removeEventListener("lostpointercapture", up);
       dlg.onclose = null; dlg.close(); URL.revokeObjectURL(img.src); done(val); };
     $("#cropOK").onclick = () => finish({...r});
     $("#cropAll").onclick = () => finish(null);
@@ -1609,7 +1618,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.9", APP_DATE = "2026-11-04";
+const APP_VERSION = "5.0", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
