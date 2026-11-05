@@ -142,6 +142,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Searches are spaced out to stay under Open Food Facts' limit of about 10 a minute. If it's busy, Sourced shows a countdown and tries again by itself.
 - Results are kept on your phone for a day, so going back to an aisle or search is instant and doesn't count toward the limit.
 
+## 5.3 (5 Nov 2026): many more US products in Explore
+- Explore now also searches the USDA FoodData Central branded foods database (about 400,000 US products with manufacturer ingredient lists), alongside Open Food Facts. These products are marked "USDA". USDA has no store information, so they show when "All stores" is picked and the market is United States or Anywhere.
+- The Walmart badge is blue, and each store has its own fixed colour from our palette (not the stores' brand colours).
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

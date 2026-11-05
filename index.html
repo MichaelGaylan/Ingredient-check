@@ -174,6 +174,7 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alt-list button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
 .alt-noimg{width:40px;height:40px;border-radius:6px;background:var(--bg);flex:none}
 #exBody a{color:var(--accent)}
+.src-tag{font:600 10.5px var(--mono);padding:0 5px;border-radius:4px;background:var(--gD-bg);color:var(--gD)}
 .alt-list img{width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;flex:none}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
 nav a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1656,7 +1657,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.2", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.3", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1822,7 +1823,7 @@ async function loadAlternatives(code, cats, myScore, token, why){
 function productList(items){
   return `<ul class="alt-list">${items.map(a=>`<li><button type="button" onclick="openProduct('${esc(a.code)}')">
       ${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy">`:`<span class="alt-noimg" aria-hidden="true"></span>`}<span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span>
-      <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button></li>`).join("")}</ul>`;
+      <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.src?` · <span class="src-tag">${esc(a.src)}</span>`:""}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button></li>`).join("")}</ul>`;
 }
 window.openProduct = code => { location.hash = "#scan"; $("#barcode").value = code; lookup(code); window.scrollTo({top:0}); };
 
@@ -1841,6 +1842,24 @@ const AISLES = [
 // Stores as Open Food Facts volunteers record them on the product on the product (coverage varies by store and country).
 const STORES = [["walmart","Walmart"],["target","Target"],["kroger","Kroger"],["costco","Costco"],["whole-foods","Whole Foods"],["trader-joe-s","Trader Joe's"],["aldi","Aldi"],["lidl","Lidl"],["publix","Publix"],["safeway","Safeway"],["tesco","Tesco"],["sainsbury-s","Sainsbury's"],["asda","Asda"],["waitrose","Waitrose"],["carrefour","Carrefour"]];
 const exCache = new Map(); let exSeq = 0;
+/* USDA FoodData Central branded foods: about 400,000 US products with manufacturer ingredient lists.
+   Used in Explore for US (or Anywhere) searches with no store picked, since USDA has no store data. */
+const USDA_Q = {"en:meats":"beef","en:poultries":"chicken","en:prepared-meats":"sausage","en:seafood":"fish","en:milks":"milk","en:cheeses":"cheese","en:eggs":"eggs","en:yogurts":"yogurt","en:spreads":"butter","en:vegetable-oils":"oil","en:flours":"flour","en:sweeteners":"syrup","en:condiments":"seasoning","en:breads":"bread","en:flatbreads":"tortillas","en:cakes":"cake","en:biscuits":"cookies","en:breakfast-cereals":"cereal","en:oat-flakes":"oats","en:jams":"jam","en:pastas":"pasta","en:rices":"rice","en:canned-foods":"canned","en:sauces":"sauce","en:soups":"soup","en:salty-snacks":"chips","en:chocolates":"chocolate","en:confectioneries":"candy","en:nuts":"nuts","en:fruit-juices":"juice","en:sodas":"soda","en:hot-beverages":"coffee","en:waters":"water","en:meat-analogues":"plant based","en:plant-based-milk-alternatives":"oat milk","en:frozen-foods":"frozen meal"};
+async function usdaSearch(q){
+  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?dataType=Branded&pageSize=50&query=${encodeURIComponent(q)}`;
+  const hit = searchCacheGet(url); if (hit) return hit;
+  const j = await fetchJSON(url + `&api_key=${encodeURIComponent(fdcKey())}`, 15000);
+  const title = t => t ? t.toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase()) : t;
+  const prods = (j.foods||[]).filter(f => f.gtinUpc && f.ingredients).map(f => {
+    const fn = n => { const x = (f.foodNutrients||[]).find(y => String(y.nutrientNumber) === n); return x && typeof x.value === "number" ? x.value : undefined; };
+    const sod = fn("307"), nm = {};
+    if (fn("269") !== undefined) nm.sugars_100g = fn("269"); if (sod !== undefined) nm.salt_100g = sod*2.5/1000;
+    if (fn("204") !== undefined) nm.fat_100g = fn("204"); if (fn("606") !== undefined) nm["saturated-fat_100g"] = fn("606");
+    return {code:String(f.gtinUpc).replace(/\D/g,""), product_name:title(f.description), brands:title(f.brandName || f.brandOwner || ""), lang:"en", ingredients_text_en:f.ingredients,
+      nutriments:nm, categories_tags:/ml|mlt/i.test(f.servingSizeUnit||"") ? ["en:beverages"] : [], src:"USDA"};
+  });
+  searchCachePut(url, prods); return prods;
+}
 {
   // Neutral store buttons: plain names on a coloured circle with the initial (no logos).
   // Our own palette (generic colours, not any store's brand colours).
@@ -1890,8 +1909,15 @@ async function exRun(title, query){
       } else {
         urls.push(`https://world.openfoodfacts.org/api/v2/search?${query.categories_tags ? `categories_tags=${encodeURIComponent(query.categories_tags)}` : "page=1"}${country?`&countries_tags=${encodeURIComponent(country)}`:""}${store?`&stores_tags=${encodeURIComponent(store)}`:""}&fields=${OFF_FIELDS}&page_size=40&sort_by=unique_scans_n`);
       }
-      const prods = await offSearch(urls, secs => { if (seq === exSeq){ const m = body.querySelector(".muted"); if (m) m.textContent = `Open Food Facts is busy (it allows about 10 searches a minute). Trying again in ${secs} s…`; } });
-      items = prods.map(scoreOFF).filter(Boolean);
+      const usdaQ = !store && (!country || country === "en:united-states") ? (query.search_terms || USDA_Q[query.categories_tags] || "") : "";
+      const usdaP = usdaQ ? usdaSearch(usdaQ).catch(() => []) : Promise.resolve([]);
+      const offP = offSearch(urls, secs => { if (seq === exSeq){ const m = body.querySelector(".muted"); if (m) m.textContent = `Open Food Facts is busy (it allows about 10 searches a minute). Trying again in ${secs} s…`; } });
+      const [offR, usdaR] = await Promise.all([offP.then(p => ({p}), e => ({e})), usdaP]);
+      if (offR.e && !usdaR.length) throw offR.e;
+      // Same product in both: keep the Open Food Facts one (it has photos and store data).
+      const key0 = c => String(c||"").replace(/^0+/, ""), seenC = new Set((offR.p||[]).map(p => key0(p.code)));
+      const prods = [...(offR.p||[]), ...usdaR.filter(p => !seenC.has(key0(p.code)) && seenC.add(key0(p.code)))];
+      items = prods.map(p => { const c = scoreOFF(p); if (c && p.src) c.src = p.src; return c; }).filter(Boolean);
       exCache.set(key, items);
     } catch(_) { items = null; }
   }
@@ -1903,7 +1929,7 @@ async function exRun(title, query){
   body.innerHTML = `<div class="panel stack">${head}
     <p class="muted" style="font-size:13px">${shown.length} product${shown.length===1?"":"s"}${where ? " in " + esc(where) : ""}, best score first.${hidden ? ` ${hidden} hidden because they contain your allergens. <a href="#" onclick="$('#exAlg').click();return false">Show them</a> or change <a href="#" class="alg-set" onclick="openSettings('alg');return false">My allergens</a>.` : ""}</p>
     ${shown.length ? productList(shown.slice(0, 40)) : `<p class="muted">Nothing found with an English ingredient list${where ? ` for ${esc(where)}` : ""}. Try another store or market, or “Anywhere”.</p>`}
-    <p class="disclaimer">From Open Food Facts (volunteer data, so some products are missing). Scored on your phone with our evidence library and nutrition; tap one for the full check. No paid placements.</p></div>`;
+    <p class="disclaimer">From Open Food Facts (volunteer data, so some products are missing)${items.some(i => i.src === "USDA") ? " and USDA FoodData Central (marked USDA: ingredient lists supplied by manufacturers, no store data)" : ""}. Scored on your phone with our evidence library and nutrition; tap one for the full check. No paid placements.</p></div>`;
 }
 
 function route(){
