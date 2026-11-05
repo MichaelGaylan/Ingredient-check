@@ -55,3 +55,23 @@ python3 server/import/build_db.py sample.jsonl.gz sample.sql --sqlite sample.db
 ```
 
 `worker/src/index.js` exports `search(db, params)`, so it can be tested against the SQLite copy.
+
+## Photo sharing (optional)
+
+Users can add a photo to a product that has none. The Worker passes it to Open Food Facts under
+Sourced's own Open Food Facts account, so the account password never reaches a phone. Photos on Open
+Food Facts are public under CC BY-SA, and the app asks each user once before their first share.
+
+1. Create the account at https://world.openfoodfacts.org/cgi/user.pl (for example the user name
+   `sourced-app`), using an email address you check.
+2. Give the Worker the account details as secrets. Type them only into the terminal, never into a chat:
+   ```
+   cd server/worker
+   npx wrangler secret put OFF_USER     # the user name
+   npx wrangler secret put OFF_PASS     # the password
+   npx wrangler deploy
+   ```
+3. Check https://sourced-search.<you>.workers.dev/ shows `"photos": true`. The app's "Add a photo"
+   button appears as soon as it does.
+
+Limits: 20 photos per phone a day and 500 a day in total, JPEG/PNG/WebP under 6 MB.
