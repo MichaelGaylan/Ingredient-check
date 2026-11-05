@@ -1674,7 +1674,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.7", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.8", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1751,7 +1751,7 @@ const OFF_FIELDS = "code,product_name,brands,lang,ingredients_text,ingredients_t
    on the phone for a day, calls are spaced out, slow calls time out, and a failed call is retried once. */
 const SEARCH_TTL = 24*3600e3, searchTimes = [];
 // Our own search server (a copy of Open Food Facts, no rate limit). Empty until it is set up (see server/README.md).
-const SOURCED_API = "";
+const SOURCED_API = "https://sourced-search.michaelgaylan.workers.dev";
 const ownSearch = (params) => SOURCED_API ? [`${SOURCED_API}/search?${new URLSearchParams(Object.entries(params).filter(([,v]) => v))}`] : [];
 function searchCacheGet(url){ try { const e = JSON.parse(localStorage.getItem("sourced.sc." + url) || "null"); return e && Date.now() - e.t < SEARCH_TTL ? e.p : null; } catch(_) { return null; } }
 function searchCachePut(url, p){
@@ -1781,8 +1781,11 @@ async function offSearch(urls, onWait){
     for (let attempt = 0; attempt < tries; attempt++){
       if (!(SOURCED_API && u.startsWith(SOURCED_API))) await searchSlot(onWait); // our own server has no per-minute limit
       try {
-        const j = await fetchJSON(u);
+        const own = SOURCED_API && u.startsWith(SOURCED_API);
+        const j = await fetchJSON(u, own ? 8000 : 20000);
         const prods = j.hits ? j.hits.map(fromSAL) : (j.products || []);
+        // Our own copy is still filling up: if it has (almost) nothing for this, ask Open Food Facts instead, and don't keep the empty answer.
+        if (own && prods.length < 5 && u !== urls[urls.length-1]) { last = new Error("own server: too few results"); break; }
         searchCachePut(u, prods); return prods;
       } catch(e){ last = e; if (attempt === 0 && tries > 1){ onWait && onWait(4); await new Promise(r => setTimeout(r, 4000)); } }
     }
