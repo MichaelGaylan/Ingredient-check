@@ -89,8 +89,15 @@ dialog.settings{overflow:auto}
 .crop-stage{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;align-self:center;max-width:100%}
 .crop-stage img{display:block;max-width:100%;max-height:58dvh;border-radius:8px}
 .crop-box{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.6) inset;cursor:move;border-radius:2px}
-.crop-stage{overflow:hidden;border-radius:8px}
-.crop-box .h{position:absolute;width:26px;height:26px;border:4px solid #fff;filter:drop-shadow(0 0 1px rgba(0,0,0,.8))}
+.crop-stage{overflow:hidden;border-radius:8px;padding:0}
+.crop-box .h{position:absolute;width:30px;height:30px;border:5px solid #fff;filter:drop-shadow(0 0 1px rgba(0,0,0,.8));z-index:2}
+.crop-box .h::after{content:"";position:absolute;inset:-14px} /* bigger finger target */
+.crop-box .e{position:absolute;z-index:1}
+.crop-box .e::before{content:"";position:absolute;background:#fff;border-radius:3px;box-shadow:0 0 2px rgba(0,0,0,.8)}
+.crop-box .t,.crop-box .b{left:22px;right:22px;height:36px;cursor:ns-resize} .crop-box .t{top:-18px} .crop-box .b{bottom:-18px}
+.crop-box .l,.crop-box .r{top:22px;bottom:22px;width:36px;cursor:ew-resize} .crop-box .l{left:-18px} .crop-box .r{right:-18px}
+.crop-box .t::before,.crop-box .b::before{left:50%;top:50%;width:34px;height:6px;margin:-3px 0 0 -17px}
+.crop-box .l::before,.crop-box .r::before{left:50%;top:50%;width:6px;height:34px;margin:-17px 0 0 -3px}
 .crop-box .tl{left:-4px;top:-4px;border-right:0;border-bottom:0;cursor:nwse-resize} .crop-box .tr{right:-4px;top:-4px;border-left:0;border-bottom:0;cursor:nesw-resize}
 .crop-box .bl{left:-4px;bottom:-4px;border-right:0;border-top:0;cursor:nesw-resize} .crop-box .br{right:-4px;bottom:-4px;border-left:0;border-top:0;cursor:nwse-resize}
 .crop-btns{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
@@ -286,6 +293,15 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
 .lib-filter button{padding:6px 10px;font-size:13px}
 .lib-filter button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 @media (prefers-reduced-motion: no-preference){.ring circle.val{transition:stroke-dashoffset .6s ease}}
+/* While records are being checked: three bouncing dots and a sweeping arc, so it never looks frozen. */
+.ring .num .dots{display:flex;gap:5px;justify-content:center;align-items:flex-end;height:22px;margin:0 0 6px}
+.ring .num .dots i{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotbounce 1s infinite ease-in-out}
+.ring .num .dots i:nth-child(2){animation-delay:.15s} .ring .num .dots i:nth-child(3){animation-delay:.3s}
+@keyframes dotbounce{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-9px);opacity:1}}
+.ring circle.spin{transform-origin:48px 48px;animation:ringspin 1.2s linear infinite}
+@keyframes ringspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.ring .num .dots i{animation:dotfade 1.4s infinite ease-in-out}.ring circle.spin{animation:dotfade 1.4s infinite}}
+@keyframes dotfade{0%,100%{opacity:.35}50%{opacity:1}}
 @media (max-width:420px){.result-head{grid-template-columns:1fr}.ring{margin:0 auto}}
 </style>
 
@@ -375,8 +391,8 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
   <dialog class="settings crop-dlg" id="cropDlg" aria-labelledby="cropTitle">
     <form method="dialog">
       <h2 id="cropTitle">Crop to the ingredients</h2>
-      <p class="set-help" style="margin:0">Drag the box or its corners so it covers just the ingredient list. Less around it means a cleaner read.</p>
-      <div class="crop-stage" id="cropStage"><img id="cropImg" alt="Your label photo"><div class="crop-box" id="cropBox"><span class="h tl" data-h="tl"></span><span class="h tr" data-h="tr"></span><span class="h bl" data-h="bl"></span><span class="h br" data-h="br"></span></div></div>
+      <p class="set-help" style="margin:0">Drag any edge or corner to fit the box around just the ingredient list. Drag inside it to move it, or drag across the photo to draw a new box.</p>
+      <div class="crop-stage" id="cropStage"><img id="cropImg" alt="Your label photo"><div class="crop-box" id="cropBox"><span class="e t" data-h="t"></span><span class="e b" data-h="b"></span><span class="e l" data-h="l"></span><span class="e r" data-h="r"></span><span class="h tl" data-h="tl"></span><span class="h tr" data-h="tr"></span><span class="h bl" data-h="bl"></span><span class="h br" data-h="br"></span></div></div>
       <div class="crop-btns"><button type="button" class="linkbtn" value="cancel" id="cropCancel">Cancel</button><button type="button" id="cropAll">Whole photo</button><button type="button" class="primary" id="cropOK" autofocus>Read this area</button></div>
     </form>
   </dialog>
@@ -1148,7 +1164,7 @@ function renderResult(args){
     : [ingConcerns ? `${ingConcerns} ingredient${ingConcerns>1?"s":""} with a documented concern. ${counts.A?`${counts.A} backed by an authority or systematic review.`:"None reach grade A."}` : "",
         sc.highs.length ? `High in ${sc.highs.map(h=>h.label).join(", ").replace(/, ([^,]*)$/, " and $1")}.` : ""].filter(Boolean).join(" ");
   const ringLabel = checking ? "Checking records" : clear ? "No concerns found" : `Score ${sc.score} of 100, show breakdown`;
-  const ringNum = checking ? `…<span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
+  const ringNum = checking ? `<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
   const ringOff = checking ? C : clear ? 0 : off;
   const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[], {code:current?.code, name, labels:args.labels||[]});
   const altEligible = !example && !checking && !clear && sc.score < 80 && current?.code && (args.cats||[]).length;
@@ -1159,7 +1175,7 @@ function renderResult(args){
       <div class="result-head">
         <button class="ring" id="ringBtn" type="button" aria-label="${ringLabel}" style="padding:0;border:0;background:none">
           <svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--line)" stroke-width="8"/>
-          <circle class="val" cx="48" cy="48" r="42" fill="none" stroke="${bandColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${ringOff}"/></svg>
+          <circle class="val" cx="48" cy="48" r="42" fill="none" stroke="${bandColor}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${ringOff}"/>${checking?`<circle class="spin" cx="48" cy="48" r="42" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(C*0.22).toFixed(1)} ${C}"/>`:""}</svg>
           <div class="num"><div>${ringNum}</div></div>
         </button>
         <div style="min-width:0">
@@ -1494,8 +1510,15 @@ function cropPhoto(file){
     const paint = () => Object.assign(box.style, {left:r.x*100+"%", top:r.y*100+"%", width:r.w*100+"%", height:r.h*100+"%"});
     paint();
     let drag = null;
-    const down = e => { const h = e.target.dataset.h || "move"; if (!box.contains(e.target)) return;
-      e.preventDefault(); box.setPointerCapture(e.pointerId); const b = stage.getBoundingClientRect(); drag = {h, x0:e.clientX, y0:e.clientY, r0:{...r}, W:b.width, H:b.height}; };
+    const down = e => {
+      e.preventDefault(); stage.setPointerCapture(e.pointerId); const b = stage.getBoundingClientRect();
+      let h = box.contains(e.target) ? (e.target.dataset.h || "move") : "new";
+      if (h === "new"){ // start a fresh box where the finger lands, then size it by dragging (like the bottom-right corner)
+        const px = Math.min(.92, Math.max(0, (e.clientX - b.left)/b.width)), py = Math.min(.92, Math.max(0, (e.clientY - b.top)/b.height));
+        r = {x:px, y:py, w:.08, h:.08}; paint();
+        drag = {h:"br", x0:e.clientX, y0:e.clientY, r0:{x:px, y:py, w:0, h:0}, W:b.width, H:b.height}; return;
+      }
+      drag = {h, x0:e.clientX, y0:e.clientY, r0:{...r}, W:b.width, H:b.height}; };
     const move = e => { if (!drag) return; const dx = (e.clientX - drag.x0)/drag.W, dy = (e.clientY - drag.y0)/drag.H, o = drag.r0, MIN = .08;
       let {x, y, w, h} = o;
       if (drag.h === "move"){ x = Math.min(1-w, Math.max(0, o.x+dx)); y = Math.min(1-h, Math.max(0, o.y+dy)); }
@@ -1507,8 +1530,8 @@ function cropPhoto(file){
       }
       r = {x, y, w, h}; paint(); };
     const up = () => { drag = null; };
-    box.addEventListener("pointerdown", down); box.addEventListener("pointermove", move); box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
-    const finish = val => { box.removeEventListener("pointerdown", down); box.removeEventListener("pointermove", move); box.removeEventListener("pointerup", up); box.removeEventListener("pointercancel", up);
+    stage.addEventListener("pointerdown", down); stage.addEventListener("pointermove", move); stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+    const finish = val => { stage.removeEventListener("pointerdown", down); stage.removeEventListener("pointermove", move); stage.removeEventListener("pointerup", up); stage.removeEventListener("pointercancel", up);
       dlg.onclose = null; dlg.close(); URL.revokeObjectURL(img.src); done(val); };
     $("#cropOK").onclick = () => finish({...r});
     $("#cropAll").onclick = () => finish(null);
@@ -1586,7 +1609,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.8", APP_DATE = "2026-11-04";
+const APP_VERSION = "4.9", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };

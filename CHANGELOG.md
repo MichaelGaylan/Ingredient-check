@@ -124,6 +124,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 4.8 (5 Nov 2026): crop label photos
 - After you take a label photo, a crop step lets you drag a box over just the ingredient list before it is read. Less text around it means a cleaner read. "Whole photo" skips the crop.
 
+## 4.9 (5 Nov 2026): livelier checking, easier cropping
+- While ingredients are being checked, the score circle shows three bouncing dots and a sweeping arc, so it's clear the app is working and not frozen.
+- Crop step: every edge now has its own drag handle as well as the corners, the handles are bigger and easier to grab with a finger, and you can drag across the photo to draw a new box.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
