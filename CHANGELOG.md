@@ -162,6 +162,13 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 5.8 (5 Nov 2026): our own search server
 - Explore and alternatives now ask Sourced's own copy of the Open Food Facts database first, which has no per-minute limit. When it has too few results (it is still growing), the app asks Open Food Facts directly, as before.
 
+## 5.9 (5 Nov 2026): same-kind alternatives, English names
+- Alternatives are now the same kind of product: they must be in the product's most specific category or share a word of its name (mac and cheese for mac and cheese). Unrelated foods no longer appear.
+- Products from Explore and the USDA database get alternatives too, found by name when there's no category.
+- In Explore, a product with your allergens or a low score has a "Find a better option" link, which shows the same kind of product without those issues (for example, a dairy-free mac and cheese).
+- Plant creams (oat, soy, cashew, almond, rice cream) no longer set off the milk alert.
+- Product names are shown in English. Products with no English name are left out of Explore and alternatives.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

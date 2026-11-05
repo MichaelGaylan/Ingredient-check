@@ -171,7 +171,9 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .ex-head{display:flex;align-items:center;gap:10px}.ex-head h3{margin:0;font:700 17px var(--display);flex:1}
 .alt-why{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}.alt-why span{font:500 11px var(--mono);padding:1px 6px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
 .alt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.alt-item{display:flex;align-items:stretch;gap:8px}
+.alt-item{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.ex-altbtn{flex-basis:100%;text-align:right;font-size:13px;padding:0 4px;color:var(--accent)}
+.ex-alt{flex-basis:100%;margin:2px 0 6px 20px;padding:8px 10px;border-left:3px solid var(--ok);font-size:13px;color:var(--muted)}
 .alt-item .alt-img{flex:none;width:72px;padding:4px;display:grid;place-items:center;border-radius:12px}
 .alt-item .alt-img img{width:62px;height:62px;object-fit:contain}
 .alt-item .alt-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
@@ -900,7 +902,7 @@ function searchChip(u){
 // terms: words in an ingredient list that mean the allergen is present; not: look-alike phrases that don't.
 const ALLERGENS = [
   {id:"milk", label:"Milk", off:["en:milk"], terms:["milk","whey","casein","caseinate","caseinates","lactose","butter","buttermilk","cream","cheese","yogurt","yoghurt","ghee","lactalbumin","lactoglobulin","curd","curds","milkfat","milk fat","milk solids","kefir","paneer","butter fat","butterfat","butter oil","butter acid","butter ester","butter esters","casein hydrolysate","cottage cheese","custard","half and half","half-and-half","lactalbumin phosphate","lactoferrin","milk protein","milk proteins","milk protein hydrolysate","milk powder","rennet casein","sour cream","sour cream solids","sour milk solids","whey protein","whey protein concentrate","whey protein isolate","whey protein hydrolysate","recaldent","simplesse","tagatose","lactulose","condensed milk","evaporated milk","dry milk","nonfat milk","non fat milk","skimmed milk powder","dairy","akawi","ashta","ayran","jibna","jibneh","khoya","khoa","brie","camembert","cheddar","edam","emmental","emmentaler","feta","gouda","gruyere","halloumi","mozzarella","parmesan","parmigiano","parmigiano reggiano","pecorino","ricotta","mascarpone","provolone","roquefort","stilton","gorgonzola","manchego","colby","monterey jack","quark","labneh","labne","skyr","lassi","kulfi","dahi","chhena","queso","queso fresco","creme fraiche","fromage frais","clotted cream","ice cream","whipping cream","double cream","single cream","milk chocolate","laban","akkawi","roumi","roumy","jameed","colostrum","emmenthal","kashkaval","paracasein"],
-   not:["cocoa butter","shea butter","peanut butter","nut butter","almond butter","apple butter","coconut milk","coconut cream","cream of tartar","almond milk","oat milk","soy milk","soya milk","rice milk","cashew milk","coconut butter","creamer non dairy","non dairy","dairy free","nondairy","dairy alternative","vegan cheese","plant based cheese","vegan feta","vegan mozzarella","vegan parmesan","non dairy ice cream","dairy free ice cream"]},
+   not:["cocoa butter","shea butter","peanut butter","nut butter","almond butter","apple butter","coconut milk","coconut cream","cream of tartar","oat cream","soy cream","soya cream","cashew cream","almond cream","rice cream","plant cream","almond milk","oat milk","soy milk","soya milk","rice milk","cashew milk","coconut butter","creamer non dairy","non dairy","dairy free","nondairy","dairy alternative","vegan cheese","plant based cheese","vegan feta","vegan mozzarella","vegan parmesan","non dairy ice cream","dairy free ice cream"]},
   {id:"lactose", label:"Lactose (intolerance)", off:["en:milk"], terms:[], not:[]},
   {id:"eggs", label:"Eggs", off:["en:eggs"], terms:["egg","eggs","albumin","albumen","ovalbumin","lysozyme","mayonnaise","meringue","egg white","egg yolk","e1105","e 1105","ovomucoid","ovomucin","ovovitellin","vitellin","livetin","egg powder","dried egg","dried eggs","egg solids","whole egg","whole eggs","egg yolks","egg whites","eggnog","aioli","hollandaise","pavlova","royal icing","conalbumin","ovoglobulin","ovum","nougat"], not:["milk albumin","serum albumin","whey albumin","soy albumin","bovine serum albumin"]},
   {id:"fish", label:"Fish", off:["en:fish"], terms:["fish","anchovy","anchovies","cod","salmon","tuna","sardine","sardines","pollock","haddock","tilapia","trout","mackerel","herring","bonito","bass","catfish","flounder","grouper","hake","halibut","mahi mahi","perch","pike","scrod","snapper","swordfish","fish oil","fish gelatin","fish sauce","fish stock","surimi","caviar","roe","fish roe","dashi","sprat","sprats","isinglass","worcestershire sauce","caesar dressing"], not:["pike place"]},
@@ -1224,7 +1226,7 @@ function renderResult(args){
   const ringOff = checking ? C : clear ? 0 : off;
   const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[], {code:current?.code, name, labels:args.labels||[]});
   // Alternatives: when the product has concerns or is high in sugar, salt or fat, or contains one of your allergens.
-  const altWhy = !example && current?.code && (args.cats||[]).length ? {
+  const altWhy = !example && current?.code && ((args.cats||[]).length || nameWords(name).length) ? {
     score: !checking && !clear && sc.score < 80, highs: sc.highs.map(h => h.key || h.label), alg: alg && alg.mineHit ? (alg.mineIds || []) : [] } : null;
   const altEligible = !!altWhy && (altWhy.score || altWhy.highs.length || altWhy.alg.length);
   $("#result").innerHTML = `
@@ -1268,7 +1270,7 @@ function renderResult(args){
   if (pending.length && !_auto) autoLookup(pending, renderToken);
   if (!example && current?.code && !args.savedAt) recordHistory(args, {score:sc.score, clear, checking, bandName, headline, bandColor});
   const fb = $("#favBtn"); if (fb) fb.onclick = () => { toggleFav(current.code); const on = isFav(current.code); fb.setAttribute("aria-pressed", on); fb.textContent = on ? "★" : "☆"; };
-  if (altEligible) loadAlternatives(current.code, args.cats, sc.score, renderToken, {...altWhy, highsN: sc.highs.length});
+  if (altEligible) loadAlternatives(current.code, args.cats, sc.score, renderToken, {...altWhy, highsN: sc.highs.length}, name);
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
 }
 
@@ -1674,7 +1676,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.8", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.9", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1745,7 +1747,7 @@ window.clearHistory = () => { if (confirm("Delete all scan history from this pho
 document.querySelectorAll('input[name=histTab]').forEach(r => r.addEventListener("change", () => { histTab = r.value; renderHistory(); }));
 
 /* ---------- alternatives and Explore: scoring Open Food Facts products on the phone ---------- */
-const OFF_FIELDS = "code,product_name,brands,lang,ingredients_text,ingredients_text_en,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags,image_front_small_url";
+const OFF_FIELDS = "code,product_name,product_name_en,generic_name_en,brands,lang,ingredients_text,ingredients_text_en,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags,image_front_small_url";
 /* Open Food Facts allows about 10 searches a minute per phone, and answers "busy" (HTTP 503) beyond that,
    which a browser reports as a failed connection. So every search goes through offSearch(): results are kept
    on the phone for a day, calls are spaced out, slow calls time out, and a failed call is retried once. */
@@ -1796,7 +1798,9 @@ async function offSearch(urls, onWait){
 // which of the user's allergens it would alert for. Returns null when there is no English ingredient list.
 function scoreOFF(p){
   const text = (p.ingredients_text_en || (p.lang === "en" ? p.ingredients_text : "") || "").trim();
-  if (!text || !p.product_name) return null;
+  // English names only: the English name, or the main name when the product's own language is English.
+  const name = (p.product_name_en || (p.lang === "en" || !p.lang ? p.product_name : "") || p.generic_name_en || "").trim();
+  if (!text || !name) return null;
   const nm = p.nutriments || {}, num = v => (typeof v === "number" ? v : undefined), pc = p.categories_tags || [];
   const nutr = {sugars:num(nm.sugars_100g), salt:num(nm.salt_100g), fat:num(nm.fat_100g), sat:num(nm["saturated-fat_100g"]), drink: pc.includes("en:beverages") && !pc.includes("en:alcoholic-beverages")};
   const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
@@ -1805,52 +1809,80 @@ function scoreOFF(p){
   const offHit = id => (ALLERGENS.find(a => a.id === id)?.off || []).some(x => (p.allergens_tags||[]).includes(x) || (p.traces_tags||[]).includes(x));
   let algs = mine.filter(id => t.has(id) || offHit(id));
   if (algs.includes("lactose") && LACTOSE_FREE.test(text + " " + p.product_name)) algs = algs.filter(id => id !== "lactose");
-  return {code:p.code, name:p.product_name, brand:(p.brands||"").split(",")[0].trim(), img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, highs:sc.highs, nutriUsed:hasN, algs};
+  return {code:p.code, name, cats:p.categories_tags||[], brand:(p.brands||"").split(",")[0].trim(), img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, highs:sc.highs, nutriUsed:hasN, algs};
 }
 const altCache = new Map();
-async function loadAlternatives(code, cats, myScore, token, why){
-  const box = () => (token === renderToken ? $("#alts") : null);
-  const key = code + "|" + (SET.allergens||[]).join(",");
-  let res = altCache.get(key);
-  if (!res){
-    try {
-      const tiers = [cats[cats.length-1], cats[cats.length-2]].filter(Boolean);
-      const seen = new Set([code]), found = [];
-      for (let ti = 0; ti < tiers.length && found.length < 5; ti++){
-        const prods = await offSearch([...ownSearch({cat:tiers[ti]}), `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(tiers[ti])}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`]);
-        prods.forEach((p, pop) => {
-          if (!p.code || seen.has(p.code)) return; seen.add(p.code);
-          const c = scoreOFF(p); if (!c) return;
-          // Never suggest anything that would set off one of the user's allergen alerts.
-          // That is: none of the allergens this product alerted for, and none it doesn't already contain.
-          if (c.algs.some(id => why.alg.includes(id) || !(algCtx?.has || []).includes(id))) return;
-          // Must score at least as well, and better when the product had concerns or nutrition highs.
-          if (c.score < 60 || c.score < myScore || ((why.score || why.highs.length) && (c.score <= myScore || c.score < 80))) return;
-          if (why.highs.length && c.nutriUsed && c.highs.length >= why.highsN) return;
-          c.why = [...(why.alg.length ? why.alg.map(id => "no " + algName(id).toLowerCase()) : []),
-                   ...(why.highs.length && c.nutriUsed && !c.highs.length ? ["not high in sugar, salt or fat"] : []),
-                   ...(c.score > myScore ? [`scores ${c.score - myScore} higher`] : [])];
-          c.tier = ti; c.pop = pop; found.push(c);
-        });
-      }
-      found.sort((a,b)=>a.tier-b.tier || b.score-a.score || a.pop-b.pop);
-      res = found.slice(0,5); altCache.set(key, res);
-    } catch(_) { res = null; }
+// Words that say what a product is ("mac", "cheese", "tortillas"), for keeping alternatives to the same kind of food.
+const NAME_STOP = new Set("the and with for from made style original classic organic natural flavor flavour flavored flavoured family size pack value brand new free low reduced less more extra light lite premium select fresh real whole great best".split(" "));
+const nameWords = n => [...new Set(norm(n||"").trim().split(" ").filter(w => w.length > 2 && !NAME_STOP.has(w) && !/^\d/.test(w)).map(w => w.replace(/(ies)$/, "y").replace(/(?<!s)s$/, "")))];
+/* Same-kind alternatives for one product: search its most specific category (and the product's own name words),
+   keep only candidates that are the same kind of food (same specific category, or sharing a name word), that set off
+   none of the allergens this product does (nor any new ones), and that score better when the product had concerns. */
+async function findAlternatives({code, name, cats, score: myScore, why, has}){
+  const key = [code, (SET.allergens||[]).join(","), why.alg.join(",")].join("|");
+  if (altCache.has(key)) return altCache.get(key);
+  const words = nameWords(name), specific = (cats||[]).slice(-2).reverse();
+  const queries = [];
+  for (const cat of specific) queries.push({cat, urls:[...ownSearch({cat}), `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(cat)}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`]});
+  if (words.length){ const q = words.slice(0, 3).join(" ");
+    queries.push({q, urls:[...ownSearch({q}), `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&langs=en&page_size=40&sort_by=-unique_scans_n&fields=${OFF_FIELDS}`]}); }
+  const seen = new Set([code]), found = [];
+  for (const [qi, qy] of queries.entries()){
+    if (found.length >= 5) break;
+    let prods = [];
+    try { prods = await offSearch(qy.urls); } catch(_) { continue; }
+    prods.forEach((p, pop) => {
+      if (!p.code || seen.has(p.code)) return;
+      const c = scoreOFF(p); if (!c) return;
+      // Same kind of food: in the product's most specific category, or sharing a word of its name.
+      const cw = nameWords(c.name), overlap = words.filter(w => cw.includes(w)).length;
+      const sameCat = specific[0] && c.cats.includes(specific[0]);
+      if (!sameCat && overlap === 0) return;
+      if (qy.cat && !c.cats.includes(qy.cat) && overlap === 0) return; // guard: a search that ignored the category
+      seen.add(p.code);
+      // Never suggest anything that would set off one of the user's allergen alerts.
+      if (c.algs.some(id => why.alg.includes(id) || !(has || []).includes(id))) return;
+      if (c.score < 60 || c.score < myScore || ((why.score || why.highs.length) && (c.score <= myScore || c.score < 80))) return;
+      if (why.highs.length && c.nutriUsed && c.highs.length >= why.highsN) return;
+      c.why = [...(why.alg.length ? why.alg.map(id => "no " + algName(id).toLowerCase()) : []),
+               ...(why.highs.length && c.nutriUsed && !c.highs.length ? ["not high in sugar, salt or fat"] : []),
+               ...(c.score > myScore ? [`scores ${c.score - myScore} higher`] : [])];
+      c.rank = (sameCat ? 2 : 0) + overlap; c.pop = pop + qi*100; found.push(c);
+    });
   }
+  found.sort((a,b) => b.rank - a.rank || b.score - a.score || a.pop - b.pop);
+  const res = found.slice(0, 5); altCache.set(key, res); return res;
+}
+async function loadAlternatives(code, cats, myScore, token, why, name){
+  const box = () => (token === renderToken ? $("#alts") : null);
+  let res = null;
+  try { res = await findAlternatives({code, name, cats, score:myScore, why, has:algCtx?.has || []}); } catch(_) {}
   const b = box(); if (!b) return;
   if (!res || res.length < 1 || (res.length < 2 && !why.alg.length)){ b.remove(); return; }
   b.innerHTML = `<div class="label">${b.querySelector(".label")?.textContent || "Better alternatives"}</div>
     ${productList(res)}
-    <p class="disclaimer">Similar products from Open Food Facts, scored on the phone with our evidence library and nutrition (tap one for the full check, including FDA, WHO and IARC records). None of them set off your allergen alerts, but always check the pack. No paid placements.</p>`;
+    <p class="disclaimer">The same kind of product from Open Food Facts, scored on the phone with our evidence library and nutrition (tap one for the full check, including FDA, WHO and IARC records). None of them set off your allergen alerts, but always check the pack. No paid placements.</p>`;
   fillThumbs(b);
 }
+// Explore: "Better option" under a product with concerns or one of your allergens.
+window.exAlt = async (code, btn) => {
+  const a = PRODUCTS.get(code); if (!a) return;
+  const li = btn.closest("li"), out = document.createElement("div"); out.className = "ex-alt"; out.textContent = "Looking for the same kind of product without these issues…";
+  btn.replaceWith(out);
+  const why = {score: a.score < 80, highs: (a.highs||[]).map(h => h.label), highsN: (a.highs||[]).length, alg: a.algs || []};
+  const has = [...new Set([...(a.algs||[])])];
+  let res = []; try { res = await findAlternatives({code, name:a.name, cats:a.cats, score:a.score, why, has}); } catch(_) {}
+  if (!li.isConnected) return;
+  out.innerHTML = res.length ? `<div class="label" style="margin:2px 0 6px">Better option${res.length > 1 ? "s" : ""}</div>${productList(res.slice(0, 2))}` : `<p class="muted" style="font-size:13px;margin:0">No same-kind product without these issues found yet.</p>`;
+  fillThumbs(out);
+};
 const PRODUCTS = new Map(); // code -> list item, for the compare cards
 function productList(items){
   items.forEach(a => PRODUCTS.set(a.code, a));
   return `<ul class="alt-list">${items.map(a=>`<li class="alt-item">
       <button type="button" class="alt-img" data-code="${esc(a.code)}" onclick="peekProduct('${esc(a.code)}')" aria-label="Show the picture of ${esc(a.name)} to compare">${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'alt-noimg',textContent:'${a.em||"🛒"}'}))">`:`<span class="alt-noimg" aria-hidden="true">${a.em||"🛒"}</span>`}</button>
       <button type="button" class="alt-main" onclick="openProduct('${esc(a.code)}')"><span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span>
-      <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.src?` · <span class="src-tag">${esc(a.src)}</span>`:""}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button></li>`).join("")}</ul>`;
+      <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.src?` · <span class="src-tag">${esc(a.src)}</span>`:""}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button>${a.offerAlt && (a.algs?.length || a.score < 60) ? `<button type="button" class="linkbtn ex-altbtn" onclick="exAlt('${esc(a.code)}', this)">Find a better option${a.algs?.length ? ` without ${esc(a.algs.map(algName).join(", ").toLowerCase())}` : ""} ›</button>` : ""}</li>`).join("")}</ul>`;
 }
 /* Photo card: tapping a product's picture shows it large at the bottom of the screen, to match it on the shelf.
    One at a time; another picture replaces it. Swipe it down (or tap ×) to close it; tap it for the full check. */
@@ -2011,7 +2043,7 @@ async function exRun(title, query){
   const shown = items.filter(i => !hideAlg || !i.algs.length).sort((a,b) => b.score - a.score || (a.clear === b.clear ? 0 : a.clear ? -1 : 1));
   body.innerHTML = `<div class="panel stack">${head}
     <p class="muted" style="font-size:13px">${shown.length} product${shown.length===1?"":"s"}${where ? " in " + esc(where) : ""}, best score first.${hidden ? ` ${hidden} hidden because they contain your allergens. <a href="#" onclick="$('#exAlg').click();return false">Show them</a> or change <a href="#" class="alg-set" onclick="openSettings('alg');return false">My allergens</a>.` : ""}</p>
-    ${shown.length ? productList(shown.slice(0, 40).map(i => ({...i, em: exEmoji}))) : `<p class="muted">Nothing found with an English ingredient list${where ? ` for ${esc(where)}` : ""}. Try another store or market, or “Anywhere”.</p>`}
+    ${shown.length ? productList(shown.slice(0, 40).map(i => ({...i, em: exEmoji, offerAlt: true}))) : `<p class="muted">Nothing found with an English ingredient list${where ? ` for ${esc(where)}` : ""}. Try another store or market, or “Anywhere”.</p>`}
     <p class="disclaimer">From Open Food Facts (volunteer data, so some products are missing)${items.some(i => i.src === "USDA") ? " and USDA FoodData Central (marked USDA: ingredient lists supplied by manufacturers, no store data)" : ""}. Scored on your phone with our evidence library and nutrition; tap one for the full check. No paid placements.</p></div>`;
   fillThumbs(body);
 }
