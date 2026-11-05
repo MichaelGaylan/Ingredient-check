@@ -13,7 +13,7 @@ Usage:
 Writes a SQL file (schema + inserts) for `wrangler d1 execute sourced-search --remote --file sourced.sql`.
 Add --sqlite sourced.db to also write a local SQLite copy for testing.
 """
-import gzip, json, sqlite3, sys, argparse
+import gzip, heapq, json, sqlite3, sys, argparse
 
 FIELDS_TAGS = ("categories_tags", "stores_tags", "countries_tags", "allergens_tags", "traces_tags", "additives_tags")
 NUTR = ("sugars_100g", "salt_100g", "fat_100g", "saturated-fat_100g")
@@ -65,14 +65,18 @@ def main():
     ap.add_argument("dump"); ap.add_argument("out", help="SQL file to write")
     ap.add_argument("--sqlite", default="", help="also write a local SQLite database (for testing)")
     ap.add_argument("--countries", default="", help="comma-separated countries_tags to keep (default: all)")
+    ap.add_argument("--top", type=int, default=0, help="keep only the N most-scanned products (fits the D1 free plan's 100k writes/day)")
     a = ap.parse_args()
     countries = {c.strip() for c in a.countries.split(",") if c.strip()}
+    source = rows(a.dump, countries)
+    if a.top:
+        source = heapq.nlargest(a.top, source, key=lambda r: r[5])
     db = sqlite3.connect(a.sqlite) if a.sqlite else None
     if db: db.executescript(SCHEMA)
     n = 0
     with open(a.out, "w", encoding="utf-8") as out:
         out.write("DROP TABLE IF EXISTS products_fts;\nDROP TABLE IF EXISTS products;\n" + SCHEMA.strip() + "\n")
-        for r in rows(a.dump, countries):
+        for r in source:
             n += 1
             out.write(f"INSERT INTO products(rowid,code,name,brands,ingredients,img,scans,categories,stores,countries,allergens,traces,additives,nutr) VALUES ({n},{','.join(q(v) for v in r)});\n")
             out.write(f"INSERT INTO products_fts(rowid,name,brands,categories) VALUES ({n},{q(r[1])},{q(r[2])},{q(r[6].replace('en:', '').replace('-', ' '))});\n")

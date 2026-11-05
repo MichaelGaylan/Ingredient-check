@@ -26,15 +26,16 @@ The app's own code is not affected.
 You need a free Cloudflare account and a computer with Node.js and Python 3.
 
 1. **Create the account.** Sign up at https://dash.cloudflare.com/sign-up.
-2. **Choose a plan size.** Free D1 databases hold up to 500 MB, which fits about the US and UK
-   products. The **Workers Paid** plan (US$5 a month) holds up to 10 GB, which fits the whole
+2. **Choose a plan size.** The free plan fits the most-scanned US and UK products (about 12,000 to 20,000). The **Workers Paid** plan (US$5 a month) holds up to 10 GB, which fits the whole
    English-language catalogue.
 3. **Download the data:** https://static.openfoodfacts.org/data/openfoodfacts-products.jsonl.gz.
    It is large (several GB) and refreshed daily.
-4. **Build the database.** For the free plan, keep the US and UK only:
+4. **Build the database.** On the free plan, keep the most-scanned US and UK products. D1's free plan
+   allows 100,000 writes a day, and each product takes about 4, so stay under about 20,000:
    ```
-   python3 server/import/build_db.py openfoodfacts-products.jsonl.gz sourced.sql --countries en:united-states,en:united-kingdom
+   python3 server/import/build_db.py openfoodfacts-products.jsonl.gz sourced.sql --countries en:united-states,en:united-kingdom --top 12000
    ```
+   On Workers Paid, leave out `--top` to load everything.
 5. **Create and load D1:**
    ```
    cd server/worker
