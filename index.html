@@ -1843,8 +1843,9 @@ const STORES = [["walmart","Walmart"],["target","Target"],["kroger","Kroger"],["
 const exCache = new Map(); let exSeq = 0;
 {
   // Neutral store buttons: plain names on a coloured circle with the initial (no logos).
-  const HUES = ["#2f6f9f","#b04a1c","#2f7a45","#7a3fa0","#a8780e","#1f7a7a","#a33a5b"];
-  $("#exStores").innerHTML = [["","All stores"], ...STORES].map(([v,l], i) => `<button type="button" role="radio" data-store="${v}" aria-checked="false"><span class="av" style="--c:${v ? HUES[i % HUES.length] : "var(--accent)"}" aria-hidden="true">${v ? esc(l.charAt(0)) : "★"}</span>${esc(l)}</button>`).join("");
+  // Our own palette (generic colours, not any store's brand colours).
+  const HUE = {walmart:"#2f6fb5", target:"#a33a5b", kroger:"#4a5fa8", costco:"#b04a1c", "whole-foods":"#2f7a45", "trader-joe-s":"#a8780e", aldi:"#1f6a8a", lidl:"#3d6fa0", publix:"#4f8a3a", safeway:"#7a3fa0", tesco:"#2a5d9a", "sainsbury-s":"#c0661f", asda:"#4f8f3a", waitrose:"#5a6b3a", carrefour:"#1f7a7a"};
+  $("#exStores").innerHTML = [["","All stores"], ...STORES].map(([v,l], i) => `<button type="button" role="radio" data-store="${v}" aria-checked="false"><span class="av" style="--c:${v ? (HUE[v] || "#5f6b78") : "var(--accent)"}" aria-hidden="true">${v ? esc(l.charAt(0)) : "★"}</span>${esc(l)}</button>`).join("");
   let EXP = {}; try { EXP = JSON.parse(localStorage.getItem("sourced.explore") || "{}"); } catch(_) {}
   $("#exCountry").value = EXP.country ?? "en:united-states"; $("#exAlg").checked = EXP.alg !== false;
   let store = EXP.store || "";
