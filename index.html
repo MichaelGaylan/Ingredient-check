@@ -1674,7 +1674,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.6", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.7", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1849,8 +1849,8 @@ function productList(items){
       <button type="button" class="alt-main" onclick="openProduct('${esc(a.code)}')"><span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span>
       <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.src?` · <span class="src-tag">${esc(a.src)}</span>`:""}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button></li>`).join("")}</ul>`;
 }
-/* Compare cards: tapping a product's picture opens it in a small card at the bottom of the screen (up to 3 side by side).
-   Swipe a card away (or tap ×) to close it; tap the card to open the full check. */
+/* Photo card: tapping a product's picture shows it large at the bottom of the screen, to match it on the shelf.
+   One at a time; another picture replaces it. Swipe it down (or tap ×) to close it; tap it for the full check. */
 const peekImgCache = new Map();
 async function peekImage(a){
   if (a.img) return a.img.replace(/\.(100|200)\.jpg$/, ".400.jpg");
@@ -1882,7 +1882,7 @@ window.peekProduct = async code => {
   let tray = $("#peekTray");
   if (!tray){ tray = document.createElement("div"); tray.id = "peekTray"; tray.setAttribute("aria-label", "Products to compare"); document.body.appendChild(tray); }
   if (tray.querySelector(`[data-code="${CSS.escape(code)}"]`)) return;
-  while (tray.children.length >= 3) tray.firstElementChild.remove();
+  tray.replaceChildren(); // one product at a time: a new picture replaces the one showing
   const card = document.createElement("div"); card.className = "peek"; card.dataset.code = code;
   card.innerHTML = `<button type="button" class="peek-x" aria-label="Close">×</button><div class="peek-img"><span class="alt-noimg">${a.em||"🛒"}</span></div>
     <span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span><b>${esc(a.name)}</b><small>${esc(a.brand||"")}</small>`;

@@ -156,6 +156,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 5.6 (5 Nov 2026): bigger photos
 - Compare-card photos are about twice as big. With more than one card open, slide sideways between them. Swipe a card down (or up) to close it. List thumbnails are a little bigger too.
 
+## 5.7 (5 Nov 2026): one photo at a time
+- The photo card now shows one product at a time, large, for matching it on the shelf. Tapping another product's picture replaces it. Swipe it down or tap × to close it.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
