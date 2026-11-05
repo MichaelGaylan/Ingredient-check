@@ -131,6 +131,12 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 5.0 (5 Nov 2026): smoother crop box on phones
 - The crop box no longer fights with the page: while you drag, the screen doesn't scroll or zoom, the photo can't be picked up by mistake, and a second finger is ignored. Resizing is steady on iPhone.
 
+## 5.1 (5 Nov 2026): Explore, and alternatives for your allergens
+- New **Explore** tab. Browse by aisle (Meat & Seafood; Dairy, Cheese & Eggs; Baking & Cooking; Bread & Baked Goods; Breakfast; Pantry; Snacks & Sweets; Drinks; Plant-based & Frozen) or search for a product. Results are ranked by Sourced score.
+- "Shop at" lets you pick a store (Walmart, Target, Kroger, Costco, Whole Foods, Trader Joe's, Aldi and more) and a market (country). Store lists come from Open Food Facts volunteers, so they are incomplete.
+- Products that would set off your allergen alert are hidden in Explore by default, with a switch to show them.
+- Alternatives now also appear when a product contains one of your allergens, or is high in sugar, salt or fat. Each one says why it's better (for example "no milk", "not high in sugar, salt or fat"), and none of them set off your allergen alerts.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

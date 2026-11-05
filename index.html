@@ -48,7 +48,7 @@ body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);padding-le
 .wrap{max-width:680px;margin:0 auto}
 header.top{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 12px;padding-block:18px 10px}
 header.top nav{grid-column:1/-1;justify-self:start}
-@media (max-width:520px){ .brand small{display:none} header.top nav{justify-self:stretch} nav a{flex:1;text-align:center;padding-inline:6px} }
+@media (max-width:520px){ .brand small{display:none} header.top nav{justify-self:stretch} nav a{flex:1;text-align:center;padding-inline:4px;font-size:13px} }
 .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:8px}
 .brand small{font:500 12px var(--mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
@@ -155,8 +155,25 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .saved-note{font-size:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--accent-soft)}
 .limits ul{margin:8px 0 0;padding-left:18px;font-size:14px}
 .limits li{margin-bottom:6px}
+.ex-search{display:flex;gap:8px}.ex-search input{flex:1;min-width:0}
+.ex-filters{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13.5px;color:var(--muted)}
+.ex-filters select{margin-left:4px;font-size:13.5px;padding:5px 8px}
+.ex-chk{display:flex;align-items:center;gap:6px}
+.ex-aisle h3,.ex-h3{font:700 16px var(--display);margin:0 0 8px}
+.ex-stores{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ex-stores::-webkit-scrollbar{display:none}
+.ex-stores button{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;width:76px;padding:0;border:0;background:none;font:500 12px var(--body);color:var(--ink);text-align:center;line-height:1.2}
+.ex-stores .av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font:700 19px var(--display);color:#fff;background:var(--c);border:3px solid transparent}
+.ex-stores button[aria-checked="true"] .av{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface) inset}
+.ex-stores button[aria-checked="true"]{font-weight:700}
+.ex-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.ex-tiles button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;font:500 12.5px var(--body);text-align:center;line-height:1.25;min-height:92px;border-radius:12px}
+.ex-tiles .em{font-size:28px;line-height:1}
+.ex-head{display:flex;align-items:center;gap:10px}.ex-head h3{margin:0;font:700 17px var(--display);flex:1}
+.alt-why{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}.alt-why span{font:500 11px var(--mono);padding:1px 6px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
 .alt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .alt-list button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
+.alt-noimg{width:40px;height:40px;border-radius:6px;background:var(--bg);flex:none}
+#exBody a{color:var(--accent)}
 .alt-list img{width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;flex:none}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
 nav a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -319,6 +336,7 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
     </div>
     <nav aria-label="Sections">
       <a href="#scan" data-view="scan">Scan</a>
+      <a href="#explore" data-view="explore">Explore</a>
       <a href="#history" data-view="history">History</a>
       <a href="#library" data-view="library">Evidence</a>
       <a href="#method" data-view="method">Method</a>
@@ -425,6 +443,23 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
         <p class="status" id="status" role="status"></p>
       </div>
       <div id="result" class="stack"></div>
+    </section>
+
+    <section id="view-explore" class="stack" hidden>
+      <div>
+        <h2>Explore</h2>
+        <p class="muted">Browse or search products, ranked by Sourced score. Products that would set off your allergen alert are left out unless you switch that off.</p>
+      </div>
+      <div class="panel stack">
+        <div class="ex-search"><input id="exQ" type="search" placeholder="Search products, e.g. tortillas" aria-label="Search products" autocomplete="off" enterkeyhint="search"><button type="button" id="exGo" class="primary">Search</button></div>
+        <div class="ex-filters">
+          <label>Market <select id="exCountry"><option value="">Anywhere</option><option value="en:united-states">United States</option><option value="en:united-kingdom">United Kingdom</option><option value="en:canada">Canada</option><option value="en:australia">Australia</option><option value="en:ireland">Ireland</option><option value="en:france">France</option><option value="en:germany">Germany</option><option value="en:spain">Spain</option><option value="en:italy">Italy</option></select></label>
+          <label class="ex-chk"><input type="checkbox" id="exAlg" checked> Hide my allergens</label>
+        </div>
+      </div>
+      <div class="panel stack"><h3 class="ex-h3">Shop at</h3><div class="ex-stores" id="exStores" role="radiogroup" aria-label="Store"></div>
+        <p class="disclaimer" style="margin:0">Stores as Open Food Facts volunteers have recorded them, so each store's list is incomplete.</p></div>
+      <div id="exBody" class="stack"></div>
     </section>
 
     <section id="view-history" class="stack" hidden>
@@ -1006,7 +1041,7 @@ function allergenReport(text, offTags, offTraces, info={}){
     last = m.index + m[0].length;
   }
   marked += esc(raw.slice(last));
-  return {html, marked, spans, mineHit: cRed.length + tRed.length > 0};
+  return {html, marked, spans, mineHit: cRed.length + tRed.length > 0, mineIds: [...new Set([...cRed, ...tRed])]};
 }
 
 /* "Ingredients checked": every ingredient with a finding is tinted in its Findings colour and carries its grade letter,
@@ -1170,7 +1205,10 @@ function renderResult(args){
   const ringNum = checking ? `<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>checking</span>` : clear ? `<span class="tick" aria-hidden="true">✓</span><span>clear</span>` : `${sc.score}<span>/100</span>`;
   const ringOff = checking ? C : clear ? 0 : off;
   const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[], {code:current?.code, name, labels:args.labels||[]});
-  const altEligible = !example && !checking && !clear && sc.score < 80 && current?.code && (args.cats||[]).length;
+  // Alternatives: when the product has concerns or is high in sugar, salt or fat, or contains one of your allergens.
+  const altWhy = !example && current?.code && (args.cats||[]).length ? {
+    score: !checking && !clear && sc.score < 80, highs: sc.highs.map(h => h.key || h.label), alg: alg && alg.mineHit ? (alg.mineIds || []) : [] } : null;
+  const altEligible = !!altWhy && (altWhy.score || altWhy.highs.length || altWhy.alg.length);
   $("#result").innerHTML = `
     ${args.savedAt?`<div class="saved-note">Saved result from ${esc(niceDate(args.savedAt))}${args.oldRules?", scored under older rules":""}. <button type="button" class="linkbtn" onclick="lookup('${esc(current?.code||"")}', true)">Rescan for the latest</button></div>`:""}
     ${alg ? alg.html : ""}
@@ -1197,7 +1235,7 @@ function renderResult(args){
       </div>
     </div>
     ${safeFindings({matched, autoHits, autoOK, unrev, pending, basic: basicFound(text)})}
-    ${altEligible?`<div class="panel stack" id="alts"><div class="label">Better-scoring alternatives</div><p class="muted" style="font-size:13.5px">Looking for similar products that score better…</p></div>`:""}
+    ${altEligible?`<div class="panel stack" id="alts"><div class="label">${altWhy.alg.length && !altWhy.score && !altWhy.highs.length ? "Alternatives without your allergens" : "Better alternatives"}</div><p class="muted" style="font-size:13.5px">Looking for similar products that score better…</p></div>`:""}
     ${nutriments?nutriPanel(nutriments):""}
     ${text?`<details class="panel"${alg&&alg.mineHit?" open":""}><summary><span class="label">Ingredients checked${args.trNote?" (in English)":""}</span><span class="f-code">show</span></summary><p style="margin-top:8px;font-size:14px">${markIngredients(text, alg ? alg.marked : esc(text), alg ? alg.spans : [], {matched, autoHits, autoOK})}</p>${MARK_KEY}</details>`:""}
     ${source?`<p class="disclaimer">${source}</p>`:""}
@@ -1212,7 +1250,7 @@ function renderResult(args){
   if (pending.length && !_auto) autoLookup(pending, renderToken);
   if (!example && current?.code && !args.savedAt) recordHistory(args, {score:sc.score, clear, checking, bandName, headline, bandColor});
   const fb = $("#favBtn"); if (fb) fb.onclick = () => { toggleFav(current.code); const on = isFav(current.code); fb.setAttribute("aria-pressed", on); fb.textContent = on ? "★" : "☆"; };
-  if (altEligible) loadAlternatives(current.code, args.cats, sc.score, renderToken);
+  if (altEligible) loadAlternatives(current.code, args.cats, sc.score, renderToken, {...altWhy, highsN: sc.highs.length});
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
 }
 
@@ -1618,7 +1656,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.0", APP_DATE = "2026-11-04";
+const APP_VERSION = "5.1", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1688,54 +1726,149 @@ function renderHistory(){
 window.clearHistory = () => { if (confirm("Delete all scan history from this phone? Favourites are kept.")){ jset(HIST_KEY, {}); renderHistory(); } };
 document.querySelectorAll('input[name=histTab]').forEach(r => r.addEventListener("change", () => { histTab = r.value; renderHistory(); }));
 
-/* ---------- better-scoring alternatives ---------- */
-// Only for products with some or several concerns. Looks in the product's most specific Open Food Facts
-// category, then its parent; scores candidates with the evidence library and nutrition on the phone;
-// shows nothing unless at least 2 clearly better products are found.
+/* ---------- alternatives and Explore: scoring Open Food Facts products on the phone ---------- */
+const OFF_FIELDS = "code,product_name,brands,lang,ingredients_text,ingredients_text_en,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags,image_front_small_url";
+// Scores one Open Food Facts product the same way a scan does (evidence library + nutrition), and lists
+// which of the user's allergens it would alert for. Returns null when there is no English ingredient list.
+function scoreOFF(p){
+  const text = (p.ingredients_text_en || (p.lang === "en" ? p.ingredients_text : "") || "").trim();
+  if (!text || !p.product_name) return null;
+  const nm = p.nutriments || {}, num = v => (typeof v === "number" ? v : undefined), pc = p.categories_tags || [];
+  const nutr = {sugars:num(nm.sugars_100g), salt:num(nm.salt_100g), fat:num(nm.fat_100g), sat:num(nm["saturated-fat_100g"]), drink: pc.includes("en:beverages") && !pc.includes("en:alcoholic-beverages")};
+  const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
+  const sc = score(matchEntries(text, p.additives_tags||[]), hasN ? nutr : null, []);
+  const t = algScan(norm(text)), mine = SET.allergens || [];
+  const offHit = id => (ALLERGENS.find(a => a.id === id)?.off || []).some(x => (p.allergens_tags||[]).includes(x) || (p.traces_tags||[]).includes(x));
+  let algs = mine.filter(id => t.has(id) || offHit(id));
+  if (algs.includes("lactose") && LACTOSE_FREE.test(text + " " + p.product_name)) algs = algs.filter(id => id !== "lactose");
+  return {code:p.code, name:p.product_name, brand:(p.brands||"").split(",")[0].trim(), img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, highs:sc.highs, nutriUsed:hasN, algs};
+}
 const altCache = new Map();
-async function loadAlternatives(code, cats, myScore, token){
+async function loadAlternatives(code, cats, myScore, token, why){
   const box = () => (token === renderToken ? $("#alts") : null);
-  let res = altCache.get(code);
+  const key = code + "|" + (SET.allergens||[]).join(",");
+  let res = altCache.get(key);
   if (!res){
     try {
       const tiers = [cats[cats.length-1], cats[cats.length-2]].filter(Boolean);
       const seen = new Set([code]), found = [];
       for (let ti = 0; ti < tiers.length && found.length < 5; ti++){
-        const r = await fetch(`https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(tiers[ti])}&fields=code,product_name,brands,lang,ingredients_text,ingredients_text_en,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags,image_front_small_url&page_size=50&sort_by=unique_scans_n`);
+        const r = await fetch(`https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(tiers[ti])}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`);
         const j = await r.json();
         (j.products||[]).forEach((p, pop) => {
           if (!p.code || seen.has(p.code)) return; seen.add(p.code);
-          const text = (p.ingredients_text_en || (p.lang === "en" ? p.ingredients_text : "") || "").trim();
-          if (!text || !p.product_name) return;
-          const nm = p.nutriments || {}, num = v => (typeof v === "number" ? v : undefined), pc = p.categories_tags || [];
-          const nutr = {sugars:num(nm.sugars_100g), salt:num(nm.salt_100g), fat:num(nm.fat_100g), sat:num(nm["saturated-fat_100g"]), drink: pc.includes("en:beverages") && !pc.includes("en:alcoholic-beverages")};
-          const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
-          const sc = score(matchEntries(text, p.additives_tags||[]), hasN ? nutr : null, []);
-          if (sc.score < 80 || sc.score <= myScore) return;
-          // Never suggest something that would raise an allergen alert this product doesn't already have.
-          const t = algScan(norm(text)), mine = (SET.allergens || []).filter(id => !(algCtx?.has || []).includes(id));
-          const offHit = id => ALLERGENS.find(a=>a.id===id).off.some(x => (p.allergens_tags||[]).includes(x) || (p.traces_tags||[]).includes(x));
-          if (mine.some(id => t.has(id) || offHit(id)) && !(mine.length === 1 && mine[0] === "lactose" && LACTOSE_FREE.test(text + " " + p.product_name))) return;
-          found.push({code:p.code, name:p.product_name, brand:(p.brands||"").split(",")[0], img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, tier:ti, pop});
+          const c = scoreOFF(p); if (!c) return;
+          // Never suggest anything that would set off one of the user's allergen alerts.
+          // That is: none of the allergens this product alerted for, and none it doesn't already contain.
+          if (c.algs.some(id => why.alg.includes(id) || !(algCtx?.has || []).includes(id))) return;
+          // Must score at least as well, and better when the product had concerns or nutrition highs.
+          if (c.score < 60 || c.score < myScore || ((why.score || why.highs.length) && (c.score <= myScore || c.score < 80))) return;
+          if (why.highs.length && c.nutriUsed && c.highs.length >= why.highsN) return;
+          c.why = [...(why.alg.length ? why.alg.map(id => "no " + algName(id).toLowerCase()) : []),
+                   ...(why.highs.length && c.nutriUsed && !c.highs.length ? ["not high in sugar, salt or fat"] : []),
+                   ...(c.score > myScore ? [`scores ${c.score - myScore} higher`] : [])];
+          c.tier = ti; c.pop = pop; found.push(c);
         });
       }
       found.sort((a,b)=>a.tier-b.tier || b.score-a.score || a.pop-b.pop);
-      res = found.slice(0,5); altCache.set(code, res);
+      res = found.slice(0,5); altCache.set(key, res);
     } catch(_) { res = null; }
   }
   const b = box(); if (!b) return;
-  if (!res || res.length < 2){ b.remove(); return; }
-  b.innerHTML = `<div class="label">Better-scoring alternatives</div>
-    <ul class="alt-list">${res.map(a=>`<li><button type="button" onclick="document.getElementById('barcode').value='${esc(a.code)}';lookup('${esc(a.code)}')">
-      ${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy">`:""}<span class="hist-badge" style="--c:var(--ok)">${a.clear?"✓":a.score}</span>
-      <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}</small></span></button></li>`).join("")}</ul>
-    <p class="disclaimer">Similar products from Open Food Facts, scored on the phone with our evidence library and nutrition (tap one for the full check, including FDA, WHO and IARC records). Excludes your allergens. No paid placements.</p>`;
+  if (!res || res.length < 1 || (res.length < 2 && !why.alg.length)){ b.remove(); return; }
+  b.innerHTML = `<div class="label">${b.querySelector(".label")?.textContent || "Better alternatives"}</div>
+    ${productList(res)}
+    <p class="disclaimer">Similar products from Open Food Facts, scored on the phone with our evidence library and nutrition (tap one for the full check, including FDA, WHO and IARC records). None of them set off your allergen alerts, but always check the pack. No paid placements.</p>`;
+}
+function productList(items){
+  return `<ul class="alt-list">${items.map(a=>`<li><button type="button" onclick="openProduct('${esc(a.code)}')">
+      ${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy">`:`<span class="alt-noimg" aria-hidden="true"></span>`}<span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span>
+      <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button></li>`).join("")}</ul>`;
+}
+window.openProduct = code => { location.hash = "#scan"; $("#barcode").value = code; lookup(code); window.scrollTo({top:0}); };
+
+/* Explore: aisles of Open Food Facts categories, plus a product search. Results are ranked by Sourced score. */
+const AISLES = [
+  ["Meat & Seafood", [["🥩","Meat","en:meats"],["🍗","Poultry","en:poultries"],["🥓","Bacon, ham & sausages","en:prepared-meats"],["🐟","Fish & seafood","en:seafood"]]],
+  ["Dairy, Cheese & Eggs", [["🥛","Milk & cream","en:milks"],["🧀","Cheese","en:cheeses"],["🥚","Eggs","en:eggs"],["🍦","Yogurt","en:yogurts"],["🧈","Butter & spreads","en:spreads"]]],
+  ["Baking & Cooking", [["🫒","Oils & vinegars","en:vegetable-oils"],["🌾","Flour & baking mixes","en:flours"],["🍯","Sugars, sweeteners & syrups","en:sweeteners"],["🧂","Spices & seasonings","en:condiments"]]],
+  ["Bread & Baked Goods", [["🍞","Bread","en:breads"],["🌯","Tortillas & flatbreads","en:flatbreads"],["🥐","Pastries & cakes","en:cakes"],["🍪","Cookies & biscuits","en:biscuits"]]],
+  ["Breakfast", [["🥣","Cereals","en:breakfast-cereals"],["🌾","Oats & porridge","en:oat-flakes"],["🍓","Jams & spreads","en:jams"]]],
+  ["Pantry", [["🍝","Pasta","en:pastas"],["🍚","Rice & grains","en:rices"],["🥫","Canned foods","en:canned-foods"],["🥫","Sauces","en:sauces"],["🍜","Soups","en:soups"]]],
+  ["Snacks & Sweets", [["🥨","Crisps & salty snacks","en:salty-snacks"],["🍫","Chocolate","en:chocolates"],["🍬","Sweets & candy","en:confectioneries"],["🥜","Nuts & seeds","en:nuts"]]],
+  ["Drinks", [["🧃","Juices","en:fruit-juices"],["🥤","Soft drinks","en:sodas"],["☕","Coffee & tea","en:hot-beverages"],["💧","Water","en:waters"]]],
+  ["Plant-based & Frozen", [["🌱","Plant-based alternatives","en:meat-analogues"],["🥛","Plant milks","en:plant-based-milk-alternatives"],["🧊","Frozen meals","en:frozen-foods"]]]
+];
+// Stores as Open Food Facts volunteers record them on the product on the product (coverage varies by store and country).
+const STORES = [["walmart","Walmart"],["target","Target"],["kroger","Kroger"],["costco","Costco"],["whole-foods","Whole Foods"],["trader-joe-s","Trader Joe's"],["aldi","Aldi"],["lidl","Lidl"],["publix","Publix"],["safeway","Safeway"],["tesco","Tesco"],["sainsbury-s","Sainsbury's"],["asda","Asda"],["waitrose","Waitrose"],["carrefour","Carrefour"]];
+const exCache = new Map(); let exSeq = 0;
+{
+  // Neutral store buttons: plain names on a coloured circle with the initial (no logos).
+  const HUES = ["#2f6f9f","#b04a1c","#2f7a45","#7a3fa0","#a8780e","#1f7a7a","#a33a5b"];
+  $("#exStores").innerHTML = [["","All stores"], ...STORES].map(([v,l], i) => `<button type="button" role="radio" data-store="${v}" aria-checked="false"><span class="av" style="--c:${v ? HUES[i % HUES.length] : "var(--accent)"}" aria-hidden="true">${v ? esc(l.charAt(0)) : "★"}</span>${esc(l)}</button>`).join("");
+  let EXP = {}; try { EXP = JSON.parse(localStorage.getItem("sourced.explore") || "{}"); } catch(_) {}
+  $("#exCountry").value = EXP.country ?? "en:united-states"; $("#exAlg").checked = EXP.alg !== false;
+  let store = EXP.store || "";
+  const paintStores = () => $("#exStores").querySelectorAll("button").forEach(b => b.setAttribute("aria-checked", b.dataset.store === store));
+  window.exStoreVal = () => store;
+  const keep = () => { try { localStorage.setItem("sourced.explore", JSON.stringify({country:$("#exCountry").value, store, alg:$("#exAlg").checked})); } catch(_) {} paintStores(); if (exLast) exLast(); else if (store) exStoreTop(); };
+  $("#exStores").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; store = b.dataset.store; keep(); });
+  paintStores();
+  ["exCountry","exAlg"].forEach(id => $("#"+id).addEventListener("change", keep));
+  $("#exGo").onclick = () => exSearch($("#exQ").value);
+  $("#exQ").addEventListener("keydown", e => { if (e.key === "Enter") exSearch(e.target.value); });
+  $("#exQ").addEventListener("search", e => { if (!e.target.value) exploreHome(); });
+}
+let exLast = null;
+window.exploreHome = () => {
+  if (exLast && $("#exBody").childElementCount) return; // keep the current results when coming back to the tab
+  $("#exBody").innerHTML = AISLES.map(([aisle, cats]) => `<div class="panel ex-aisle"><h3>${esc(aisle)}</h3><div class="ex-tiles">${cats.map(([em, label, tag]) =>
+    `<button type="button" onclick="exCategory('${tag}', '${esc(label).replace(/'/g,"&#39;")}')"><span class="em" aria-hidden="true">${em}</span>${esc(label)}</button>`).join("")}</div></div>`).join("")
+    + `<p class="disclaimer">Product data from Open Food Facts, a free database built by volunteers, so some products and stores are missing. Scores are worked out on your phone. No paid placements.</p>`;
+};
+window.exCategory = (tag, label) => { exLast = () => exCategory(tag, label); exRun(label, {categories_tags: tag}); };
+window.exSearch = q => { q = (q||"").trim(); if (!q){ exLast = null; exploreHome(); return; } exLast = () => exSearch(q); exRun(`“${q}”`, {search_terms: q}); };
+window.exStoreTop = () => { const st = exStoreVal(); if (!st) return; exLast = exStoreTop; exRun(`Popular at ${STORES.find(x => x[0] === st)[1]}`, {}); };
+window.exBack = () => { exLast = null; $("#exQ").value = ""; exploreHome(); };
+async function exRun(title, query){
+  const seq = ++exSeq, body = $("#exBody");
+  const country = $("#exCountry").value, store = exStoreVal(), hideAlg = $("#exAlg").checked;
+  const where = [store ? STORES.find(x => x[0] === store)?.[1] : "", country ? $("#exCountry").selectedOptions[0].textContent : ""].filter(Boolean).join(", ");
+  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${esc(title)}</h3></div><p class="muted">Finding and scoring products${where ? " in " + esc(where) : ""}…</p></div>`;
+  body.scrollIntoView({behavior:"smooth", block:"start"});
+  const key = JSON.stringify([query, country, store]);
+  let items = exCache.get(key);
+  if (!items){
+    try {
+      let url;
+      if (query.search_terms){
+        // Text search uses Open Food Facts' classic search; category browsing uses the v2 API.
+        const tags = [country && ["countries", country.replace(/^en:/,"")], store && ["stores", store]].filter(Boolean);
+        url = `https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1&search_terms=${encodeURIComponent(query.search_terms)}&page_size=60&sort_by=unique_scans_n&fields=${OFF_FIELDS}` + tags.map(([t,v],i) => `&tagtype_${i}=${t}&tag_contains_${i}=contains&tag_${i}=${encodeURIComponent(v)}`).join("");
+      } else {
+        url = `https://world.openfoodfacts.org/api/v2/search?${query.categories_tags ? `categories_tags=${encodeURIComponent(query.categories_tags)}` : "page=1"}${country?`&countries_tags=${encodeURIComponent(country)}`:""}${store?`&stores_tags=${encodeURIComponent(store)}`:""}&fields=${OFF_FIELDS}&page_size=60&sort_by=unique_scans_n`;
+      }
+      const j = await (await fetch(url)).json();
+      items = (j.products||[]).map(scoreOFF).filter(Boolean);
+      exCache.set(key, items);
+    } catch(_) { items = null; }
+  }
+  if (seq !== exSeq) return;
+  const head = `<div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${esc(title)}</h3></div>`;
+  if (!items){ body.innerHTML = `<div class="panel stack">${head}<p class="muted">Couldn't reach Open Food Facts. Check your connection and try again. (It allows a limited number of searches a minute.)</p></div>`; return; }
+  const hidden = hideAlg ? items.filter(i => i.algs.length).length : 0;
+  const shown = items.filter(i => !hideAlg || !i.algs.length).sort((a,b) => b.score - a.score || (a.clear === b.clear ? 0 : a.clear ? -1 : 1));
+  body.innerHTML = `<div class="panel stack">${head}
+    <p class="muted" style="font-size:13px">${shown.length} product${shown.length===1?"":"s"}${where ? " in " + esc(where) : ""}, best score first.${hidden ? ` ${hidden} hidden because they contain your allergens. <a href="#" onclick="$('#exAlg').click();return false">Show them</a> or change <a href="#" class="alg-set" onclick="openSettings('alg');return false">My allergens</a>.` : ""}</p>
+    ${shown.length ? productList(shown.slice(0, 40)) : `<p class="muted">Nothing found with an English ingredient list${where ? ` for ${esc(where)}` : ""}. Try another store or market, or “Anywhere”.</p>`}
+    <p class="disclaimer">From Open Food Facts (volunteer data, so some products are missing). Scored on your phone with our evidence library and nutrition; tap one for the full check. No paid placements.</p></div>`;
 }
 
 function route(){
   const v = (location.hash||"#scan").slice(1);
-  const view = ["scan","history","library","method"].includes(v) ? v : "scan";
-  ["scan","history","library","method"].forEach(n=>$("#view-"+n).hidden = n!==view);
+  const view = ["scan","explore","history","library","method"].includes(v) ? v : "scan";
+  ["scan","explore","history","library","method"].forEach(n=>$("#view-"+n).hidden = n!==view);
+  if (view === "explore" && window.exploreHome) exploreHome();
   if (view === "history") renderHistory();
   document.querySelectorAll("nav a").forEach(a=>a.setAttribute("aria-current", a.dataset.view===view?"page":"false"));
 }
