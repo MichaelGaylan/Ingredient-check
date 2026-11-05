@@ -176,11 +176,11 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .alt-item .alt-img img{width:62px;height:62px;object-fit:contain}
 .alt-item .alt-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
 .alt-noimg{width:62px;height:62px;border-radius:8px;background:var(--bg);flex:none;display:grid;place-items:center;font-size:24px}
-#peekTray{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 12px calc(10px + env(safe-area-inset-bottom));scrollbar-width:none}
+#peekTray{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:center;gap:10px;overflow:visible;pointer-events:none;padding:10px 12px calc(10px + env(safe-area-inset-bottom));scrollbar-width:none}
 #peekTray::-webkit-scrollbar{display:none}
 #peekTray.one{justify-content:center}
 body.peeking main{padding-bottom:min(70vh,470px)}
-.peek{position:relative;flex:none;width:min(64vw,300px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:10px;display:flex;flex-direction:column;gap:4px;touch-action:pan-x;user-select:none;-webkit-user-select:none;cursor:grab;animation:peekin .2s ease-out}
+.peek{pointer-events:auto;position:relative;flex:none;width:min(64vw,300px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:10px;display:flex;flex-direction:column;gap:4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;animation:peekin .2s ease-out}
 @keyframes peekin{from{transform:translateY(30px);opacity:0}}
 .peek .peek-img{height:min(64vw,300px,46vh);display:grid;place-items:center;background:#fff;border-radius:12px;overflow:hidden;position:relative}
 .peek .peek-img img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
@@ -1890,15 +1890,15 @@ window.peekProduct = async code => {
   const close = (dir) => { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = dir; card.style.opacity = "0"; setTimeout(() => { card.remove(); trayState(); }, 200); };
   card.querySelector(".peek-x").onclick = e => { e.stopPropagation(); close("translateY(40px)"); };
   let x0 = null, y0 = 0, dx = 0, dy = 0, moved = false;
-  card.addEventListener("pointerdown", e => { if (e.target.closest(".peek-x")) return; x0 = e.clientX; y0 = e.clientY; dx = dy = 0; moved = false; card.style.transition = "none"; });
-  // Swipe a card down (or up) to close it; sideways moves between cards.
-  card.addEventListener("pointermove", e => { if (x0 === null) return; dx = e.clientX - x0; dy = e.clientY - y0; if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
-    if (Math.abs(dy) > Math.abs(dx)){ card.style.transform = `translateY(${dy}px)`; card.style.opacity = String(1 - Math.min(.7, Math.abs(dy) / 250)); } });
+  card.addEventListener("pointerdown", e => { if (e.target.closest(".peek-x")) return; x0 = e.clientX; y0 = e.clientY; dx = dy = 0; moved = false; card.setPointerCapture(e.pointerId); card.style.transition = "none"; });
+  // Swipe the card away in any direction to close it.
+  card.addEventListener("pointermove", e => { if (x0 === null) return; dx = e.clientX - x0; dy = e.clientY - y0; const d = Math.hypot(dx, dy); if (d > 8) moved = true;
+    card.style.transform = `translate(${dx}px,${dy}px)`; card.style.opacity = String(1 - Math.min(.7, d / 250)); });
   const end = () => { if (x0 === null) return; x0 = null;
-    if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx)) close(dy > 0 ? "translateY(120%)" : "translateY(-120%)");
+    if (Math.hypot(dx, dy) > 70) close(Math.abs(dx) > Math.abs(dy) ? `translateX(${dx > 0 ? 130 : -130}%)` : `translateY(${dy > 0 ? 130 : -130}%)`);
     else { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = ""; card.style.opacity = ""; if (!moved) openProduct(code); } };
   card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
-  card.addEventListener("touchmove", e => { if (x0 !== null && e.cancelable && Math.abs(dy) > Math.abs(dx)) e.preventDefault(); }, {passive:false});
+  card.addEventListener("touchmove", e => { if (x0 !== null && e.cancelable) e.preventDefault(); }, {passive:false});
   const url = await peekImage(a);
   const box = card.querySelector(".peek-img");
   if (url){ const im = new Image(); im.alt = a.name; im.onload = () => { box.replaceChildren(im); }; im.onerror = () => box.insertAdjacentHTML("beforeend", `<small class="peek-none">No photo yet</small>`); im.src = url; }
