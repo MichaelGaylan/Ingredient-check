@@ -86,6 +86,14 @@ dialog.settings{overflow:auto}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .alg-banner{background:#7d3a35;color:#fff}}
 .alg-note{font-size:14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface)}
 .alg-note b{font-weight:600}
+.crop-stage{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;align-self:center;max-width:100%}
+.crop-stage img{display:block;max-width:100%;max-height:58dvh;border-radius:8px}
+.crop-box{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.6) inset;cursor:move;border-radius:2px}
+.crop-stage{overflow:hidden;border-radius:8px}
+.crop-box .h{position:absolute;width:26px;height:26px;border:4px solid #fff;filter:drop-shadow(0 0 1px rgba(0,0,0,.8))}
+.crop-box .tl{left:-4px;top:-4px;border-right:0;border-bottom:0;cursor:nwse-resize} .crop-box .tr{right:-4px;top:-4px;border-left:0;border-bottom:0;cursor:nesw-resize}
+.crop-box .bl{left:-4px;bottom:-4px;border-right:0;border-top:0;cursor:nesw-resize} .crop-box .br{right:-4px;bottom:-4px;border-left:0;border-top:0;cursor:nwse-resize}
+.crop-btns{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
 .ing-mk{border-radius:3px;padding:0 2px;text-decoration:none;font-weight:600;color:var(--ink);box-shadow:inset 0 -2px 0 currentColor}
 .ing-mk sup{font:700 9.5px var(--mono);margin-left:1px;vertical-align:4px}
 .ing-mk.mk-A{background:var(--gA-bg);color:var(--gA)} .ing-mk.mk-B{background:var(--gB-bg);color:var(--gB)} .ing-mk.mk-C{background:var(--gC-bg);color:var(--gC)}
@@ -364,6 +372,14 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
     </form>
   </dialog>
 
+  <dialog class="settings crop-dlg" id="cropDlg" aria-labelledby="cropTitle">
+    <form method="dialog">
+      <h2 id="cropTitle">Crop to the ingredients</h2>
+      <p class="set-help" style="margin:0">Drag the box or its corners so it covers just the ingredient list. Less around it means a cleaner read.</p>
+      <div class="crop-stage" id="cropStage"><img id="cropImg" alt="Your label photo"><div class="crop-box" id="cropBox"><span class="h tl" data-h="tl"></span><span class="h tr" data-h="tr"></span><span class="h bl" data-h="bl"></span><span class="h br" data-h="br"></span></div></div>
+      <div class="crop-btns"><button type="button" class="linkbtn" value="cancel" id="cropCancel">Cancel</button><button type="button" id="cropAll">Whole photo</button><button type="button" class="primary" id="cropOK" autofocus>Read this area</button></div>
+    </form>
+  </dialog>
   <dialog class="settings" id="aboutDlg" aria-labelledby="aboutTitle">
     <form method="dialog"><h2 id="aboutTitle">About Sourced</h2><div id="aboutBody" class="about"></div>
       <div class="set-foot"><button class="primary" value="close">Done</button></div></form>
@@ -1433,11 +1449,13 @@ $("#photo").onchange = async (ev) => {
 };
 /* ---------- read the label from a photo (on-device OCR) ---------- */
 function loadScript(src){ return new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = no; document.head.appendChild(el); }); }
-async function shrink(file, enhance){ // scale to about 2000 px on the long side (small photos are enlarged, big ones reduced)
+async function shrink(file, enhance, crop){ // scale to about 2000 px on the long side (small photos are enlarged, big ones reduced)
   const img = new Image(); img.src = URL.createObjectURL(file); await img.decode();
-  const k = Math.min(2, 2000 / Math.max(img.width, img.height));
-  const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
-  const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(img, 0, 0, c.width, c.height);
+  // crop is a fraction of the photo {x, y, w, h} (0 to 1) from the crop step; none means the whole photo.
+  const r = crop || {x:0, y:0, w:1, h:1}, sx = r.x*img.naturalWidth, sy = r.y*img.naturalHeight, sw = Math.max(1, r.w*img.naturalWidth), sh = Math.max(1, r.h*img.naturalHeight);
+  const k = Math.min(2.5, 2000 / Math.max(sw, sh));
+  const c = document.createElement("canvas"); c.width = Math.round(sw*k); c.height = Math.round(sh*k);
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
   if (enhance){
     // Greyscale and stretch the contrast (ignoring the darkest and brightest 1%), which helps with glare,
     // shadows and coloured packaging. Tesseract reads dark-on-light text best.
@@ -1465,9 +1483,44 @@ function ocrQuality(t, conf){
   const bad = w.filter(x => /[^A-Za-z0-9%.,;:()\[\]&'\/\-*]/.test(x) || (/^[A-Za-z]{3,}$/.test(x) && !/[aeiouyAEIOUY]/.test(x))).length;
   return {bad, total:w.length, poor: w.length >= 4 && (bad / w.length > 0.15 || (typeof conf === "number" && conf < 60))};
 }
+/* Crop step: after a label photo, drag a box over just the ingredient list. Resolves to {x,y,w,h} as fractions,
+   null for the whole photo, or false if cancelled. */
+function cropPhoto(file){
+  return new Promise(async done => {
+    const dlg = $("#cropDlg"), img = $("#cropImg"), box = $("#cropBox"), stage = $("#cropStage");
+    img.src = URL.createObjectURL(file);
+    try { await img.decode(); } catch(_) { return done(null); }
+    let r = {x:.08, y:.15, w:.84, h:.7}; // start with most of the photo selected
+    const paint = () => Object.assign(box.style, {left:r.x*100+"%", top:r.y*100+"%", width:r.w*100+"%", height:r.h*100+"%"});
+    paint();
+    let drag = null;
+    const down = e => { const h = e.target.dataset.h || "move"; if (!box.contains(e.target)) return;
+      e.preventDefault(); box.setPointerCapture(e.pointerId); const b = stage.getBoundingClientRect(); drag = {h, x0:e.clientX, y0:e.clientY, r0:{...r}, W:b.width, H:b.height}; };
+    const move = e => { if (!drag) return; const dx = (e.clientX - drag.x0)/drag.W, dy = (e.clientY - drag.y0)/drag.H, o = drag.r0, MIN = .08;
+      let {x, y, w, h} = o;
+      if (drag.h === "move"){ x = Math.min(1-w, Math.max(0, o.x+dx)); y = Math.min(1-h, Math.max(0, o.y+dy)); }
+      else {
+        if (drag.h.includes("l")){ x = Math.min(o.x+o.w-MIN, Math.max(0, o.x+dx)); w = o.x+o.w-x; }
+        if (drag.h.includes("r")){ w = Math.min(1-o.x, Math.max(MIN, o.w+dx)); }
+        if (drag.h.includes("t")){ y = Math.min(o.y+o.h-MIN, Math.max(0, o.y+dy)); h = o.y+o.h-y; }
+        if (drag.h.includes("b")){ h = Math.min(1-o.y, Math.max(MIN, o.h+dy)); }
+      }
+      r = {x, y, w, h}; paint(); };
+    const up = () => { drag = null; };
+    box.addEventListener("pointerdown", down); box.addEventListener("pointermove", move); box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
+    const finish = val => { box.removeEventListener("pointerdown", down); box.removeEventListener("pointermove", move); box.removeEventListener("pointerup", up); box.removeEventListener("pointercancel", up);
+      dlg.onclose = null; dlg.close(); URL.revokeObjectURL(img.src); done(val); };
+    $("#cropOK").onclick = () => finish({...r});
+    $("#cropAll").onclick = () => finish(null);
+    $("#cropCancel").onclick = () => finish(false);
+    dlg.onclose = () => finish(false); // Escape key
+    dlg.showModal();
+  });
+}
 $("#labelBtn").onclick = () => $("#labelPhoto").click();
 $("#labelPhoto").onchange = async (ev) => {
   const f = ev.target.files[0]; ev.target.value = ""; if (!f) return;
+  const crop = await cropPhoto(f); if (crop === false) return; // cancelled
   const btn = $("#labelBtn"); btn.disabled = true;
   try{
     status("Loading the text reader (first time only)…");
@@ -1478,11 +1531,11 @@ $("#labelPhoto").onchange = async (ev) => {
     const worker = await Tesseract.createWorker("eng", 1, { workerPath: base + "worker.min.js", corePath: base, langPath: base, workerBlobURL: false,
       logger: m => { if (m.status === "recognizing text") status(`Reading the label${pass}… ${Math.round(m.progress*100)}%`); } });
     // First read a cleaned-up (greyscale, higher contrast) copy; if that looks garbled, try the original photo and keep the better read.
-    let { data } = await worker.recognize(await shrink(f, true));
+    let { data } = await worker.recognize(await shrink(f, true, crop));
     let text = cleanOCR(data.text || ""), q = ocrQuality(text, data.confidence);
     if (q.poor || text.length < 8){
       pass = " (second try)";
-      const r2 = (await worker.recognize(await shrink(f, false))).data, t2 = cleanOCR(r2.text || ""), q2 = ocrQuality(t2, r2.confidence);
+      const r2 = (await worker.recognize(await shrink(f, false, crop))).data, t2 = cleanOCR(r2.text || ""), q2 = ocrQuality(t2, r2.confidence);
       if (t2.length >= 8 && (text.length < 8 || q2.bad / Math.max(1, q2.total) < q.bad / Math.max(1, q.total))){ data = r2; text = t2; }
     }
     worker.terminate();
@@ -1533,7 +1586,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "4.7", APP_DATE = "2026-11-04";
+const APP_VERSION = "4.8", APP_DATE = "2026-11-04";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };

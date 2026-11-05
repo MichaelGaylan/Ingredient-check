@@ -121,6 +121,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Label photos are cleaned up before reading: turned to greyscale, contrast boosted, small photos enlarged, and light-on-dark text flipped. This helps with glare, shadows and coloured packs.
 - If the first read still looks garbled, Sourced tries again with the original photo and keeps the better result.
 
+## 4.8 (5 Nov 2026): crop label photos
+- After you take a label photo, a crop step lets you drag a box over just the ingredient list before it is read. Less text around it means a cleaner read. "Whole photo" skips the crop.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
