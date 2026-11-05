@@ -137,6 +137,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Products that would set off your allergen alert are hidden in Explore by default, with a switch to show them.
 - Alternatives now also appear when a product contains one of your allergens, or is high in sugar, salt or fat. Each one says why it's better (for example "no milk", "not high in sugar, salt or fat"), and none of them set off your allergen alerts.
 
+## 5.2 (5 Nov 2026): more reliable Explore searches
+- Explore searches now use Open Food Facts' current search service, with the older one as a backup.
+- Searches are spaced out to stay under Open Food Facts' limit of about 10 a minute. If it's busy, Sourced shows a countdown and tries again by itself.
+- Results are kept on your phone for a day, so going back to an aisle or search is instant and doesn't count toward the limit.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

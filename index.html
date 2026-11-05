@@ -1656,7 +1656,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.1", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.2", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1728,6 +1728,46 @@ document.querySelectorAll('input[name=histTab]').forEach(r => r.addEventListener
 
 /* ---------- alternatives and Explore: scoring Open Food Facts products on the phone ---------- */
 const OFF_FIELDS = "code,product_name,brands,lang,ingredients_text,ingredients_text_en,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags,image_front_small_url";
+/* Open Food Facts allows about 10 searches a minute per phone, and answers "busy" (HTTP 503) beyond that,
+   which a browser reports as a failed connection. So every search goes through offSearch(): results are kept
+   on the phone for a day, calls are spaced out, slow calls time out, and a failed call is retried once. */
+const SEARCH_TTL = 24*3600e3, searchTimes = [];
+function searchCacheGet(url){ try { const e = JSON.parse(localStorage.getItem("sourced.sc." + url) || "null"); return e && Date.now() - e.t < SEARCH_TTL ? e.p : null; } catch(_) { return null; } }
+function searchCachePut(url, p){
+  try { localStorage.setItem("sourced.sc." + url, JSON.stringify({t:Date.now(), p})); }
+  catch(_) { try { Object.keys(localStorage).filter(k => k.startsWith("sourced.sc.")).forEach(k => localStorage.removeItem(k)); } catch(__) {} }
+}
+async function searchSlot(onWait){
+  for (;;){
+    const now = Date.now(); while (searchTimes.length && now - searchTimes[0] > 60e3) searchTimes.shift();
+    if (searchTimes.length < 8){ searchTimes.push(now); return; }
+    const wait = 60e3 - (now - searchTimes[0]) + 300; onWait && onWait(Math.ceil(wait/1000)); await new Promise(r => setTimeout(r, Math.min(wait, 5000)));
+  }
+}
+async function fetchJSON(url, ms){
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms || 20000);
+  try { const r = await fetch(url, {signal:ac.signal}); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); } finally { clearTimeout(t); }
+}
+// Search-a-licious (search.openfoodfacts.org) returns some fields per language or as lists; flatten them.
+const flat = v => Array.isArray(v) ? v.join(", ") : v && typeof v === "object" ? (v.en || v.main || Object.values(v)[0] || "") : v;
+function fromSAL(h){ const p = {}; for (const [k,v] of Object.entries(h)) p[k] = /_tags$/.test(k) ? (Array.isArray(v) ? v : []) : k === "nutriments" ? v : flat(v); if (!p.ingredients_text_en && h.ingredients_text && typeof h.ingredients_text === "object") p.ingredients_text_en = h.ingredients_text.en || ""; return p; }
+// urls: tried in order until one answers. Returns a list of products, or throws.
+async function offSearch(urls, onWait){
+  for (const u of urls){ const hit = searchCacheGet(u); if (hit) return hit; }
+  let last;
+  for (const u of urls){
+    const tries = u === urls[urls.length-1] ? 2 : 1; // the backup gets a second try; the first choice falls through to it
+    for (let attempt = 0; attempt < tries; attempt++){
+      await searchSlot(onWait);
+      try {
+        const j = await fetchJSON(u);
+        const prods = j.hits ? j.hits.map(fromSAL) : (j.products || []);
+        searchCachePut(u, prods); return prods;
+      } catch(e){ last = e; if (attempt === 0 && tries > 1){ onWait && onWait(4); await new Promise(r => setTimeout(r, 4000)); } }
+    }
+  }
+  throw last || new Error("search failed");
+}
 // Scores one Open Food Facts product the same way a scan does (evidence library + nutrition), and lists
 // which of the user's allergens it would alert for. Returns null when there is no English ingredient list.
 function scoreOFF(p){
@@ -1753,9 +1793,8 @@ async function loadAlternatives(code, cats, myScore, token, why){
       const tiers = [cats[cats.length-1], cats[cats.length-2]].filter(Boolean);
       const seen = new Set([code]), found = [];
       for (let ti = 0; ti < tiers.length && found.length < 5; ti++){
-        const r = await fetch(`https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(tiers[ti])}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`);
-        const j = await r.json();
-        (j.products||[]).forEach((p, pop) => {
+        const prods = await offSearch([`https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(tiers[ti])}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`]);
+        prods.forEach((p, pop) => {
           if (!p.code || seen.has(p.code)) return; seen.add(p.code);
           const c = scoreOFF(p); if (!c) return;
           // Never suggest anything that would set off one of the user's allergen alerts.
@@ -1840,22 +1879,24 @@ async function exRun(title, query){
   let items = exCache.get(key);
   if (!items){
     try {
-      let url;
+      const urls = [];
       if (query.search_terms){
-        // Text search uses Open Food Facts' classic search; category browsing uses the v2 API.
+        // Full-text search: Search-a-licious first (the current Open Food Facts search), then the older search page.
+        const qq = [query.search_terms.replace(/["\\]/g, " "), country && `countries_tags:"${country}"`, store && `stores_tags:"${store}"`].filter(Boolean).join(" AND ");
+        urls.push(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(qq)}&langs=en&page_size=40&sort_by=-unique_scans_n&fields=${OFF_FIELDS}`);
         const tags = [country && ["countries", country.replace(/^en:/,"")], store && ["stores", store]].filter(Boolean);
-        url = `https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1&search_terms=${encodeURIComponent(query.search_terms)}&page_size=60&sort_by=unique_scans_n&fields=${OFF_FIELDS}` + tags.map(([t,v],i) => `&tagtype_${i}=${t}&tag_contains_${i}=contains&tag_${i}=${encodeURIComponent(v)}`).join("");
+        urls.push(`https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1&search_terms=${encodeURIComponent(query.search_terms)}&page_size=40&sort_by=unique_scans_n&fields=${OFF_FIELDS}` + tags.map(([t,v],i) => `&tagtype_${i}=${t}&tag_contains_${i}=contains&tag_${i}=${encodeURIComponent(v)}`).join(""));
       } else {
-        url = `https://world.openfoodfacts.org/api/v2/search?${query.categories_tags ? `categories_tags=${encodeURIComponent(query.categories_tags)}` : "page=1"}${country?`&countries_tags=${encodeURIComponent(country)}`:""}${store?`&stores_tags=${encodeURIComponent(store)}`:""}&fields=${OFF_FIELDS}&page_size=60&sort_by=unique_scans_n`;
+        urls.push(`https://world.openfoodfacts.org/api/v2/search?${query.categories_tags ? `categories_tags=${encodeURIComponent(query.categories_tags)}` : "page=1"}${country?`&countries_tags=${encodeURIComponent(country)}`:""}${store?`&stores_tags=${encodeURIComponent(store)}`:""}&fields=${OFF_FIELDS}&page_size=40&sort_by=unique_scans_n`);
       }
-      const j = await (await fetch(url)).json();
-      items = (j.products||[]).map(scoreOFF).filter(Boolean);
+      const prods = await offSearch(urls, secs => { if (seq === exSeq){ const m = body.querySelector(".muted"); if (m) m.textContent = `Open Food Facts is busy (it allows about 10 searches a minute). Trying again in ${secs} s…`; } });
+      items = prods.map(scoreOFF).filter(Boolean);
       exCache.set(key, items);
     } catch(_) { items = null; }
   }
   if (seq !== exSeq) return;
   const head = `<div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${esc(title)}</h3></div>`;
-  if (!items){ body.innerHTML = `<div class="panel stack">${head}<p class="muted">Couldn't reach Open Food Facts. Check your connection and try again. (It allows a limited number of searches a minute.)</p></div>`; return; }
+  if (!items){ body.innerHTML = `<div class="panel stack">${head}<p class="muted">Open Food Facts didn't answer, even after a retry. It allows about 10 searches a minute and is sometimes busy. Wait a minute and <a href="#" onclick="exLast&&exLast();return false">try again</a>. Searches you've already done stay on your phone for a day.</p></div>`; return; }
   const hidden = hideAlg ? items.filter(i => i.algs.length).length : 0;
   const shown = items.filter(i => !hideAlg || !i.algs.length).sort((a,b) => b.score - a.score || (a.clear === b.clear ? 0 : a.clear ? -1 : 1));
   body.innerHTML = `<div class="panel stack">${head}
