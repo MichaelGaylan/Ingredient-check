@@ -149,6 +149,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 5.4 (5 Nov 2026): ready for our own search server
 - The app can now use Sourced's own copy of the Open Food Facts database for Explore and alternatives, with no per-minute limit. It switches on once the server is online. Until then, nothing changes.
 
+## 5.5 (5 Nov 2026): product pictures and compare cards
+- Products without a photo now show a tidy aisle icon instead of a blank box.
+- Tap a product's picture to open it in a small card at the bottom of the screen. Open up to three to compare them side by side. Swipe a card away (or tap ×) to close it, or tap it for the full check. Missing photos (USDA products never have one) are now fetched from Open Food Facts as you scroll, a few at a time, so more products show a picture.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

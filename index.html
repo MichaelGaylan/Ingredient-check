@@ -171,8 +171,22 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .ex-head{display:flex;align-items:center;gap:10px}.ex-head h3{margin:0;font:700 17px var(--display);flex:1}
 .alt-why{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}.alt-why span{font:500 11px var(--mono);padding:1px 6px;border-radius:999px;background:var(--ok-bg);color:var(--ok)}
 .alt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.alt-list button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
-.alt-noimg{width:40px;height:40px;border-radius:6px;background:var(--bg);flex:none}
+.alt-item{display:flex;align-items:stretch;gap:8px}
+.alt-item .alt-img{flex:none;width:60px;padding:4px;display:grid;place-items:center;border-radius:12px}
+.alt-item .alt-img img{width:50px;height:50px}
+.alt-item .alt-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;font-weight:400;padding:10px 12px}
+.alt-noimg{width:50px;height:50px;border-radius:8px;background:var(--bg);flex:none;display:grid;place-items:center;font-size:24px}
+#peekTray{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:8px;justify-content:center;padding:10px 10px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
+.peek{pointer-events:auto;position:relative;width:min(31vw,150px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:8px;display:flex;flex-direction:column;gap:4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;animation:peekin .2s ease-out}
+@keyframes peekin{from{transform:translateY(30px);opacity:0}}
+.peek .peek-img{height:min(31vw,150px);display:grid;place-items:center;background:#fff;border-radius:10px;overflow:hidden;position:relative}
+.peek .peek-img img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+.peek .peek-img .alt-noimg{width:100%;height:100%;font-size:40px;border-radius:0}
+.peek-none{position:absolute;bottom:6px;font-size:11px;color:#667}
+.peek b{font-size:12.5px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.peek small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peek .hist-badge{position:absolute;top:4px;left:4px;transform:scale(.8);transform-origin:top left;background:var(--surface)}
+.peek-x{position:absolute;top:2px;right:2px;z-index:2;width:28px;height:28px;padding:0;border-radius:50%;font-size:18px;line-height:1;background:var(--surface);border:1px solid var(--line)}
 #exBody a{color:var(--accent)}
 .src-tag{font:600 10.5px var(--mono);padding:0 5px;border-radius:4px;background:var(--gD-bg);color:var(--gD)}
 .alt-list img{width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;flex:none}
@@ -1657,7 +1671,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "5.4", APP_DATE = "2026-11-05";
+const APP_VERSION = "5.5", APP_DATE = "2026-11-05";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1822,12 +1836,68 @@ async function loadAlternatives(code, cats, myScore, token, why){
   b.innerHTML = `<div class="label">${b.querySelector(".label")?.textContent || "Better alternatives"}</div>
     ${productList(res)}
     <p class="disclaimer">Similar products from Open Food Facts, scored on the phone with our evidence library and nutrition (tap one for the full check, including FDA, WHO and IARC records). None of them set off your allergen alerts, but always check the pack. No paid placements.</p>`;
+  fillThumbs(b);
 }
+const PRODUCTS = new Map(); // code -> list item, for the compare cards
 function productList(items){
-  return `<ul class="alt-list">${items.map(a=>`<li><button type="button" onclick="openProduct('${esc(a.code)}')">
-      ${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy">`:`<span class="alt-noimg" aria-hidden="true"></span>`}<span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span>
+  items.forEach(a => PRODUCTS.set(a.code, a));
+  return `<ul class="alt-list">${items.map(a=>`<li class="alt-item">
+      <button type="button" class="alt-img" data-code="${esc(a.code)}" onclick="peekProduct('${esc(a.code)}')" aria-label="Show the picture of ${esc(a.name)} to compare">${a.img?`<img src="${esc(a.img)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'alt-noimg',textContent:'${a.em||"🛒"}'}))">`:`<span class="alt-noimg" aria-hidden="true">${a.em||"🛒"}</span>`}</button>
+      <button type="button" class="alt-main" onclick="openProduct('${esc(a.code)}')"><span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span>
       <span class="hist-txt"><b>${esc(a.name)}</b><small>${esc(a.brand||"")}${a.src?` · <span class="src-tag">${esc(a.src)}</span>`:""}${a.algs?.length?` · <span style="color:var(--neg)">contains ${esc(a.algs.map(algName).join(", ").toLowerCase())}</span>`:""}</small>${a.why?.length?`<span class="alt-why">${a.why.map(w=>`<span>${esc(w)}</span>`).join("")}</span>`:""}</span></button></li>`).join("")}</ul>`;
 }
+/* Compare cards: tapping a product's picture opens it in a small card at the bottom of the screen (up to 3 side by side).
+   Swipe a card away (or tap ×) to close it; tap the card to open the full check. */
+const peekImgCache = new Map();
+async function peekImage(a){
+  if (a.img) return a.img.replace(/\.(100|200)\.jpg$/, ".400.jpg");
+  if (peekImgCache.has(a.code)) return peekImgCache.get(a.code);
+  // No picture in the search result (USDA products never have one): ask Open Food Facts for this barcode.
+  let url = "";
+  try { const j = await fetchJSON(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(a.code)}?fields=image_front_url,image_front_small_url`, 12000); url = j.product?.image_front_url || j.product?.image_front_small_url || ""; } catch(_) {}
+  peekImgCache.set(a.code, url); return url;
+}
+// Thumbnails missing from search results are filled in from Open Food Facts as they scroll into view,
+// one every 5 seconds so product lookups stay well under its limit of 15 a minute.
+const thumbQueue = []; let thumbBusy = false;
+const thumbObs = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ thumbObs.unobserve(e.target); thumbQueue.push(e.target); thumbPump(); } }), {rootMargin:"100px"}) : null;
+async function thumbPump(){
+  if (thumbBusy) return; thumbBusy = true;
+  while (thumbQueue.length){
+    const btn = thumbQueue.shift(); if (!btn.isConnected) continue;
+    const a = PRODUCTS.get(btn.dataset.code); if (!a || a.img) continue;
+    const cached = peekImgCache.has(a.code), url = await peekImage(a);
+    if (url && btn.isConnected){ const im = new Image(); im.alt = ""; im.onload = () => btn.querySelector(".alt-noimg")?.replaceWith(im); im.src = url.replace(/\.(400|full)\.jpg$/, ".200.jpg"); }
+    if (!cached) await new Promise(r => setTimeout(r, 5000));
+  }
+  thumbBusy = false;
+}
+window.fillThumbs = root => { if (thumbObs) root.querySelectorAll(".alt-img[data-code]").forEach(b => { if (b.querySelector(".alt-noimg")) thumbObs.observe(b); }); };
+window.peekProduct = async code => {
+  const a = PRODUCTS.get(code); if (!a) return;
+  let tray = $("#peekTray");
+  if (!tray){ tray = document.createElement("div"); tray.id = "peekTray"; tray.setAttribute("aria-label", "Products to compare"); document.body.appendChild(tray); }
+  if (tray.querySelector(`[data-code="${CSS.escape(code)}"]`)) return;
+  while (tray.children.length >= 3) tray.firstElementChild.remove();
+  const card = document.createElement("div"); card.className = "peek"; card.dataset.code = code;
+  card.innerHTML = `<button type="button" class="peek-x" aria-label="Close">×</button><div class="peek-img"><span class="alt-noimg">${a.em||"🛒"}</span></div>
+    <span class="hist-badge" style="--c:${a.clear?"var(--ok)":esc(band(a.score)[1])}">${a.clear?"✓":a.score}</span><b>${esc(a.name)}</b><small>${esc(a.brand||"")}</small>`;
+  tray.appendChild(card);
+  const close = (dir) => { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = dir; card.style.opacity = "0"; setTimeout(() => { card.remove(); if (!tray.children.length) tray.remove(); }, 200); };
+  card.querySelector(".peek-x").onclick = e => { e.stopPropagation(); close("translateY(40px)"); };
+  let x0 = null, y0 = 0, dx = 0, dy = 0, moved = false;
+  card.addEventListener("pointerdown", e => { if (e.target.closest(".peek-x")) return; x0 = e.clientX; y0 = e.clientY; dx = dy = 0; moved = false; card.setPointerCapture(e.pointerId); card.style.transition = "none"; });
+  card.addEventListener("pointermove", e => { if (x0 === null) return; dx = e.clientX - x0; dy = Math.max(0, e.clientY - y0); if (Math.abs(dx) + dy > 8) moved = true; card.style.transform = `translate(${dx}px,${dy}px)`; card.style.opacity = String(1 - Math.min(.7, (Math.abs(dx) + dy) / 250)); });
+  const end = () => { if (x0 === null) return; x0 = null;
+    if (Math.abs(dx) > 70 || dy > 60) close(Math.abs(dx) > dy ? `translateX(${dx > 0 ? 120 : -120}%)` : "translateY(120%)");
+    else { card.style.transition = "transform .2s, opacity .2s"; card.style.transform = ""; card.style.opacity = ""; if (!moved) openProduct(code); } };
+  card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+  card.addEventListener("touchmove", e => { if (x0 !== null && e.cancelable) e.preventDefault(); }, {passive:false});
+  const url = await peekImage(a);
+  const box = card.querySelector(".peek-img");
+  if (url){ const im = new Image(); im.alt = a.name; im.onload = () => { box.replaceChildren(im); }; im.onerror = () => box.insertAdjacentHTML("beforeend", `<small class="peek-none">No photo yet</small>`); im.src = url; }
+  else box.insertAdjacentHTML("beforeend", `<small class="peek-none">No photo yet</small>`);
+};
 window.openProduct = code => { location.hash = "#scan"; $("#barcode").value = code; lookup(code); window.scrollTo({top:0}); };
 
 /* Explore: aisles of Open Food Facts categories, plus a product search. Results are ranked by Sourced score. */
@@ -1888,8 +1958,9 @@ window.exploreHome = () => {
     `<button type="button" onclick="exCategory('${tag}', '${esc(label).replace(/'/g,"&#39;")}')"><span class="em" aria-hidden="true">${em}</span>${esc(label)}</button>`).join("")}</div></div>`).join("")
     + `<p class="disclaimer">Product data from Open Food Facts, a free database built by volunteers, so some products and stores are missing. Scores are worked out on your phone. No paid placements.</p>`;
 };
-window.exCategory = (tag, label) => { exLast = () => exCategory(tag, label); exRun(label, {categories_tags: tag}); };
-window.exSearch = q => { q = (q||"").trim(); if (!q){ exLast = null; exploreHome(); return; } exLast = () => exSearch(q); exRun(`“${q}”`, {search_terms: q}); };
+let exEmoji = "🛒";
+window.exCategory = (tag, label) => { exEmoji = AISLES.flatMap(a => a[1]).find(c => c[2] === tag)?.[0] || "🛒"; exLast = () => exCategory(tag, label); exRun(label, {categories_tags: tag}); };
+window.exSearch = q => { exEmoji = "🛒"; q = (q||"").trim(); if (!q){ exLast = null; exploreHome(); return; } exLast = () => exSearch(q); exRun(`“${q}”`, {search_terms: q}); };
 window.exStoreTop = () => { const st = exStoreVal(); if (!st) return; exLast = exStoreTop; exRun(`Popular at ${STORES.find(x => x[0] === st)[1]}`, {}); };
 window.exBack = () => { exLast = null; $("#exQ").value = ""; exploreHome(); };
 async function exRun(title, query){
@@ -1931,8 +2002,9 @@ async function exRun(title, query){
   const shown = items.filter(i => !hideAlg || !i.algs.length).sort((a,b) => b.score - a.score || (a.clear === b.clear ? 0 : a.clear ? -1 : 1));
   body.innerHTML = `<div class="panel stack">${head}
     <p class="muted" style="font-size:13px">${shown.length} product${shown.length===1?"":"s"}${where ? " in " + esc(where) : ""}, best score first.${hidden ? ` ${hidden} hidden because they contain your allergens. <a href="#" onclick="$('#exAlg').click();return false">Show them</a> or change <a href="#" class="alg-set" onclick="openSettings('alg');return false">My allergens</a>.` : ""}</p>
-    ${shown.length ? productList(shown.slice(0, 40)) : `<p class="muted">Nothing found with an English ingredient list${where ? ` for ${esc(where)}` : ""}. Try another store or market, or “Anywhere”.</p>`}
+    ${shown.length ? productList(shown.slice(0, 40).map(i => ({...i, em: exEmoji}))) : `<p class="muted">Nothing found with an English ingredient list${where ? ` for ${esc(where)}` : ""}. Try another store or market, or “Anywhere”.</p>`}
     <p class="disclaimer">From Open Food Facts (volunteer data, so some products are missing)${items.some(i => i.src === "USDA") ? " and USDA FoodData Central (marked USDA: ingredient lists supplied by manufacturers, no store data)" : ""}. Scored on your phone with our evidence library and nutrition; tap one for the full check. No paid placements.</p></div>`;
+  fillThumbs(body);
 }
 
 function route(){
