@@ -396,6 +396,24 @@ button.primary{border-radius:14px;box-shadow:0 4px 14px color-mix(in srgb,var(--
 .swatches .dot{width:34px;height:34px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
 .swatches label:has(input:checked){border:2px solid var(--accent);background:var(--accent-soft)}
 .swatches label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+
+/* Liquid glass (v6.3): shinier glass + floating bottom tab bar with a sliding bubble. */
+:root{--lg-fill:linear-gradient(180deg,rgba(255,255,255,.80) 0%,rgba(255,255,255,.58) 45%,rgba(255,255,255,.50) 100%);
+ --lg-rim:inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -10px 18px rgba(255,255,255,.18),inset 0 0 0 .5px rgba(255,255,255,.4),0 12px 32px rgba(20,40,70,.18);
+ --lg-drop:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.6))}
+:root[data-theme="dark"]{--lg-fill:linear-gradient(180deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.07) 45%,rgba(255,255,255,.04) 100%);--lg-rim:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -10px 18px rgba(255,255,255,.04),0 12px 32px rgba(0,0,0,.45);--lg-drop:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.10))}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--lg-fill:linear-gradient(180deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.07) 45%,rgba(255,255,255,.04) 100%);--lg-rim:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -10px 18px rgba(255,255,255,.04),0 12px 32px rgba(0,0,0,.45);--lg-drop:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.10))}}
+header.top,#tabbar,.theme-btn{background:var(--lg-fill);border:1px solid var(--glass-line);box-shadow:var(--lg-rim);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
+header.top{grid-template-columns:1fr auto;border-radius:24px;margin-bottom:12px}
+body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+#tabbar{position:fixed;z-index:40;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:560px;margin:0 auto;display:flex;gap:0;padding:6px;border-radius:30px}
+#tabbar a{position:relative;z-index:1;flex:1;min-width:0;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 2px;border-radius:24px;font-size:11.5px;font-weight:600;color:var(--ink);background:none;text-align:center;-webkit-tap-highlight-color:transparent}
+#tabbar a svg{width:22px;height:22px;flex:none}
+#tabbar a[aria-current="page"]{background:none;color:var(--accent);font-weight:700}
+#tabbar a[aria-current="page"] svg{stroke-width:2.4}
+#tabbar .drop{position:absolute;z-index:0;top:6px;bottom:6px;left:6px;width:0;border-radius:24px;background:var(--lg-drop);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -6px 12px color-mix(in srgb,var(--accent) 12%,transparent),0 4px 14px rgba(20,40,70,.18);transition:left .45s cubic-bezier(.34,1.56,.64,1),width .28s ease;pointer-events:none}
+@media (prefers-reduced-motion: reduce){#tabbar .drop{transition:none}}
+#peekTray{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px))} /* photo cards float above the tab bar */
 </style>
 
 <div class="wrap">
@@ -407,14 +425,16 @@ button.primary{border-radius:14px;box-shadow:0 4px 14px color-mix(in srgb,var(--
     <button type="button" class="theme-btn" id="themeBtn" aria-label="Dark mode" aria-pressed="false"></button>
     <button type="button" class="theme-btn icon-btn" id="settingsBtn" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
-    <nav aria-label="Sections">
-      <a href="#scan" data-view="scan">Scan</a>
-      <a href="#explore" data-view="explore">Explore</a>
-      <a href="#history" data-view="history">History</a>
-      <a href="#library" data-view="library">Evidence</a>
-      <a href="#method" data-view="method">Method</a>
-    </nav>
   </header>
+  <!-- Liquid glass tab bar (v6.3): fixed at the bottom; kept outside the header because the header's backdrop-filter would trap a fixed child. -->
+  <nav aria-label="Sections" id="tabbar">
+    <span class="drop" aria-hidden="true"></span>
+    <a href="#scan" data-view="scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8v8M11 8v8M14 8v8M17 8v8"/></svg><span>Scan</span></a>
+    <a href="#explore" data-view="explore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Explore</span></a>
+    <a href="#history" data-view="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>History</span></a>
+    <a href="#library" data-view="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 11h6M9 15h6"/></svg><span>Evidence</span></a>
+    <a href="#method" data-view="method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6M10 4v6l-5 9a1 1 0 0 0 .9 1.5h12.2A1 1 0 0 0 19 19l-5-9V4"/></svg><span>Method</span></a>
+  </nav>
   <dialog class="settings" id="settings" aria-labelledby="setTitle">
     <form method="dialog">
       <h2 id="setTitle">Settings</h2>
@@ -1739,7 +1759,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.2", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.3", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2168,7 +2188,24 @@ function route(){
   if (view === "explore" && window.exploreHome) exploreHome();
   if (view === "history") renderHistory();
   document.querySelectorAll("nav a").forEach(a=>a.setAttribute("aria-current", a.dataset.view===view?"page":"false"));
+  placeDrop(true);
 }
+/* Liquid tab bar: the glass bubble stretches across to the new tab, then settles on it. */
+let dropTimer = 0, dropAt = null;
+function placeDrop(animate){
+  const bar = $("#tabbar"), drop = bar?.querySelector(".drop"), a = bar?.querySelector('a[aria-current="page"]');
+  if (!drop || !a) return;
+  const to = {l: a.offsetLeft, w: a.offsetWidth};
+  clearTimeout(dropTimer);
+  if (animate && dropAt && dropAt.l !== to.l && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const l = Math.min(dropAt.l, to.l), r = Math.max(dropAt.l + dropAt.w, to.l + to.w);
+    drop.style.left = l + "px"; drop.style.width = (r - l) + "px";
+    dropTimer = setTimeout(() => { drop.style.left = to.l + "px"; drop.style.width = to.w + "px"; }, 170);
+  } else { drop.style.left = to.l + "px"; drop.style.width = to.w + "px"; }
+  dropAt = to;
+}
+window.addEventListener("resize", () => placeDrop(false));
+document.fonts?.ready?.then(() => placeDrop(false));
 window.addEventListener("hashchange", route);
 renderLibrary(); renderSources(); route();
 const EXAMPLE = "Ingredients: carbonated water, citric acid, sodium benzoate (preservative), natural flavors, aspartame, sucralose, Red 40, caramel color, potassium citrate.";

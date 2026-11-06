@@ -180,6 +180,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 6.2 (6 Nov 2026): Midnight Iris theme
 - The Mineral colour theme is replaced by Midnight Iris, a deep blue with gold and green accents. If you'd picked Mineral, you're moved to Midnight Iris automatically.
 
+## 6.3 (6 Nov 2026): liquid glass
+- The section tabs (Scan, Explore, History, Evidence, Method) moved to a floating glass bar at the bottom of the screen, with icons, where your thumb can reach them.
+- The selected tab sits under a glass bubble that stretches and springs across when you switch tabs.
+- Shinier glass on the header and buttons. Results and warnings stay on solid backgrounds so they're easy to read.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
