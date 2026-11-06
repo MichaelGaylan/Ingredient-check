@@ -198,6 +198,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - See and adjust the list under History → Dinner: use − and + to set how much you'll eat, and remove items with ×.
 - Calories come from the product's own label data in Open Food Facts or the USDA database: per serving when the label gives one, otherwise per 100 g, and the list says which.
 
+## 6.7 (6 Nov 2026): see the product you looked up
+- When you scan a barcode, type one in, or open a product from Explore or History, its photo now appears in a glass pop-up at the top of the screen for about 3 seconds, then fades away. Tap it to close it sooner.
+- If there's no photo of the product, no pop-up appears.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
