@@ -192,6 +192,12 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 6.5 (6 Nov 2026): small fix
 - Opening About no longer shows a blue outline around the "Method" link. Outlines now appear only when you move around with a keyboard.
 
+## 6.6 (6 Nov 2026): Dinner list with a calorie total
+- Tap the plate button next to a product's name to add it to your Dinner list. A small glass pop-up shows the running calorie total for your dinner.
+- The plate button is also on your Favourites and Recent scans, so you can build a dinner from things you've scanned before.
+- See and adjust the list under History → Dinner: use − and + to set how much you'll eat, and remove items with ×.
+- Calories come from the product's own label data in Open Food Facts or the USDA database: per serving when the label gives one, otherwise per 100 g, and the list says which.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

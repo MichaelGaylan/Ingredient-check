@@ -430,6 +430,31 @@ header.top .icon-btn svg{width:20px;height:20px}
 .peek .peek-img{border-radius:16px;box-shadow:0 2px 8px rgba(20,40,70,.12)}
 .peek-x{background:var(--lg-drop);border:1px solid var(--glass-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(20,40,70,.18);color:var(--ink)}
 
+/* Dinner list (v6.6): plate button beside the star, liquid glass calorie pop-up, Dinner tab in History. */
+.din-btn{flex:none;display:grid;place-items:center;background:none;border:0;padding:0;width:44px;height:44px;border-radius:50%;color:var(--muted);cursor:pointer}
+.din-btn svg{width:23px;height:23px}
+.din-btn[aria-pressed="true"]{color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+#dinPop{position:fixed;z-index:45;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(94px + env(safe-area-inset-bottom,0px));max-width:400px;margin:0 auto;padding:14px 16px;border-radius:24px;color:var(--ink);background:var(--lg-fill);border:1px solid var(--glass-line);box-shadow:var(--lg-rim);-webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8);display:flex;align-items:center;gap:14px;opacity:0;transform:translateY(16px) scale(.96);pointer-events:none;transition:opacity .25s ease,transform .4s cubic-bezier(.34,1.56,.64,1)}
+#dinPop.show{opacity:1;transform:none;pointer-events:auto}
+@media (prefers-reduced-motion: reduce){#dinPop{transition:opacity .2s}}
+#dinPop .din-ic{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--accent);background:var(--lg-drop);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -6px 12px color-mix(in srgb,var(--accent) 14%,transparent),0 3px 10px rgba(20,40,70,.16)}
+#dinPop .din-ic svg{width:24px;height:24px}
+#dinPop .din-body{flex:1;min-width:0}
+#dinPop .din-what{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dinPop .din-total{font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--accent);font-variant-numeric:tabular-nums}
+#dinPop .din-total small{font-size:13px;font-weight:600;color:var(--ink)}
+#dinPop .din-sub{font-size:12.5px;color:var(--muted)}
+#dinPop .din-view{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--glass-line);background:var(--lg-drop);color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.din-sum{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:16px;border:1.5px solid var(--accent);background:var(--accent-soft)}
+.din-sum b{font-size:26px;color:var(--accent);font-variant-numeric:tabular-nums}
+.din-sum span{font-size:13.5px;color:var(--muted)}
+.din-qty{flex:none;display:flex;align-items:center;gap:2px}
+.din-qty button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;line-height:1;cursor:pointer;padding:0}
+.din-qty output{min-width:30px;text-align:center;font:600 14px var(--mono)}
+.din-kcal{display:block;color:var(--accent);font-weight:600;font-size:13px}
+.hist-tabs label{white-space:nowrap;padding:7px 4px}
+.din-note{font-size:13px;color:var(--muted);margin:0}
+
 /* v6.5: no focus ring for taps or mouse, only for keyboard (focus-visible keeps it). */
 :focus:not(:focus-visible){outline:none}
 #aboutTitle:focus{outline:none}
@@ -454,6 +479,7 @@ header.top .icon-btn svg{width:20px;height:20px}
     <a href="#library" data-view="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M9 11h6M9 15h6"/></svg><span>Evidence</span></a>
     <a href="#method" data-view="method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6M10 4v6l-5 9a1 1 0 0 0 .9 1.5h12.2A1 1 0 0 0 19 19l-5-9V4"/></svg><span>Method</span></a>
   </nav>
+  <div id="dinPop" role="status" aria-live="polite"></div>
   <dialog class="settings" id="settings" aria-labelledby="setTitle">
     <form method="dialog">
       <h2 id="setTitle">Settings</h2>
@@ -592,6 +618,7 @@ header.top .icon-btn svg{width:20px;height:20px}
       <div class="seg hist-tabs" role="tablist" aria-label="History lists">
         <label><input type="radio" name="histTab" value="recent" checked>Recent</label>
         <label><input type="radio" name="histTab" value="fav">★ Favourites</label>
+        <label><input type="radio" name="histTab" value="dinner">🍽 Dinner</label>
       </div>
       <ul class="hist-list" id="histList"></ul>
       <div class="row" id="histFoot"></div>
@@ -1343,7 +1370,7 @@ function renderResult(args){
         </button>
         <div style="min-width:0">
           ${example?'<div class="example-tag">Example, not a real product</div>':""}
-          <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1;color:${nameColor}"${worst?` title="Most serious finding: grade ${worst} (${GRADE_NAME[worst]})"`:""}>${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button>`:""}</div>
+          <div style="display:flex;align-items:flex-start;gap:6px"><h2 class="prod-name" style="flex:1;color:${nameColor}"${worst?` title="Most serious finding: grade ${worst} (${GRADE_NAME[worst]})"`:""}>${esc(name||"Your ingredient list")}</h2>${!example&&current?.code?`<button type="button" class="fav-btn" id="favBtn" aria-pressed="${isFav(current.code)}" aria-label="Favourite" title="Add to favourites">${isFav(current.code)?"★":"☆"}</button><button type="button" class="din-btn" id="dinBtn" aria-pressed="${inDinner(current.code)}" aria-label="${inDinner(current.code)?"Remove from Dinner list":"Add to Dinner list"}" title="Dinner list">${PLATE}</button>`:""}</div>
           ${brand?`<p class="muted">${esc(brand)}</p>`:""}
           <p style="margin-top:6px"><b style="color:${bandColor}">${bandName}.</b> ${clear||checking?esc(headline):`<span class="neg">${esc(headline)}</span>`}</p>
           <div class="counts">${["A","B","C","D","W","OK","P"].filter(g=>counts[g]).map(g=>`<span class="chip-wrap"><button type="button" class="chip chipbtn g-${g==="P"?"OK":g}" onclick="jumpTab('${g==="P"?"OK":g}')" title="Show in Findings">${counts[g]} × ${g==="OK"?"reassuring":g==="P"?"permitted":g==="W"?"label warning":g}</button>${g==="P"&&autoOK.some(r=>r.caveat)?CAVEAT:""}</span>`).join("")}${urCount?`<button type="button" class="chip g-N chipbtn" onclick="jumpTab('U')" title="Show in Findings">${urCount} under review</button>`:""}${noRec?`<button type="button" class="chip g-N chipbtn" onclick="jumpTab('N')" title="Show in Findings">${noRec} not reviewed</button>`:""}</div>
@@ -1372,6 +1399,7 @@ function renderResult(args){
   if (pending.length && !_auto) autoLookup(pending, renderToken);
   if (!example && current?.code && !args.savedAt) recordHistory(args, {score:sc.score, clear, checking, bandName, headline, bandColor});
   const fb = $("#favBtn"); if (fb) fb.onclick = () => { toggleFav(current.code); const on = isFav(current.code); fb.setAttribute("aria-pressed", on); fb.textContent = on ? "★" : "☆"; };
+  const dbn = $("#dinBtn"); if (dbn) dbn.onclick = () => { toggleDinner(); const on = inDinner(current.code); dbn.setAttribute("aria-pressed", on); dbn.setAttribute("aria-label", on ? "Remove from Dinner list" : "Add to Dinner list"); };
   if (altEligible) loadAlternatives(current.code, args.cats, sc.score, renderToken, {...altWhy, highsN: sc.highs.length}, name);
   $("#ringBtn").onclick = () => { const b = $("#breakdown"); b.hidden = !b.hidden; };
 }
@@ -1522,7 +1550,7 @@ function renderMissing(info, code){
 const fdcKey = () => { try { return (localStorage.getItem("fdcKey") || "").trim() || "DEMO_KEY"; } catch(_) { return "DEMO_KEY"; } };
 const digits = c => String(c||"").replace(/\D/g,"").replace(/^0+/,"");
 async function fromOFF(code){
-  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,lang,ingredients_text,ingredients_text_en,ingredients_text_${SET.lang},product_name_en,product_name_${SET.lang},ingredients,additives_tags,allergens_tags,traces_tags,labels_tags,nutriments,categories_tags`);
+  const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,lang,ingredients_text,ingredients_text_en,ingredients_text_${SET.lang},product_name_en,product_name_${SET.lang},ingredients,additives_tags,allergens_tags,traces_tags,labels_tags,nutriments,categories_tags,serving_size,serving_quantity`);
   const j = await r.json();
   if (j.status !== 1 || !j.product) return null;
   const p = j.product;
@@ -1531,11 +1559,12 @@ async function fromOFF(code){
   const nutr = {sugars:num(nm.sugars_100g), salt:num(nm.salt_100g), fat:num(nm.fat_100g), sat:num(nm["saturated-fat_100g"]),
     drink: cats.includes("en:beverages") && !cats.includes("en:alcoholic-beverages")};
   const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
+  const kcal = kcalOFF(nm, p.serving_size);
   const T = SET.lang, clean = v => (v||"").trim();
   // OFF's ingredient taxonomy gives English ids (en:water) for recognised ingredients, whatever the label language.
   const top = Array.isArray(p.ingredients) ? p.ingredients : [];
   const ids = top.length && top.every(i => /^en:/.test(i.id||"")) ? top.map(i => i.id.slice(3).replace(/-/g," ")).join(", ") : "";
-  return {db:"Open Food Facts", name:clean(p.product_name), brand:p.brands, text:clean(p.ingredients_text_en || p.ingredients_text), tags:p.additives_tags||[], nutr: hasN ? nutr : null,
+  return {db:"Open Food Facts", name:clean(p.product_name), brand:p.brands, text:clean(p.ingredients_text_en || p.ingredients_text), tags:p.additives_tags||[], nutr: hasN ? nutr : null, kcal,
     allergens:p.allergens_tags||[], traces:p.traces_tags||[], labels:p.labels_tags||[], cats,
     lang:(p.lang||"").toLowerCase(), en:clean(p.ingredients_text_en), ids, local:clean(p["ingredients_text_"+T]), nameEn:clean(p.product_name_en), nameLocal:clean(p["product_name_"+T]), orig:clean(p.ingredients_text),
     source:`Ingredients from <a href="https://world.openfoodfacts.org/product/${code}" target="_blank" rel="noopener">Open Food Facts</a> (barcode ${code}), a volunteer-built open database. Check them against the pack.`};
@@ -1553,7 +1582,10 @@ async function fromUSDA(code){
   const sod = fn("307");
   const nutr = {sugars:fn("269"), salt: sod!==undefined ? sod*2.5/1000 : undefined, fat:fn("204"), sat:fn("606"), drink:/ml|mlt/i.test(f.servingSizeUnit||"")};
   const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
-  return {db:"the USDA database", name:title(f.description), brand:title(f.brandName || f.brandOwner), text:(f.ingredients||"").trim(), tags:[], nutr: hasN ? nutr : null,
+  // Energy (nutrient 208) is per 100 g; the label serving is servingSize in g or ml.
+  const k100 = fn("208"), ss = +f.servingSize, su = /ml|mlt/i.test(f.servingSizeUnit||"") ? "ml" : /^g|grm/i.test(f.servingSizeUnit||"") ? "g" : "";
+  const kcal = k100 === undefined ? null : ss > 0 && su ? {v:Math.round(k100*ss/100), per:"serving", serving:`${+ss.toFixed(1)} ${su}`} : {v:Math.round(k100), per:"100g"};
+  return {db:"the USDA database", name:title(f.description), brand:title(f.brandName || f.brandOwner), text:(f.ingredients||"").trim(), tags:[], nutr: hasN ? nutr : null, kcal,
     source:`Ingredients from <a href="https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients" target="_blank" rel="noopener">USDA FoodData Central</a> (supplied by the manufacturer${f.publishedDate?`, published ${esc(f.publishedDate)}`:""}). Recipes change, so check them against the pack.`};
 }
 async function lookup(code, skipSaved){
@@ -1577,7 +1609,7 @@ async function lookup(code, skipSaved){
   }
   const hit = (off && off.text) ? off : (usda && usda.text) ? usda : null;
   const info = hit || off || usda;
-  current = {code, name:info?.name, brand:info?.brand, nutr:(off&&off.nutr)||(usda&&usda.nutr)||null};
+  current = {code, name:info?.name, brand:info?.brand, nutr:(off&&off.nutr)||(usda&&usda.nutr)||null, kcal:(off&&off.kcal)||(usda&&usda.kcal)||null};
   if (hit){
     status("");
     present({...hit, text: hit.orig || hit.text, nutriments:hit.nutr});
@@ -1778,7 +1810,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.5", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.6", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -1794,7 +1826,7 @@ function recordHistory(args, v){
   const code = current.code, all = jget(HIST_KEY), now = new Date().toISOString();
   const e = all[code] || {code, first:now, times:0};
   if (scanFresh || !e.times){ e.times++; e.last = now; scanFresh = false; }
-  Object.assign(e, {name:args.name||"", brand:args.brand||"", score:v.score, clear:v.clear, checking:v.checking, band:v.bandName, color:v.bandColor, rules:RULES_VERSION, snap:snapshotArgs(args), nutr:current.nutr||null});
+  Object.assign(e, {name:args.name||"", brand:args.brand||"", score:v.score, clear:v.clear, checking:v.checking, band:v.bandName, color:v.bandColor, rules:RULES_VERSION, snap:snapshotArgs(args), nutr:current.nutr||null, kcal:current.kcal||null});
   all[code] = e;
   const ks = Object.keys(all).sort((a,b)=>(all[b].last||"").localeCompare(all[a].last||""));
   ks.slice(HIST_MAX).forEach(k=>delete all[k]);
@@ -1811,7 +1843,7 @@ function toggleFav(code){
 window.openHistory = (code, which) => {
   const e = jget(which === "fav" ? FAV_KEY : HIST_KEY)[code]; if (!e) return;
   for (const [k, r] of Object.entries(e.snap.reg||{})) if (!regCache.has(k)) regCache.set(k, r);
-  current = {code, name:e.name, brand:e.brand, nutr:e.nutr||null};
+  current = {code, name:e.name, brand:e.brand, nutr:e.nutr||null, kcal:e.kcal||null};
   $("#barcode").value = code; $("#ingredients").value = e.snap.text || ""; lastChecked = e.snap.text || "";
   location.hash = "#scan"; status("");
   renderResult({...e.snap, savedAt:(e.last||e.first||"").slice(0,10), oldRules:(e.rules||0) < RULES_VERSION});
@@ -1821,6 +1853,7 @@ window.deleteHistory = (code, which) => {
   const k = which === "fav" ? FAV_KEY : HIST_KEY, all = jget(k); delete all[code]; jset(k, all); renderHistory();
 };
 function renderHistory(){
+  if (histTab === "dinner") return renderDinner();
   const which = histTab, all = jget(which === "fav" ? FAV_KEY : HIST_KEY);
   const items = Object.values(all).sort((a,b)=>((which==="fav"?b.added:b.last)||"").localeCompare((which==="fav"?a.added:a.last)||""));
   $("#histList").innerHTML = items.length ? items.map(e => {
@@ -1831,14 +1864,15 @@ function renderHistory(){
         <span class="hist-txt"><b>${esc(e.name||"Product "+e.code)}</b><small>${e.brand?esc(e.brand)+" · ":""}${esc(niceDate((e.last||e.first||"").slice(0,10)))}${e.times>1?` · scanned ${e.times}×`:""}</small>${old?'<span class="hist-tag">Outdated · rescan</span>':""}</span>
       </button>
       ${which==="recent"?`<button type="button" class="fav-btn" aria-pressed="${isFav(e.code)}" aria-label="Favourite ${esc(e.name||e.code)}" onclick="toggleFav('${esc(e.code)}');renderHistory()">${isFav(e.code)?"★":"☆"}</button>`:""}
+      <button type="button" class="din-btn" aria-pressed="${inDinner(e.code)}" aria-label="${inDinner(e.code)?"Remove":"Add"} ${esc(e.name||e.code)} ${inDinner(e.code)?"from":"to"} Dinner list" onclick="dinnerFromList('${esc(e.code)}','${which}')">${PLATE}</button>
       <button type="button" class="hist-x" aria-label="Delete ${esc(e.name||e.code)}" onclick="deleteHistory('${esc(e.code)}','${which}')">×</button>
     </div></li>`; }).join("")
-    : `<li class="empty">${which==="fav" ? "No favourites yet. Tap ☆ next to a product's name to keep it here." : "Nothing yet. Scanned products appear here."}</li>`;
+    : `<li class="empty">${which==="fav" ? "No favourites yet. Tap ☆ next to a product's name to keep it here. Tap the plate on any favourite to add it to your Dinner list." : "Nothing yet. Scanned products appear here."}</li>`;
   $("#histFoot").innerHTML = items.length && which==="recent" ? `<button type="button" onclick="clearHistory()">Clear all history</button><span class="muted" style="font-size:13px">Favourites are kept.</span>` : "";
   // Swipe left to delete.
   $("#histList").querySelectorAll(".hist-row").forEach(row => {
     let x0 = null, dx = 0;
-    row.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" || e.target.closest(".hist-x,.fav-btn")) return; x0 = e.clientX; dx = 0; row.classList.add("dragging"); row.parentElement.classList.add("swiping"); });
+    row.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" || e.target.closest(".hist-x,.fav-btn,.din-btn")) return; x0 = e.clientX; dx = 0; row.classList.add("dragging"); row.parentElement.classList.add("swiping"); });
     row.addEventListener("pointermove", e => { if (x0 === null) return; dx = Math.min(0, e.clientX - x0); row.style.transform = `translateX(${dx}px)`; });
     const end = () => { if (x0 === null) return; row.classList.remove("dragging"); x0 = null;
       if (dx < -90){ row.style.transform = "translateX(-110%)"; setTimeout(()=>deleteHistory(row.dataset.code, which), 180); } else { row.style.transform = ""; setTimeout(()=>row.parentElement.classList.remove("swiping"), 200); } };
@@ -1847,6 +1881,75 @@ function renderHistory(){
 }
 window.clearHistory = () => { if (confirm("Delete all scan history from this phone? Favourites are kept.")){ jset(HIST_KEY, {}); renderHistory(); } };
 document.querySelectorAll('input[name=histTab]').forEach(r => r.addEventListener("change", () => { histTab = r.value; renderHistory(); }));
+
+/* ---------- Dinner list (v6.6): add products to see the calories for a meal (this phone only) ---------- */
+// Calories come from the product's own nutrition data (Open Food Facts or USDA): per serving when the label gives one, otherwise per 100 g.
+const DIN_KEY = "sourced.dinner.v1";
+const PLATE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="5.5"/><circle cx="12" cy="13" r="2.5" stroke-width="1.4"/><path d="M2.5 3v4.5a1.5 1.5 0 0 0 3 0V3M4 9v12M21.5 3c-1.7 1-2.5 3.2-2.5 6.5h2.5M21.5 3v18"/></svg>`;
+function kcalOFF(nm, servingSize){
+  const n = v => (typeof v === "number" ? v : (v!=null && v!=="" && !isNaN(+v) ? +v : undefined));
+  let serv = n(nm["energy-kcal_serving"]), per100 = n(nm["energy-kcal_100g"]);
+  if (per100 === undefined && n(nm["energy-kj_100g"]) !== undefined) per100 = n(nm["energy-kj_100g"]) / 4.184;
+  if (serv === undefined && n(nm["energy-kj_serving"]) !== undefined) serv = n(nm["energy-kj_serving"]) / 4.184;
+  if (serv !== undefined) return {v:Math.round(serv), per:"serving", serving:(servingSize||"").trim().slice(0,40)};
+  if (per100 !== undefined) return {v:Math.round(per100), per:"100g"};
+  return null;
+}
+const kcalLabel = k => !k ? "Calories not listed" : `${k.v.toLocaleString()} kcal ${k.per === "serving" ? `per serving${k.serving ? ` (${k.serving})` : ""}` : "per 100 g"}`;
+const inDinner = code => !!jget(DIN_KEY)[code];
+function dinnerTotal(){
+  const items = Object.values(jget(DIN_KEY));
+  const known = items.filter(e => e.kcal);
+  return {items, n:items.length, kcal:Math.round(known.reduce((t, e) => t + e.kcal.v * (e.qty||1), 0)), missing:items.length - known.length, has100:known.some(e => e.kcal.per === "100g")};
+}
+function toggleDinner(c = current){
+  if (!c?.code) return;
+  const all = jget(DIN_KEY), was = !!all[c.code];
+  if (was) delete all[c.code];
+  else all[c.code] = {code:c.code, name:c.name||"", brand:c.brand||"", kcal:c.kcal||null, qty:1, added:new Date().toISOString()};
+  jset(DIN_KEY, all);
+  showDinnerPop(was ? null : all[c.code], c.name);
+}
+let dinPopTimer = 0;
+function showDinnerPop(added, name){
+  const t = dinnerTotal(), el = $("#dinPop");
+  const what = `${added ? "Added" : "Removed"} ${name ? esc(name) : "product"}${added ? `<br>${esc(kcalLabel(added.kcal))}` : ""}`;
+  el.innerHTML = `<span class="din-ic">${PLATE}</span><div class="din-body"><div class="din-what">${what}</div>
+    <div class="din-total">${t.kcal.toLocaleString()} <small>kcal dinner total</small></div>
+    <div class="din-sub">${t.n} item${t.n===1?"":"s"}${t.missing?` · ${t.missing} without calories`:""}${t.has100?" · some per 100 g":""}</div></div>
+    <button type="button" class="din-view">View</button>`;
+  el.querySelector(".din-view").onclick = () => { hideDinnerPop(); histTab = "dinner"; const r = document.querySelector('input[name=histTab][value=dinner]'); if (r) r.checked = true; location.hash = "#history"; renderHistory(); window.scrollTo({top:0}); };
+  el.classList.add("show");
+  clearTimeout(dinPopTimer); dinPopTimer = setTimeout(hideDinnerPop, 5000);
+}
+function hideDinnerPop(){ clearTimeout(dinPopTimer); $("#dinPop").classList.remove("show"); }
+window.dinnerFromList = async (code, which) => {
+  const e = jget(which === "fav" ? FAV_KEY : HIST_KEY)[code]; if (!e) return;
+  toggleDinner({code, name:e.name, brand:e.brand, kcal:e.kcal||null}); renderHistory();
+  // Products saved before v6.6 have no calories stored: fetch them once from Open Food Facts.
+  if (!e.kcal && inDinner(code)){ try { const off = await fromOFF(code); const all = jget(DIN_KEY);
+    if (off?.kcal && all[code]){ all[code].kcal = off.kcal; jset(DIN_KEY, all); showDinnerPop(all[code], e.name); if (histTab === "dinner") renderDinner(); } } catch(_) {} }
+};
+window.dinnerQty = (code, d) => { const all = jget(DIN_KEY), e = all[code]; if (!e) return; e.qty = Math.max(.5, Math.min(20, (e.qty||1) + d)); jset(DIN_KEY, all); renderDinner(); };
+window.dinnerRemove = code => { const all = jget(DIN_KEY); delete all[code]; jset(DIN_KEY, all); renderDinner(); };
+window.dinnerOpen = code => { if (jget(HIST_KEY)[code]) openHistory(code, "recent"); else openProduct(code); };
+window.clearDinner = () => { if (confirm("Empty the Dinner list?")){ jset(DIN_KEY, {}); renderDinner(); } };
+function renderDinner(){
+  const t = dinnerTotal(), items = t.items.sort((a,b) => (a.added||"").localeCompare(b.added||""));
+  const sum = items.length ? `<li class="din-sum"><b>${t.kcal.toLocaleString()} kcal</b><span>${t.n} item${t.n===1?"":"s"} on your Dinner list${t.missing?`, ${t.missing} without calorie data (not counted)`:""}</span></li>` : "";
+  $("#histList").innerHTML = items.length ? sum + items.map(e => {
+    const q = e.qty||1, amount = e.kcal?.per === "100g" ? `${+(q*100).toFixed(0)} g` : `${q} serving${q === 1 ? "" : "s"}`;
+    const sub = e.kcal ? `${Math.round(e.kcal.v * q).toLocaleString()} kcal for ${amount}` : "Calories not listed";
+    return `<li><div class="hist-row">
+      <button type="button" class="hist-open" onclick="dinnerOpen('${esc(e.code)}')">
+        <span class="hist-txt"><b>${esc(e.name||"Product "+e.code)}</b><small>${esc(kcalLabel(e.kcal))}</small><span class="din-kcal">${sub}</span></span>
+      </button>
+      <span class="din-qty" role="group" aria-label="Amount of ${esc(e.name||e.code)}"><button type="button" aria-label="Less" onclick="dinnerQty('${esc(e.code)}',-.5)">−</button><output>${e.qty||1}</output><button type="button" aria-label="More" onclick="dinnerQty('${esc(e.code)}',.5)">+</button></span>
+      <button type="button" class="hist-x" aria-label="Remove ${esc(e.name||e.code)}" onclick="dinnerRemove('${esc(e.code)}')">×</button>
+    </div></li>`; }).join("")
+    : `<li class="empty">Your Dinner list is empty. Tap the plate next to a product's name to add it and see the calories add up.</li>`;
+  $("#histFoot").innerHTML = items.length ? `<p class="din-note">Calories come from each product's label data in Open Food Facts or the USDA database: per serving where the label gives one, otherwise per 100 g. Use − and + to match how much you'll eat. Check the pack, as listed values can be wrong or out of date.</p><button type="button" onclick="clearDinner()">Empty Dinner list</button>` : "";
+}
 
 /* ---------- alternatives and Explore: scoring Open Food Facts products on the phone ---------- */
 const OFF_FIELDS = "code,product_name,product_name_en,generic_name_en,brands,lang,ingredients_text,ingredients_text_en,additives_tags,allergens_tags,traces_tags,nutriments,categories_tags,image_front_small_url";
