@@ -177,6 +177,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Choose a colour theme in Settings: Sage, Gilded Navy, Clay or Mineral. Each works in light and dark mode.
 - Warning colours never change with the theme, so red always means Established and the allergen alert always looks the same.
 
+## 6.2 (6 Nov 2026): Midnight Iris theme
+- The Mineral colour theme is replaced by Midnight Iris, a deep blue with gold and green accents. If you'd picked Mineral, you're moved to Midnight Iris automatically.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

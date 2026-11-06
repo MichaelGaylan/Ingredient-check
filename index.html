@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1f6f5c">
-<script>try{var a=localStorage.getItem("sourced.accent");document.documentElement.dataset.accent=/^(sage|gilded|clay|mineral)$/.test(a)?a:"sage"}catch(_){document.documentElement.dataset.accent="sage"}</script>
+<script>try{var a=localStorage.getItem("sourced.accent");if(a==="mineral")a="iris";document.documentElement.dataset.accent=/^(sage|gilded|clay|iris)$/.test(a)?a:"sage"}catch(_){document.documentElement.dataset.accent="sage"}</script>
 <title>Sourced</title>
 <script>try{var t=localStorage.getItem("sourced.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -366,12 +366,12 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="clay"]{--accent:#e0aa83;--accent-soft:#33241b;--bg:#111613}}
 :root[data-theme="dark"][data-accent="clay"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0aa83' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="clay"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0aa83' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
-:root[data-accent="mineral"]{--accent:#23626e;--accent-soft:#dceef0;--bg:#e7f1f2;--glow1:#27a9b8;--glow2:#d6d8d7;--glow3:#51838f}
-:root[data-accent="mineral"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2323626e' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
-:root[data-theme="dark"][data-accent="mineral"]{--accent:#5cc6d3;--accent-soft:#163035;--bg:#111613}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="mineral"]{--accent:#5cc6d3;--accent-soft:#163035;--bg:#111613}}
-:root[data-theme="dark"][data-accent="mineral"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235cc6d3' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="mineral"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235cc6d3' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
+:root[data-accent="iris"]{--accent:#31649c;--accent-soft:#e0e9f4;--bg:#e9eef5;--glow1:#31649c;--glow2:#d1b05f;--glow3:#339a7a}
+:root[data-accent="iris"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2331649c' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+:root[data-theme="dark"][data-accent="iris"]{--accent:#8fb3e3;--accent-soft:#1a2638;--bg:#111823;--surface:#18212f;--line:#2a3547}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="iris"]{--accent:#8fb3e3;--accent-soft:#1a2638;--bg:#111823;--surface:#18212f;--line:#2a3547}}
+:root[data-theme="dark"][data-accent="iris"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fb3e3' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="iris"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fb3e3' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
 :root{--glass:rgba(255,255,255,.58);--glass-line:rgba(255,255,255,.85);--glass-shadow:0 6px 24px rgba(20,40,35,.10);--frame:color-mix(in srgb,var(--accent) 55%,var(--line))}
 :root[data-theme="dark"]{--glass:rgba(255,255,255,.06);--glass-line:rgba(255,255,255,.13);--glass-shadow:0 6px 24px rgba(0,0,0,.35)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--glass:rgba(255,255,255,.06);--glass-line:rgba(255,255,255,.13);--glass-shadow:0 6px 24px rgba(0,0,0,.35)}}
@@ -433,7 +433,7 @@ button.primary{border-radius:14px;box-shadow:0 4px 14px color-mix(in srgb,var(--
           <label><input type="radio" name="accent" value="sage"><span class="dot" style="background:#1f6f5c" aria-hidden="true"></span>Sage</label>
           <label><input type="radio" name="accent" value="gilded"><span class="dot" style="background:#303e61" aria-hidden="true"></span>Gilded Navy</label>
           <label><input type="radio" name="accent" value="clay"><span class="dot" style="background:#82553a" aria-hidden="true"></span>Clay</label>
-          <label><input type="radio" name="accent" value="mineral"><span class="dot" style="background:#23626e" aria-hidden="true"></span>Mineral</label>
+          <label><input type="radio" name="accent" value="iris"><span class="dot" style="background:#31649c" aria-hidden="true"></span>Midnight Iris</label>
         </div>
         <p class="set-help">Changes the buttons, borders and background colour. Warning colours stay the same in every theme, so red always means Established.</p>
       </div>
@@ -1739,7 +1739,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.1", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.2", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
