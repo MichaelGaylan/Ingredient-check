@@ -202,6 +202,12 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - When you scan a barcode, type one in, or open a product from Explore or History, its photo now appears in a glass pop-up at the top of the screen for about 3 seconds, then fades away. Tap it to close it sooner.
 - If there's no photo of the product, no pop-up appears.
 
+## 6.8 (6 Nov 2026): fresh vegetables aisle
+- Explore now starts with a Fresh vegetables aisle, for loose vegetables that have no barcode. The nine most common are shown, with the rest of the 20 one tap away.
+- Tap a vegetable to see its calories per typical serving (and per 100 g), and add it to your Dinner list with one tap.
+- Searching for a vegetable, such as "carrots" or "spring onion", shows it above the packaged products.
+- Calories come from the US FDA's "Nutrition Information for Raw Vegetables" chart and are for the raw vegetable.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
