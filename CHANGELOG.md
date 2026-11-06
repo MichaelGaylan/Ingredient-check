@@ -172,6 +172,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 ## 6.0 (5 Nov 2026): add missing product photos
 - When a product has no photo, its photo card offers "📷 Add a photo". Your picture shows on your phone straight away and is shared with Open Food Facts, so everyone gets it. It is public under the CC BY-SA licence and added by Sourced's Open Food Facts account; Sourced asks once before the first share. This switches on once Sourced's Open Food Facts account is connected.
 
+## 6.1 (6 Nov 2026): a fresh look, with colour themes
+- A new "frosted glass" look: the header, section tabs and buttons sit on frosted glass over soft background colour, and result cards have coloured borders.
+- Choose a colour theme in Settings: Sage, Gilded Navy, Clay or Mineral. Each works in light and dark mode.
+- Warning colours never change with the theme, so red always means Established and the allergen alert always looks the same.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

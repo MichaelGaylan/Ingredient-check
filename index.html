@@ -11,6 +11,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1f6f5c">
+<script>try{var a=localStorage.getItem("sourced.accent");document.documentElement.dataset.accent=/^(sage|gilded|clay|mineral)$/.test(a)?a:"sage"}catch(_){document.documentElement.dataset.accent="sage"}</script>
 <title>Sourced</title>
 <script>try{var t=localStorage.getItem("sourced.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -345,6 +346,56 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
 @media (prefers-reduced-motion: reduce){.ring .num .dots i{animation:dotfade 1.4s infinite ease-in-out}.ring circle.spin{animation:dotfade 1.4s infinite}}
 @keyframes dotfade{0%,100%{opacity:.35}50%{opacity:1}}
 @media (max-width:420px){.result-head{grid-template-columns:1fr}.ring{margin:0 auto}}
+
+/* Frosted Garden look + colour themes (v6.1). Grade colours (--gA..--ok), the allergen box and caveat reds never change with the theme. */
+:root[data-accent="sage"]{--accent:#1f6f5c;--accent-soft:#e1efe9;--bg:#eaf2ee;--glow1:#7cc7a8;--glow2:#9fd3e6;--glow3:#f4d58d}
+:root[data-accent="sage"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231f6f5c' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+:root[data-theme="dark"][data-accent="sage"]{--accent:#5fc4a8;--accent-soft:#1c3029;--bg:#111613}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="sage"]{--accent:#5fc4a8;--accent-soft:#1c3029;--bg:#111613}}
+:root[data-theme="dark"][data-accent="sage"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235fc4a8' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="sage"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235fc4a8' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
+:root[data-accent="gilded"]{--accent:#303e61;--accent-soft:#e3e7f0;--bg:#eceef3;--glow1:#d4b058;--glow2:#a0a7b1;--glow3:#6e8e8f}
+:root[data-accent="gilded"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23303e61' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+:root[data-theme="dark"][data-accent="gilded"]{--accent:#a9b8e0;--accent-soft:#1e2433;--bg:#111613}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="gilded"]{--accent:#a9b8e0;--accent-soft:#1e2433;--bg:#111613}}
+:root[data-theme="dark"][data-accent="gilded"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b8e0' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="gilded"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b8e0' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
+:root[data-accent="clay"]{--accent:#82553a;--accent-soft:#f3e6dc;--bg:#f6eee7;--glow1:#d1a37f;--glow2:#c48e69;--glow3:#a67351}
+:root[data-accent="clay"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2382553a' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+:root[data-theme="dark"][data-accent="clay"]{--accent:#e0aa83;--accent-soft:#33241b;--bg:#111613}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="clay"]{--accent:#e0aa83;--accent-soft:#33241b;--bg:#111613}}
+:root[data-theme="dark"][data-accent="clay"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0aa83' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="clay"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0aa83' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
+:root[data-accent="mineral"]{--accent:#23626e;--accent-soft:#dceef0;--bg:#e7f1f2;--glow1:#27a9b8;--glow2:#d6d8d7;--glow3:#51838f}
+:root[data-accent="mineral"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2323626e' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+:root[data-theme="dark"][data-accent="mineral"]{--accent:#5cc6d3;--accent-soft:#163035;--bg:#111613}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="mineral"]{--accent:#5cc6d3;--accent-soft:#163035;--bg:#111613}}
+:root[data-theme="dark"][data-accent="mineral"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235cc6d3' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"])[data-accent="mineral"] .find-tabs details > summary::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235cc6d3' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")}}
+:root{--glass:rgba(255,255,255,.58);--glass-line:rgba(255,255,255,.85);--glass-shadow:0 6px 24px rgba(20,40,35,.10);--frame:color-mix(in srgb,var(--accent) 55%,var(--line))}
+:root[data-theme="dark"]{--glass:rgba(255,255,255,.06);--glass-line:rgba(255,255,255,.13);--glass-shadow:0 6px 24px rgba(0,0,0,.35)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--glass:rgba(255,255,255,.06);--glass-line:rgba(255,255,255,.13);--glass-shadow:0 6px 24px rgba(0,0,0,.35)}}
+/* Soft colour behind the glass: fixed, behind everything, never over content. */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+ radial-gradient(38vmax 38vmax at 0% 0%,color-mix(in srgb,var(--glow1,#7cc7a8) 45%,transparent),transparent 70%),
+ radial-gradient(34vmax 34vmax at 100% 45%,color-mix(in srgb,var(--glow2,#9fd3e6) 45%,transparent),transparent 70%),
+ radial-gradient(34vmax 34vmax at 10% 100%,color-mix(in srgb,var(--glow3,#f4d58d) 40%,transparent),transparent 70%)}
+:root[data-theme="dark"] body::before{opacity:.35}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) body::before{opacity:.35}}
+/* Glass on controls only: header bar, section tabs, round buttons. */
+header.top{margin-top:12px;padding:10px 12px;border-radius:22px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--glass-shadow);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4)}
+.brand{color:var(--accent)}
+nav,.theme-btn{background:var(--glass);border-color:var(--glass-line);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+/* Results stay solid and high-contrast, framed in the theme colour. */
+.panel{border:1.5px solid var(--frame);border-radius:20px;box-shadow:0 8px 28px rgba(20,40,35,.08)}
+@media (max-width:520px){header.top{padding:8px;border-radius:20px} header.top nav{min-width:0} nav a{padding-inline:2px}}
+button.primary{border-radius:14px;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.swatches label{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;min-height:44px;border-radius:14px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-size:12.5px;font-weight:600;text-align:center;line-height:1.2}
+.swatches input{position:absolute;opacity:0;pointer-events:none}
+.swatches .dot{width:34px;height:34px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.swatches label:has(input:checked){border:2px solid var(--accent);background:var(--accent-soft)}
+.swatches label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 </style>
 
 <div class="wrap">
@@ -375,6 +426,16 @@ a.chip-link:hover,a.chip-link:focus-visible{border-color:var(--accent);color:var
           <label><input type="radio" name="theme" value="dark">Dark</label>
         </div>
         <p class="set-help">Automatic follows your phone's light or dark setting.</p>
+      </div>
+      <div class="set-row">
+        <span class="label" id="accentLbl">Colour theme</span>
+        <div class="swatches" role="radiogroup" aria-labelledby="accentLbl">
+          <label><input type="radio" name="accent" value="sage"><span class="dot" style="background:#1f6f5c" aria-hidden="true"></span>Sage</label>
+          <label><input type="radio" name="accent" value="gilded"><span class="dot" style="background:#303e61" aria-hidden="true"></span>Gilded Navy</label>
+          <label><input type="radio" name="accent" value="clay"><span class="dot" style="background:#82553a" aria-hidden="true"></span>Clay</label>
+          <label><input type="radio" name="accent" value="mineral"><span class="dot" style="background:#23626e" aria-hidden="true"></span>Mineral</label>
+        </div>
+        <p class="set-help">Changes the buttons, borders and background colour. Warning colours stay the same in every theme, so red always means Established.</p>
       </div>
       <div class="set-row">
         <label class="label" for="langSel">Show product text in</label>
@@ -1678,7 +1739,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.0", APP_DATE = "2026-11-05";
+const APP_VERSION = "6.1", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2142,11 +2203,13 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
     btn.innerHTML=(d?sun:moon)+"<span>"+(d?"Light":"Dark")+"</span>";
     btn.setAttribute("aria-pressed", String(d));
     btn.title=d?"Switch to light mode":"Switch to dark mode";
-    const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=d?"#111613":"#1f6f5c";
+    const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=d?"#111613":getComputedStyle(root).getPropertyValue("--accent").trim()||"#1f6f5c";
+    dlg.querySelectorAll('input[name=accent]').forEach(r => r.checked = r.value===root.dataset.accent);
     dlg.querySelectorAll('input[name=theme]').forEach(r => r.checked = r.value===SET.theme);
   }
   btn.addEventListener("click",()=>{ SET.theme=isDark()?"light":"dark"; saveSet(); paint(); });
   dlg.querySelectorAll('input[name=theme]').forEach(r => r.addEventListener("change", () => { SET.theme=r.value; saveSet(); paint(); }));
+  dlg.querySelectorAll('input[name=accent]').forEach(r => r.addEventListener("change", () => { root.dataset.accent=r.value; try { localStorage.setItem("sourced.accent", r.value); } catch(_) {} paint(); }));
   mq.addEventListener?.("change",paint);
   const sel=$("#langSel");
   sel.innerHTML=Object.entries(LANGS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
