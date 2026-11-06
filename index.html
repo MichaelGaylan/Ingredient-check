@@ -169,7 +169,7 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .ex-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
 .ex-tiles button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;font:500 12.5px var(--body);text-align:center;line-height:1.25;min-height:92px;border-radius:12px}
 .ex-tiles .em{font-size:28px;line-height:1}
-/* Fresh vegetables aisle (v6.8) */
+/* Fresh produce aisles (v6.8) */
 .veg-tiles button small{font:500 11px var(--mono);color:var(--muted)}
 .veg-card{display:flex;align-items:center;gap:14px}
 .veg-card .em{font-size:52px;line-height:1;flex:none;width:72px;height:72px;display:grid;place-items:center;border-radius:18px;background:var(--accent-soft)}
@@ -615,7 +615,7 @@ header.top .icon-btn svg{width:20px;height:20px}
         <p class="muted">Browse or search products, ranked by Sourced score. Products that would set off your allergen alert are left out unless you switch that off.</p>
       </div>
       <div class="panel stack">
-        <div class="ex-search"><input id="exQ" type="search" placeholder="Search products or vegetables, e.g. carrots" aria-label="Search products" autocomplete="off" enterkeyhint="search"><button type="button" id="exGo" class="primary">Search</button></div>
+        <div class="ex-search"><input id="exQ" type="search" placeholder="Search products or produce, e.g. carrots" aria-label="Search products" autocomplete="off" enterkeyhint="search"><button type="button" id="exGo" class="primary">Search</button></div>
         <div class="ex-filters">
           <label>Market <select id="exCountry"><option value="">Anywhere</option><option value="en:united-states">United States</option><option value="en:united-kingdom">United Kingdom</option><option value="en:canada">Canada</option><option value="en:australia">Australia</option><option value="en:ireland">Ireland</option><option value="en:france">France</option><option value="en:germany">Germany</option><option value="en:spain">Spain</option><option value="en:italy">Italy</option></select></label>
           <label class="ex-chk"><input type="checkbox" id="exAlg" checked> Hide my allergens</label>
@@ -1950,7 +1950,7 @@ window.dinnerFromList = async (code, which) => {
 };
 window.dinnerQty = (code, d) => { const all = jget(DIN_KEY), e = all[code]; if (!e) return; e.qty = Math.max(.5, Math.min(20, (e.qty||1) + d)); jset(DIN_KEY, all); renderDinner(); };
 window.dinnerRemove = code => { const all = jget(DIN_KEY); delete all[code]; jset(DIN_KEY, all); renderDinner(); };
-window.dinnerOpen = code => { if (String(code).startsWith("veg:")){ location.hash = "#explore"; setTimeout(() => exVeg(code.slice(4)), 0); return; } if (jget(HIST_KEY)[code]) openHistory(code, "recent"); else openProduct(code); };
+window.dinnerOpen = code => { if (isProduce(code)){ location.hash = "#explore"; setTimeout(() => exProduce(code), 0); return; } if (jget(HIST_KEY)[code]) openHistory(code, "recent"); else openProduct(code); };
 window.clearDinner = () => { if (confirm("Empty the Dinner list?")){ jset(DIN_KEY, {}); renderDinner(); } };
 function renderDinner(){
   const t = dinnerTotal(), items = t.items.sort((a,b) => (a.added||"").localeCompare(b.added||""));
@@ -1966,7 +1966,7 @@ function renderDinner(){
       <button type="button" class="hist-x" aria-label="Remove ${esc(e.name||e.code)}" onclick="dinnerRemove('${esc(e.code)}')">×</button>
     </div></li>`; }).join("")
     : `<li class="empty">Your Dinner list is empty. Tap the plate next to a product's name to add it and see the calories add up.</li>`;
-  $("#histFoot").innerHTML = items.length ? `<p class="din-note">Calories come from each product's label data in Open Food Facts or the USDA database (per serving where the label gives one, otherwise per 100 g), and for fresh vegetables from the FDA's raw vegetables chart. Use − and + to match how much you'll eat. Check the pack, as listed values can be wrong or out of date.</p><button type="button" onclick="clearDinner()">Empty Dinner list</button>` : "";
+  $("#histFoot").innerHTML = items.length ? `<p class="din-note">Calories come from each product's label data in Open Food Facts or the USDA database (per serving where the label gives one, otherwise per 100 g), and for fresh fruit and vegetables from the FDA's raw produce charts. Use − and + to match how much you'll eat. Check the pack, as listed values can be wrong or out of date.</p><button type="button" onclick="clearDinner()">Empty Dinner list</button>` : "";
 }
 
 /* ---------- alternatives and Explore: scoring Open Food Facts products on the phone ---------- */
@@ -2233,23 +2233,22 @@ async function addPhoto(a, card){
 window.openProduct = code => { location.hash = "#scan"; $("#barcode").value = code; lookup(code); window.scrollTo({top:0}); };
 
 /* Explore: aisles of Open Food Facts categories, plus a product search. Results are ranked by Sourced score. */
+/* v6.8: 7 aisles. A tile can name more than one Open Food Facts category; their results are searched together and ranked as one list. */
 const AISLES = [
   ["Meat & Seafood", [["🥩","Meat","en:meats"],["🍗","Poultry","en:poultries"],["🥓","Bacon, ham & sausages","en:prepared-meats"],["🐟","Fish & seafood","en:seafood"]]],
-  ["Dairy, Cheese & Eggs", [["🥛","Milk & cream","en:milks"],["🧀","Cheese","en:cheeses"],["🥚","Eggs","en:eggs"],["🍦","Yogurt","en:yogurts"],["🧈","Butter & spreads","en:spreads"]]],
-  ["Baking & Cooking", [["🫒","Oils & vinegars","en:vegetable-oils"],["🌾","Flour & baking mixes","en:flours"],["🍯","Sugars, sweeteners & syrups","en:sweeteners"],["🧂","Spices & seasonings","en:condiments"]]],
-  ["Bread & Baked Goods", [["🍞","Bread","en:breads"],["🌯","Tortillas & flatbreads","en:flatbreads"],["🥐","Pastries & cakes","en:cakes"],["🍪","Cookies & biscuits","en:biscuits"]]],
-  ["Breakfast", [["🥣","Cereals","en:breakfast-cereals"],["🌾","Oats & porridge","en:oat-flakes"],["🍓","Jams & spreads","en:jams"]]],
-  ["Pantry", [["🍝","Pasta","en:pastas"],["🍚","Rice & grains","en:rices"],["🥫","Canned foods","en:canned-foods"],["🥫","Sauces","en:sauces"],["🍜","Soups","en:soups"]]],
-  ["Snacks & Sweets", [["🥨","Crisps & salty snacks","en:salty-snacks"],["🍫","Chocolate","en:chocolates"],["🍬","Sweets & candy","en:confectioneries"],["🥜","Nuts & seeds","en:nuts"]]],
-  ["Drinks", [["🧃","Juices","en:fruit-juices"],["🥤","Soft drinks","en:sodas"],["☕","Coffee & tea","en:hot-beverages"],["💧","Water","en:waters"]]],
-  ["Plant-based & Frozen", [["🌱","Plant-based alternatives","en:meat-analogues"],["🥛","Plant milks","en:plant-based-milk-alternatives"],["🧊","Frozen meals","en:frozen-foods"]]]
+  ["Dairy & Eggs", [["🥛","Milk & cream","en:milks"],["🧀","Cheese","en:cheeses"],["🥚","Eggs","en:eggs"],["🍦","Yogurt","en:yogurts"],["🧈","Butter & spreads","en:spreads"]]],
+  ["Bakery & Breakfast", [["🍞","Bread","en:breads"],["🌯","Tortillas & wraps","en:flatbreads"],["🥐","Cakes & pastries","en:cakes"],["🥣","Cereals & oats","en:breakfast-cereals|en:oat-flakes"],["🍓","Jams & spreads","en:jams"]]],
+  ["Pantry & Cooking", [["🍝","Pasta & rice","en:pastas|en:rices"],["🥫","Canned foods & soups","en:canned-foods|en:soups"],["🍅","Sauces & condiments","en:sauces|en:condiments"],["🫒","Oils & vinegars","en:vegetable-oils"],["🌾","Flour & sugar","en:flours|en:sweeteners"],["🧂","Herbs & spices","en:spices"]]],
+  ["Snacks & Sweets", [["🥨","Crisps & salty snacks","en:salty-snacks"],["🍫","Chocolate & sweets","en:chocolates|en:confectioneries"],["🍪","Cookies & biscuits","en:biscuits"],["🥜","Nuts & seeds","en:nuts"]]],
+  ["Drinks", [["🧃","Juices & soft drinks","en:fruit-juices|en:sodas"],["☕","Coffee & tea","en:hot-beverages"],["💧","Water","en:waters"],["🥛","Plant milks","en:plant-based-milk-alternatives"]]],
+  ["Frozen & Plant-based", [["🧊","Frozen meals","en:frozen-foods"],["🥦","Frozen vegetables & fruit","en:frozen-vegetables|en:frozen-fruits"],["🌱","Meat alternatives","en:meat-analogues"]]]
 ];
 // Stores as Open Food Facts volunteers record them on the product on the product (coverage varies by store and country).
 const STORES = [["walmart","Walmart"],["target","Target"],["kroger","Kroger"],["costco","Costco"],["whole-foods","Whole Foods"],["trader-joe-s","Trader Joe's"],["aldi","Aldi"],["lidl","Lidl"],["publix","Publix"],["safeway","Safeway"],["tesco","Tesco"],["sainsbury-s","Sainsbury's"],["asda","Asda"],["waitrose","Waitrose"],["carrefour","Carrefour"]];
 const exCache = new Map(); let exSeq = 0;
 /* USDA FoodData Central branded foods: about 400,000 US products with manufacturer ingredient lists.
    Used in Explore for US (or Anywhere) searches with no store picked, since USDA has no store data. */
-const USDA_Q = {"en:meats":"beef","en:poultries":"chicken","en:prepared-meats":"sausage","en:seafood":"fish","en:milks":"milk","en:cheeses":"cheese","en:eggs":"eggs","en:yogurts":"yogurt","en:spreads":"butter","en:vegetable-oils":"oil","en:flours":"flour","en:sweeteners":"syrup","en:condiments":"seasoning","en:breads":"bread","en:flatbreads":"tortillas","en:cakes":"cake","en:biscuits":"cookies","en:breakfast-cereals":"cereal","en:oat-flakes":"oats","en:jams":"jam","en:pastas":"pasta","en:rices":"rice","en:canned-foods":"canned","en:sauces":"sauce","en:soups":"soup","en:salty-snacks":"chips","en:chocolates":"chocolate","en:confectioneries":"candy","en:nuts":"nuts","en:fruit-juices":"juice","en:sodas":"soda","en:hot-beverages":"coffee","en:waters":"water","en:meat-analogues":"plant based","en:plant-based-milk-alternatives":"oat milk","en:frozen-foods":"frozen meal"};
+const USDA_Q = {"en:meats":"beef","en:poultries":"chicken","en:prepared-meats":"sausage","en:seafood":"fish","en:milks":"milk","en:cheeses":"cheese","en:eggs":"eggs","en:yogurts":"yogurt","en:spreads":"butter","en:vegetable-oils":"oil","en:flours":"flour","en:sweeteners":"syrup","en:condiments":"seasoning","en:breads":"bread","en:flatbreads":"tortillas","en:cakes":"cake","en:biscuits":"cookies","en:breakfast-cereals":"cereal","en:oat-flakes":"oats","en:jams":"jam","en:pastas":"pasta","en:rices":"rice","en:canned-foods":"canned","en:sauces":"sauce","en:soups":"soup","en:salty-snacks":"chips","en:chocolates":"chocolate","en:confectioneries":"candy","en:nuts":"nuts","en:fruit-juices":"juice","en:sodas":"soda","en:hot-beverages":"coffee","en:waters":"water","en:meat-analogues":"plant based","en:plant-based-milk-alternatives":"oat milk","en:frozen-foods":"frozen meal","en:spices":"spice","en:frozen-vegetables":"frozen vegetables","en:frozen-fruits":"frozen fruit"};
 async function usdaSearch(q){
   const url = `https://api.nal.usda.gov/fdc/v1/foods/search?dataType=Branded&pageSize=50&query=${encodeURIComponent(q)}`;
   const hit = searchCacheGet(url); if (hit) return hit;
@@ -2283,10 +2282,10 @@ async function usdaSearch(q){
   $("#exQ").addEventListener("keydown", e => { if (e.key === "Enter") exSearch(e.target.value); });
   $("#exQ").addEventListener("search", e => { if (!e.target.value) exploreHome(); });
 }
-/* Fresh vegetables (v6.8): loose vegetables have no barcode, so they get their own aisle.
-   Calories per serving from the FDA's "Nutrition Information for Raw Vegetables" chart (the 20 most eaten raw
-   vegetables in the US; content current as of 13 Dec 2017). Nothing is estimated: the values are copied from that page. */
-const VEG_SRC = "https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/nutrition-information-raw-vegetables";
+/* Fresh produce (v6.8): loose vegetables and fruit have no barcode, so they get their own aisle.
+   Calories per serving from the FDA's "Nutrition Information for Raw Vegetables" and "Raw Fruits" charts
+   (the 20 most eaten raw vegetables and fruits in the US; content current as of 13 Dec 2017). Nothing is estimated:
+   the values are copied from those pages. */
 const VEG = [
   ["asparagus","🌱","Asparagus","5 spears",93,20,["asparagus"]],
   ["bell-pepper","🫑","Bell pepper","1 medium",148,25,["bell pepper","bell peppers","pepper","peppers","capsicum","sweet pepper"]],
@@ -2308,38 +2307,73 @@ const VEG = [
   ["sweet-corn","🌽","Sweet corn","kernels from 1 medium ear",90,90,["corn","sweet corn","corn on the cob","sweetcorn"]],
   ["sweet-potato","🍠","Sweet potato","1 medium, 5 in long",130,100,["sweet potato","sweet potatoes","yam","yams"]],
   ["tomato","🍅","Tomato","1 medium",148,25,["tomato","tomatoes"]]
-].map(([id, em, name, serv, g, kcal, words]) => ({id, code:"veg:" + id, em, name, serving:`${serv} (${g} g)`, g, kcal, words}));
-const vegById = id => VEG.find(v => v.id === id);
-// Vegetables a search names: "carrots", "baby carrots", "spring onion". Whole words only.
-const vegMatch = q => { const t = " " + norm(q||"").trim() + " "; return t.trim() ? VEG.filter(v => v.words.some(w => t.includes(" " + w + " "))) : []; };
+];
+const FRUIT = [
+  ["apple","🍎","Apple","1 large",242,130,["apple","apples"]],
+  ["avocado","🥑","Avocado (California)","1/5 medium",30,50,["avocado","avocados"]],
+  ["banana","🍌","Banana","1 medium",126,110,["banana","bananas"]],
+  ["cantaloupe","🍈","Cantaloupe","1/4 medium",134,50,["cantaloupe","cantaloupes","rockmelon"]],
+  ["grapefruit","🍊","Grapefruit","1/2 medium",154,60,["grapefruit","grapefruits"]],
+  ["grapes","🍇","Grapes","3/4 cup",126,90,["grape","grapes"]],
+  ["honeydew","🍈","Honeydew melon","1/10 medium melon",134,50,["honeydew","honeydew melon","melon"]],
+  ["kiwifruit","🥝","Kiwifruit","2 medium",148,90,["kiwi","kiwis","kiwifruit","kiwi fruit"]],
+  ["lemon","🍋","Lemon","1 medium",58,15,["lemon","lemons"]],
+  ["lime","🍋","Lime","1 medium",67,20,["lime","limes"]],
+  ["nectarine","🍑","Nectarine","1 medium",140,60,["nectarine","nectarines"]],
+  ["orange","🍊","Orange","1 medium",154,80,["orange","oranges"]],
+  ["peach","🍑","Peach","1 medium",147,60,["peach","peaches"]],
+  ["pear","🍐","Pear","1 medium",166,100,["pear","pears"]],
+  ["pineapple","🍍","Pineapple","2 slices, 3 in across, 3/4 in thick",112,50,["pineapple","pineapples"]],
+  ["plums","🟣","Plums","2 medium",151,70,["plum","plums"]],
+  ["strawberries","🍓","Strawberries","8 medium",147,50,["strawberry","strawberries"]],
+  ["cherries","🍒","Sweet cherries","21 cherries, 1 cup",140,100,["cherry","cherries","sweet cherries"]],
+  ["tangerine","🍊","Tangerine","1 medium",109,50,["tangerine","tangerines","mandarin","mandarins","clementine","clementines"]],
+  ["watermelon","🍉","Watermelon","1/18 medium melon, 2 cups diced",280,80,["watermelon","watermelons"]]
+];
+const FDA_CHART = "https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/";
+const PRODUCE = {
+  veg: {title:"Fresh vegetables", em:"🥕", noun:"vegetable", chart:"Nutrition Information for Raw Vegetables", src:FDA_CHART + "nutrition-information-raw-vegetables",
+        rows:VEG, top:["carrot","potato","onion","tomato","broccoli","bell-pepper","cucumber","leaf-lettuce","mushrooms"]},
+  fruit: {title:"Fresh fruit", em:"🍎", noun:"fruit", chart:"Nutrition Information for Raw Fruits", src:FDA_CHART + "raw-fruits-poster-text-version-accessible-version",
+        rows:FRUIT, top:["banana","apple","strawberries","grapes","orange","avocado","watermelon","pear","peach"]}
+};
+for (const [kind, k] of Object.entries(PRODUCE))
+  k.items = k.rows.map(([id, em, name, serv, g, kcal, words]) => ({kind, id, code:kind + ":" + id, em, name, serving:`${serv} (${g} g)`, g, kcal, words}));
+const ALL_PRODUCE = [...PRODUCE.veg.items, ...PRODUCE.fruit.items];
+const produceByCode = code => ALL_PRODUCE.find(v => v.code === code);
+const isProduce = code => /^(veg|fruit):/.test(String(code));
+// Produce a search names: "carrots", "baby carrots", "spring onion". Whole words only.
+const vegMatch = q => { const t = " " + norm(q||"").trim() + " "; return t.trim() ? ALL_PRODUCE.filter(v => v.words.some(w => t.includes(" " + w + " "))) : []; };
 const vegKcal = v => ({v:v.kcal, per:"serving", serving:v.serving});
-const vegTiles = list => `<div class="ex-tiles veg-tiles">${list.map(v => `<button type="button" onclick="exVeg('${v.id}')"><span class="em" aria-hidden="true">${v.em}</span>${esc(v.name)}<small>${v.kcal} kcal</small></button>`).join("")}</div>`;
-window.exVeg = id => {
-  const v = vegById(id); if (!v) return;
-  exLast = () => exVeg(id); ++exSeq;
+const vegTiles = list => `<div class="ex-tiles veg-tiles">${list.map(v => `<button type="button" onclick="exProduce('${v.code}')"><span class="em" aria-hidden="true">${v.em}</span>${esc(v.name)}<small>${v.kcal} kcal</small></button>`).join("")}</div>`;
+const produceSrc = k => `Calories per serving from the US FDA chart <a href="${k.src}" target="_blank" rel="noopener">${k.chart}</a> (current as of 13 Dec 2017)`;
+window.exProduce = code => {
+  const v = produceByCode(code); if (!v) return;
+  const k = PRODUCE[v.kind];
+  exLast = () => exProduce(code); ++exSeq;
   const body = $("#exBody"), on = inDinner(v.code), per100 = Math.round(v.kcal * 100 / v.g);
-  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>Fresh vegetables</h3></div>
+  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${k.title}</h3></div>
     <div class="veg-card"><span class="em" aria-hidden="true">${v.em}</span><div><h2 style="margin:0 0 4px">${esc(v.name)}</h2>
       <div class="veg-kcal">${v.kcal} <small>kcal per ${esc(v.serving)}</small></div><div class="muted" style="font-size:13px">About ${per100} kcal per 100 g, raw</div></div></div>
     <button type="button" class="veg-add${on ? "" : " primary"}" id="vegAdd" aria-pressed="${on}">${PLATE}<span>${on ? "On your Dinner list · tap to remove" : "Add to Dinner list"}</span></button>
     <ul class="veg-facts"><li>A single whole food with no ingredient list, so there's nothing for Sourced to score.</li>
-      <li>Calories are for the raw vegetable. Cooking with oil, butter or sauce adds more.</li>
+      <li>Calories are for the raw ${k.noun}.${v.kind === "veg" ? " Cooking with oil, butter or sauce adds more." : ""}</li>
       <li>Washing fresh produce under running water before eating is the FDA's advice.</li></ul>
-    <p class="disclaimer" style="margin:0">Calories per serving from the US FDA chart <a href="${VEG_SRC}" target="_blank" rel="noopener">Nutrition Information for Raw Vegetables</a> (current as of 13 Dec 2017). Per 100 g is worked out from the FDA's serving weight.</p></div>
-    <div class="panel"><h3 class="ex-h3">More vegetables</h3>${vegTiles(VEG.filter(x => x.id !== id))}</div>`;
-  $("#vegAdd").onclick = () => { toggleDinner({code:v.code, name:v.name, brand:"Fresh vegetable", kcal:vegKcal(v)}); exVeg(id); };
+    <p class="disclaimer" style="margin:0">${produceSrc(k)}. Per 100 g is worked out from the FDA's serving weight.</p></div>
+    <div class="panel"><h3 class="ex-h3">More ${k.title.replace("Fresh ", "")}</h3>${vegTiles(k.items.filter(x => x.code !== code))}</div>`;
+  $("#vegAdd").onclick = () => { toggleDinner({code:v.code, name:v.name, brand:k.title, kcal:vegKcal(v)}); exProduce(code); };
   body.scrollIntoView({behavior:"smooth", block:"start"});
 };
-// The home screen shows the most-bought nine; the rest are one tap away.
-const VEG_TOP = ["carrot","potato","onion","tomato","broccoli","bell-pepper","cucumber","leaf-lettuce","mushrooms"];
-window.exVegAll = () => { exLast = exVegAll; ++exSeq; const body = $("#exBody");
-  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>Fresh vegetables</h3></div>${vegTiles(VEG)}
-    <p class="disclaimer" style="margin:0">Calories per serving from the US FDA chart <a href="${VEG_SRC}" target="_blank" rel="noopener">Nutrition Information for Raw Vegetables</a>.</p></div>`;
+window.exProduceAll = kind => { const k = PRODUCE[kind]; if (!k) return; exLast = () => exProduceAll(kind); ++exSeq; const body = $("#exBody");
+  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${k.title}</h3></div>${vegTiles(k.items)}
+    <p class="disclaimer" style="margin:0">${produceSrc(k)}.</p></div>`;
   body.scrollIntoView({behavior:"smooth", block:"start"}); };
+const producePanel = kind => { const k = PRODUCE[kind];
+  return `<div class="panel ex-aisle"><h3>${k.em} ${k.title}</h3>${vegTiles(k.top.map(id => produceByCode(kind + ":" + id)))}<button type="button" class="linkbtn" style="margin-top:10px" onclick="exProduceAll('${kind}')">All ${k.items.length} ${k.title.replace("Fresh ", "")} ›</button></div>`; };
 let exLast = null;
 window.exploreHome = () => {
   if (exLast && $("#exBody").childElementCount) return; // keep the current results when coming back to the tab
-  $("#exBody").innerHTML = `<div class="panel ex-aisle"><h3>🥕 Fresh vegetables</h3><p class="muted" style="font-size:13px;margin:-4px 0 10px">Loose vegetables have no barcode. Tap one for its calories and to add it to your Dinner list.</p>${vegTiles(VEG_TOP.map(vegById))}<button type="button" class="linkbtn" style="margin-top:10px" onclick="exVegAll()">All ${VEG.length} vegetables ›</button></div>`
+  $("#exBody").innerHTML = `<p class="muted" style="font-size:13px;margin:0">Loose fruit and vegetables have no barcode. Tap one for its calories and to add it to your Dinner list.</p>` + producePanel("veg") + producePanel("fruit")
     + AISLES.map(([aisle, cats]) => `<div class="panel ex-aisle"><h3>${esc(aisle)}</h3><div class="ex-tiles">${cats.map(([em, label, tag]) =>
     `<button type="button" onclick="exCategory('${tag}', '${esc(label).replace(/'/g,"&#39;")}')"><span class="em" aria-hidden="true">${em}</span>${esc(label)}</button>`).join("")}</div></div>`).join("")
     + `<p class="disclaimer">Product data from Open Food Facts, a free database built by volunteers, so some products and stores are missing. Scores are worked out on your phone. No paid placements.</p>`;
@@ -2349,7 +2383,7 @@ window.exCategory = (tag, label) => { exEmoji = AISLES.flatMap(a => a[1]).find(c
 window.exSearch = q => { exEmoji = "🛒"; q = (q||"").trim(); if (!q){ exLast = null; exploreHome(); return; } exLast = () => exSearch(q); exRun(`“${q}”`, {search_terms: q}, vegMatch(q)); };
 window.exStoreTop = () => { const st = exStoreVal(); if (!st) return; exLast = exStoreTop; exRun(`Popular at ${STORES.find(x => x[0] === st)[1]}`, {}); };
 window.exBack = () => { exLast = null; $("#exQ").value = ""; exploreHome(); };
-const vegBlock = veg => veg.length ? `<div><div class="label" style="margin:2px 0 6px">Fresh vegetables</div>${vegTiles(veg)}</div>` : "";
+const vegBlock = veg => veg.length ? `<div><div class="label" style="margin:2px 0 6px">Fresh produce</div>${vegTiles(veg)}</div>` : "";
 async function exRun(title, query, veg = []){
   const seq = ++exSeq, body = $("#exBody");
   const country = $("#exCountry").value, store = exStoreVal(), hideAlg = $("#exAlg").checked;
@@ -2367,17 +2401,20 @@ async function exRun(title, query, veg = []){
         urls.push(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(qq)}&langs=en&page_size=40&sort_by=-unique_scans_n&fields=${OFF_FIELDS}`);
         const tags = [country && ["countries", country.replace(/^en:/,"")], store && ["stores", store]].filter(Boolean);
         urls.push(`https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1&search_terms=${encodeURIComponent(query.search_terms)}&page_size=40&sort_by=unique_scans_n&fields=${OFF_FIELDS}` + tags.map(([t,v],i) => `&tagtype_${i}=${t}&tag_contains_${i}=contains&tag_${i}=${encodeURIComponent(v)}`).join(""));
-      } else {
-        urls.push(`https://world.openfoodfacts.org/api/v2/search?${query.categories_tags ? `categories_tags=${encodeURIComponent(query.categories_tags)}` : "page=1"}${country?`&countries_tags=${encodeURIComponent(country)}`:""}${store?`&stores_tags=${encodeURIComponent(store)}`:""}&fields=${OFF_FIELDS}&page_size=40&sort_by=unique_scans_n`);
       }
-      const usdaQ = !store && (!country || country === "en:united-states") ? (query.search_terms || USDA_Q[query.categories_tags] || "") : "";
+      // A category tile may name several categories ("en:pastas|en:rices"): one search each, results merged.
+      const cats = query.search_terms ? [null] : (query.categories_tags || "").split("|");
+      const catUrls = cat => [...(cat ? ownSearch({cat, store, country}) : urls), `https://world.openfoodfacts.org/api/v2/search?${cat ? `categories_tags=${encodeURIComponent(cat)}` : "page=1"}${country?`&countries_tags=${encodeURIComponent(country)}`:""}${store?`&stores_tags=${encodeURIComponent(store)}`:""}&fields=${OFF_FIELDS}&page_size=${cats.length > 1 ? 25 : 40}&sort_by=unique_scans_n`];
+      const usdaQ = !store && (!country || country === "en:united-states") ? (query.search_terms || USDA_Q[cats[0]] || "") : "";
       const usdaP = usdaQ ? usdaSearch(usdaQ).catch(() => []) : Promise.resolve([]);
-      const offP = offSearch(urls, secs => { if (seq === exSeq){ const m = body.querySelector(".muted"); if (m) m.textContent = `Open Food Facts is busy (it allows about 10 searches a minute). Trying again in ${secs} s…`; } });
+      const onWait = secs => { if (seq === exSeq){ const m = body.querySelector(".muted"); if (m) m.textContent = `Open Food Facts is busy (it allows about 10 searches a minute). Trying again in ${secs} s…`; } };
+      const offP = query.search_terms ? offSearch(urls, onWait) : Promise.allSettled(cats.map(c => offSearch(catUrls(c), onWait))).then(rs => { const ok = rs.filter(r => r.status === "fulfilled"); if (!ok.length) throw rs[0].reason; return ok.flatMap(r => r.value); });
       const [offR, usdaR] = await Promise.all([offP.then(p => ({p}), e => ({e})), usdaP]);
       if (offR.e && !usdaR.length) throw offR.e;
       // Same product in both: keep the Open Food Facts one (it has photos and store data).
       const key0 = c => String(c||"").replace(/^0+/, ""), seenC = new Set((offR.p||[]).map(p => key0(p.code)));
-      const prods = [...(offR.p||[]), ...usdaR.filter(p => !seenC.has(key0(p.code)) && seenC.add(key0(p.code)))];
+      const offU = [], seenO = new Set(); (offR.p||[]).forEach(p => { const k = key0(p.code); if (!seenO.has(k)){ seenO.add(k); offU.push(p); } });
+      const prods = [...offU, ...usdaR.filter(p => !seenC.has(key0(p.code)) && seenC.add(key0(p.code)))];
       items = prods.map(p => { const c = scoreOFF(p); if (c && p.src) c.src = p.src; return c; }).filter(Boolean);
       exCache.set(key, items);
     } catch(_) { items = null; }

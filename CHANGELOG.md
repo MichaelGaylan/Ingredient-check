@@ -202,11 +202,13 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - When you scan a barcode, type one in, or open a product from Explore or History, its photo now appears in a glass pop-up at the top of the screen for about 3 seconds, then fades away. Tap it to close it sooner.
 - If there's no photo of the product, no pop-up appears.
 
-## 6.8 (6 Nov 2026): fresh vegetables aisle
-- Explore now starts with a Fresh vegetables aisle, for loose vegetables that have no barcode. The nine most common are shown, with the rest of the 20 one tap away.
-- Tap a vegetable to see its calories per typical serving (and per 100 g), and add it to your Dinner list with one tap.
-- Searching for a vegetable, such as "carrots" or "spring onion", shows it above the packaged products.
-- Calories come from the US FDA's "Nutrition Information for Raw Vegetables" chart and are for the raw vegetable.
+## 6.8 (6 Nov 2026): fresh fruit and vegetables, and tidier aisles
+- Explore now starts with Fresh vegetables and Fresh fruit, for loose produce that has no barcode. The nine most common of each are shown, with the rest of the 20 one tap away.
+- Tap one to see its calories per typical serving (and per 100 g), and add it to your Dinner list with one tap.
+- Searching for produce, such as "carrots" or "bananas", shows it above the packaged products.
+- Calories come from the US FDA's "Nutrition Information for Raw Vegetables" and "Raw Fruits" charts, and are for the raw food.
+- The other aisles are shorter: 7 instead of 9. Breakfast joined Bakery, Baking joined Pantry & Cooking, and similar shelves share one tile (for example Pasta & rice, Chocolate & sweets, Juices & soft drinks).
+- Herbs & spices now has its own tile, and there's a new Frozen vegetables & fruit tile.
 
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
