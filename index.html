@@ -1834,7 +1834,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.9", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.10", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2255,9 +2255,55 @@ const exCache = new Map(); let exSeq = 0;
 /* USDA FoodData Central branded foods: about 400,000 US products with manufacturer ingredient lists.
    Used in Explore for US (or Anywhere) searches with no store picked, since USDA has no store data. */
 const USDA_Q = {"en:meats":"beef","en:poultries":"chicken","en:prepared-meats":"sausage","en:seafood":"fish","en:milks":"milk","en:cheeses":"cheese","en:eggs":"eggs","en:yogurts":"yogurt","en:spreads":"butter","en:vegetable-oils":"oil","en:flours":"flour","en:sweeteners":"syrup","en:condiments":"seasoning","en:breads":"bread","en:flatbreads":"tortillas","en:cakes":"cake","en:biscuits":"cookies","en:breakfast-cereals":"cereal","en:oat-flakes":"oats","en:jams":"jam","en:pastas":"pasta","en:rices":"rice","en:canned-foods":"canned","en:sauces":"sauce","en:soups":"soup","en:salty-snacks":"chips","en:chocolates":"chocolate","en:confectioneries":"candy","en:nuts":"nuts","en:fruit-juices":"juice","en:sodas":"soda","en:hot-beverages":"coffee","en:waters":"water","en:meat-analogues":"plant based","en:plant-based-milk-alternatives":"oat milk","en:frozen-foods":"frozen meal","en:spices":"spice","en:frozen-vegetables":"frozen vegetables","en:frozen-fruits":"frozen fruit"};
+/* v6.10: USDA is searched by keyword ("coffee"), which also finds coffee yogurt, coffee sweets and coffee ice cream.
+   So in an aisle, a USDA product is kept only when USDA's own food category for it fits the aisle
+   (a coffee yogurt is filed by USDA under Yogurt, so it stays out of Coffee & tea). [allowed, refused] word patterns: */
+const USDA_FIT = {
+  "en:meats":[/\b(beef|pork|lamb|veal|meat)/i, /jerky|snack|substitute|plant|sausage|cold cut|deli/i],
+  "en:poultries":[/\b(poultry|chicken|turkey)/i, /substitute|plant|soup|dinner|entree/i],
+  "en:prepared-meats":[/\b(sausage|bacon|ham\b|hot ?dog|frank|cold cut|salami|pepperoni|deli|lunch ?meat|jerky)/i, /substitute|plant/i],
+  "en:seafood":[/\b(fish|seafood|shellfish|tuna|salmon|shrimp)/i, /substitute|plant|dinner|entree/i],
+  "en:milks":[/\b(milk|cream)/i, /ice cream|frozen|plant|almond|soy|oat|coconut|chocolate candy/i],
+  "en:cheeses":[/\bcheese/i, /cake|snack|cracker|cream cheese frost/i],
+  "en:eggs":[/\begg/i, /noodle|roll|nog/i],
+  "en:yogurts":[/\byog/i, /frozen|ice cream/i],
+  "en:spreads":[/\b(butter|spread|margarine)/i, /nut|peanut|seed|cookie/i],
+  "en:vegetable-oils":[/\b(oil|vinegar|shortening)/i, /fish oil|supplement/i],
+  "en:flours":[/\b(flour|meal|baking)/i, /meal kit|dinner/i],
+  "en:sweeteners":[/\b(sugar|sweetener|syrup|honey|molasses)/i, /candy|cereal/i],
+  "en:condiments":[/\b(condiment|ketchup|mustard|mayo|dressing|sauce|relish)/i, /pasta sauce|candy/i],
+  "en:sauces":[/\b(sauce|salsa|gravy|condiment|dip)/i, /candy|dessert/i],
+  "en:spices":[/\b(spice|herb|season|salt)/i, /snack|chip/i],
+  "en:breads":[/\b(bread|bun|roll|bagel)/i, /crumb|pudding|cake/i],
+  "en:flatbreads":[/\b(tortilla|wrap|pita|flatbread|bread)/i, /chip|snack/i],
+  "en:cakes":[/\b(cake|pastr|muffin|croissant|donut|doughnut|pie|sweet roll|dessert)/i, /ice cream|frozen yog|rice cake|candy/i],
+  "en:biscuits":[/\b(cookie|biscuit)/i, /ice cream|dough/i],
+  "en:breakfast-cereals":[/\b(cereal|granola|oat|muesli)/i, /bar\b|snack/i],
+  "en:oat-flakes":[/\b(cereal|oat|porridge|granola)/i, /bar\b|snack|milk/i],
+  "en:jams":[/\b(jam|jelly|preserve|fruit spread|marmalade)/i, /candy|donut/i],
+  "en:pastas":[/\b(pasta|noodle|macaroni|spaghetti)/i, /sauce|soup|dinner|entree/i],
+  "en:rices":[/\b(rice|grain)/i, /cake|snack|cereal|pudding|dinner|entree/i],
+  "en:canned-foods":[/\b(canned|jarred|tinned)/i, /drink|soda/i],
+  "en:soups":[/\b(soup|broth|stock|chowder|chili)/i, /mix for dip/i],
+  "en:salty-snacks":[/\b(chip|crisp|pretzel|snack|popcorn|cracker|puff)/i, /cookie|candy|chocolate|fruit snack/i],
+  "en:chocolates":[/\b(chocolate|candy|confection)/i, /milk\b|drink|cookie|cake|ice cream|cereal/i],
+  "en:confectioneries":[/\b(candy|confection|chocolate|gum|mint)/i, /ice cream|cookie|cake|cereal|drink/i],
+  "en:nuts":[/\b(nut|seed|peanut|almond|trail mix)/i, /butter|milk|candy|chocolate/i],
+  "en:fruit-juices":[/\b(juice|nectar|fruit drink)/i, /concentrate frozen|candy/i],
+  "en:sodas":[/\b(soda|soft drink|carbonated|pop\b|cola)/i, /water/i],
+  "en:hot-beverages":[/\b(coffee|tea\b|teas\b|cocoa|hot chocolate)/i, /yog|ice cream|frozen|candy|creamer|cake|cookie/i],
+  "en:waters":[/\bwater/i, /ice|candy/i],
+  "en:plant-based-milk-alternatives":[/\b(plant based (milk|beverage|drink)|non-?dairy|almond|soy|oat|rice drink)/i, /yog|ice cream|frozen|creamer|cheese|candy/i],
+  "en:meat-analogues":[/\b(substitute|plant based|meat analog|vegetarian|vegan|tofu|tempeh)/i, /milk|yog|ice cream|cheese|candy/i],
+  "en:frozen-foods":[/\b(frozen|entree|dinner|meal|pizza)/i, /ice cream|yog|dessert|novelt/i],
+  "en:frozen-vegetables":[/\b(frozen )?vegetable/i, /chip|juice|soup|oil/i],
+  "en:frozen-fruits":[/\b(frozen )?fruit/i, /juice|candy|snack|drink/i]
+};
+const usdaFits = (p, cats) => { const c = p.usdaCat || ""; if (!c) return false;
+  return cats.some(cat => { const f = USDA_FIT[cat]; return f && f[0].test(c) && !f[1].test(c); }); };
 async function usdaSearch(q){
-  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?dataType=Branded&pageSize=50&query=${encodeURIComponent(q)}`;
-  const hit = searchCacheGet(url); if (hit) return hit;
+  const url = `https://api.nal.usda.gov/fdc/v1/foods/search?dataType=Branded&pageSize=100&query=${encodeURIComponent(q)}`;
+  const hit = searchCacheGet(url + "#cat"); if (hit) return hit; // "#cat": saved results that include USDA's food category (v6.10)
   const j = await fetchJSON(url + `&api_key=${encodeURIComponent(fdcKey())}`, 15000);
   const title = t => t ? t.toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase()) : t;
   const prods = (j.foods||[]).filter(f => f.gtinUpc && f.ingredients).map(f => {
@@ -2266,9 +2312,9 @@ async function usdaSearch(q){
     if (fn("269") !== undefined) nm.sugars_100g = fn("269"); if (sod !== undefined) nm.salt_100g = sod*2.5/1000;
     if (fn("204") !== undefined) nm.fat_100g = fn("204"); if (fn("606") !== undefined) nm["saturated-fat_100g"] = fn("606");
     return {code:String(f.gtinUpc).replace(/\D/g,""), product_name:title(f.description), brands:title(f.brandName || f.brandOwner || ""), lang:"en", ingredients_text_en:f.ingredients,
-      nutriments:nm, categories_tags:/ml|mlt/i.test(f.servingSizeUnit||"") ? ["en:beverages"] : [], src:"USDA"};
+      nutriments:nm, categories_tags:/ml|mlt/i.test(f.servingSizeUnit||"") ? ["en:beverages"] : [], src:"USDA", usdaCat:f.foodCategory || f.brandedFoodCategory || ""};
   });
-  searchCachePut(url, prods); return prods;
+  searchCachePut(url + "#cat", prods); return prods;
 }
 {
   // Neutral store buttons: plain names on a coloured circle with the initial (no logos).
@@ -2444,7 +2490,9 @@ async function exRun(title, query, veg = []){
       const usdaP = usdaQ ? usdaSearch(usdaQ).catch(() => []) : Promise.resolve([]);
       const onWait = secs => { if (seq === exSeq){ const m = body.querySelector(".muted"); if (m) m.textContent = `Open Food Facts is busy (it allows about 10 searches a minute). Trying again in ${secs} s…`; } };
       const offP = query.search_terms ? offSearch(urls, onWait) : Promise.allSettled(cats.map(c => offSearch(catUrls(c), onWait))).then(rs => { const ok = rs.filter(r => r.status === "fulfilled"); if (!ok.length) throw rs[0].reason; return ok.flatMap(r => r.value); });
-      const [offR, usdaR] = await Promise.all([offP.then(p => ({p}), e => ({e})), usdaP]);
+      let [offR, usdaR] = await Promise.all([offP.then(p => ({p}), e => ({e})), usdaP]);
+      // In an aisle, keep only USDA products that USDA itself files under that kind of food.
+      if (!query.search_terms && cats[0]) usdaR = usdaR.filter(p => usdaFits(p, cats));
       if (offR.e && !usdaR.length) throw offR.e;
       // Same product in both: keep the Open Food Facts one (it has photos and store data).
       const key0 = c => String(c||"").replace(/^0+/, ""), seenC = new Set((offR.p||[]).map(p => key0(p.code)));

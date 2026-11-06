@@ -215,6 +215,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Tap a spice to see packaged products of it, best score first. Most are just the spice, but some contain anti-caking agents, colourings or salt, and Sourced shows which.
 - "All spice products" still shows everything in the spices category.
 
+## 6.10 (6 Nov 2026): the right products in each aisle
+- Aisles no longer show products that only share a word with the aisle, such as coffee yogurt, coffee sweets or coffee ice cream in Coffee & tea.
+- Products from the USDA database now appear in an aisle only when USDA itself files them under that kind of food. Products from Open Food Facts were already sorted by their food category.
+- Searching by name still finds everything with that word, as before.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
