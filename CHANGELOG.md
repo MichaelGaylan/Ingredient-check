@@ -185,6 +185,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - The selected tab sits under a glass bubble that stretches and springs across when you switch tabs.
 - Shinier glass on the header and buttons. Results and warnings stay on solid backgrounds so they're easy to read.
 
+## 6.4 (6 Nov 2026): liquid glass top bar and photo card
+- The top bar is now liquid glass like the bottom bar. It stays at the top as you scroll, with round glass icon buttons for About, light/dark mode and Settings.
+- The floating product photo card is liquid glass too. The photo itself stays on a solid white background so the product is easy to see.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

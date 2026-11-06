@@ -414,11 +414,26 @@ body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 #tabbar .drop{position:absolute;z-index:0;top:6px;bottom:6px;left:6px;width:0;border-radius:24px;background:var(--lg-drop);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -6px 12px color-mix(in srgb,var(--accent) 12%,transparent),0 4px 14px rgba(20,40,70,.18);transition:left .45s cubic-bezier(.34,1.56,.64,1),width .28s ease;pointer-events:none}
 @media (prefers-reduced-motion: reduce){#tabbar .drop{transition:none}}
 #peekTray{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px))} /* photo cards float above the tab bar */
+
+/* Liquid glass top bar and photo card (v6.4). */
+header.top{position:sticky;top:calc(8px + env(safe-area-inset-top,0px));z-index:30;background:linear-gradient(180deg,rgba(255,255,255,.9) 0%,rgba(255,255,255,.76) 50%,rgba(255,255,255,.7) 100%);-webkit-backdrop-filter:blur(28px) saturate(1.8);backdrop-filter:blur(28px) saturate(1.8)}
+:root[data-theme="dark"] header.top{background:linear-gradient(180deg,rgba(40,46,56,.82) 0%,rgba(22,26,32,.74) 100%)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) header.top{background:linear-gradient(180deg,rgba(40,46,56,.82) 0%,rgba(22,26,32,.74) 100%)}}
+.peek .peek-none{color:#2f3a44;background:rgba(255,255,255,.9);font-weight:500} /* readable on light and dark */
+.brand{align-items:center}
+.brand-ic{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;color:var(--accent);background:var(--lg-drop);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),inset 0 -6px 12px color-mix(in srgb,var(--accent) 14%,transparent),0 3px 10px rgba(20,40,70,.16)}
+.brand-ic svg{width:20px;height:20px}
+header.top .icon-btn{width:44px;height:44px;min-height:44px;border-radius:50%;color:var(--ink)}
+header.top .icon-btn svg{width:20px;height:20px}
+.theme-btn:active,#tabbar a:active{transform:scale(.94);transition:transform .12s}
+.peek{background:var(--lg-fill);border:1px solid var(--glass-line);border-radius:24px;box-shadow:var(--lg-rim);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
+.peek .peek-img{border-radius:16px;box-shadow:0 2px 8px rgba(20,40,70,.12)}
+.peek-x{background:var(--lg-drop);border:1px solid var(--glass-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(20,40,70,.18);color:var(--ink)}
 </style>
 
 <div class="wrap">
   <header class="top">
-    <div class="brand">Sourced <small>evidence-graded food scanner</small></div>
+    <div class="brand"><span class="brand-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>Sourced <small>evidence-graded food scanner</small></div>
     <div class="top-r">
     <!-- About button (v4.5): self-contained, delete this line, the aboutDlg dialog and the "About pop-up" script block to remove it. -->
     <button type="button" class="theme-btn icon-btn" id="aboutBtn" aria-label="About Sourced" title="About"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".6" fill="currentColor"/></svg></button>
@@ -1759,7 +1774,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.3", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.4", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2237,7 +2252,7 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   function paint(){
     if (SET.theme==="system") delete root.dataset.theme; else root.dataset.theme=SET.theme;
     const d=isDark();
-    btn.innerHTML=(d?sun:moon)+"<span>"+(d?"Light":"Dark")+"</span>";
+    btn.innerHTML=(d?sun:moon); btn.classList.add("icon-btn"); btn.setAttribute("aria-label", d?"Switch to light mode":"Switch to dark mode");
     btn.setAttribute("aria-pressed", String(d));
     btn.title=d?"Switch to light mode":"Switch to dark mode";
     const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=d?"#111613":getComputedStyle(root).getPropertyValue("--accent").trim()||"#1f6f5c";
