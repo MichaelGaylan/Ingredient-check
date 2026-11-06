@@ -189,6 +189,9 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - The top bar is now liquid glass like the bottom bar. It stays at the top as you scroll, with round glass icon buttons for About, light/dark mode and Settings.
 - The floating product photo card is liquid glass too. The photo itself stays on a solid white background so the product is easy to see.
 
+## 6.5 (6 Nov 2026): small fix
+- Opening About no longer shows a blue outline around the "Method" link. Outlines now appear only when you move around with a keyboard.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

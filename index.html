@@ -429,6 +429,10 @@ header.top .icon-btn svg{width:20px;height:20px}
 .peek{background:var(--lg-fill);border:1px solid var(--glass-line);border-radius:24px;box-shadow:var(--lg-rim);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
 .peek .peek-img{border-radius:16px;box-shadow:0 2px 8px rgba(20,40,70,.12)}
 .peek-x{background:var(--lg-drop);border:1px solid var(--glass-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(20,40,70,.18);color:var(--ink)}
+
+/* v6.5: no focus ring for taps or mouse, only for keyboard (focus-visible keeps it). */
+:focus:not(:focus-visible){outline:none}
+#aboutTitle:focus{outline:none}
 </style>
 
 <div class="wrap">
@@ -536,7 +540,7 @@ header.top .icon-btn svg{width:20px;height:20px}
     </form>
   </dialog>
   <dialog class="settings" id="aboutDlg" aria-labelledby="aboutTitle">
-    <form method="dialog"><h2 id="aboutTitle">About Sourced</h2><div id="aboutBody" class="about"></div>
+    <form method="dialog"><h2 id="aboutTitle" tabindex="-1">About Sourced</h2><div id="aboutBody" class="about"></div>
       <div class="set-foot"><button class="primary" value="close">Done</button></div></form>
   </dialog>
 
@@ -1774,7 +1778,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.4", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.5", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2373,7 +2377,7 @@ $("#aboutBtn").addEventListener("click", () => {
   const src = document.getElementById("setAbout").cloneNode(true);
   src.querySelector("summary").remove(); src.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
   src.querySelectorAll("a[onclick]").forEach(a => a.setAttribute("onclick", "document.getElementById('aboutDlg').close()"));
-  $("#aboutBody").innerHTML = src.innerHTML; $("#aboutDlg").showModal();
+  $("#aboutBody").innerHTML = src.innerHTML; $("#aboutDlg").showModal(); $("#aboutTitle").focus(); // start on the title, not the first link (stops the blue ring on "Method")
 });
 /* ---------- offline support when added to the Home Screen ---------- */
 if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(()=>{});
