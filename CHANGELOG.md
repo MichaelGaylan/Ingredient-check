@@ -210,6 +210,11 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - The other aisles are shorter: 7 instead of 9. Breakfast joined Bakery, Baking joined Pantry & Cooking, and similar shelves share one tile (for example Pasta & rice, Chocolate & sweets, Juices & soft drinks).
 - Herbs & spices now has its own tile, and there's a new Frozen vegetables & fruit tile.
 
+## 6.9 (6 Nov 2026): herbs and spices
+- The Herbs & spices tile now opens a list of 94 herbs and spices in six groups: peppers and chillies, seeds, roots and barks, sour and fruity, powders, and herbs and leaves. A search box at the top finds one quickly.
+- Tap a spice to see packaged products of it, best score first. Most are just the spice, but some contain anti-caking agents, colourings or salt, and Sourced shows which.
+- "All spice products" still shows everything in the spices category.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

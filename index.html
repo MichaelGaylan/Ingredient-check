@@ -169,6 +169,12 @@ mark.alg.mine{background:var(--neg);color:#fff;font-weight:700}
 .ex-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
 .ex-tiles button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;font:500 12.5px var(--body);text-align:center;line-height:1.25;min-height:92px;border-radius:12px}
 .ex-tiles .em{font-size:28px;line-height:1}
+/* Spice picker (v6.9) */
+.sp-group h4{margin:0 0 6px;font:600 13px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.sp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sp-chips button{padding:6px 11px;border-radius:999px;font:500 13.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.sp-chips button:hover{border-color:var(--accent);color:var(--accent)}
+.sp-filter{width:100%}
 /* Fresh produce aisles (v6.8) */
 .veg-tiles button small{font:500 11px var(--mono);color:var(--muted)}
 .veg-card{display:flex;align-items:center;gap:14px}
@@ -1828,7 +1834,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.8", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.9", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2238,7 +2244,7 @@ const AISLES = [
   ["Meat & Seafood", [["🥩","Meat","en:meats"],["🍗","Poultry","en:poultries"],["🥓","Bacon, ham & sausages","en:prepared-meats"],["🐟","Fish & seafood","en:seafood"]]],
   ["Dairy & Eggs", [["🥛","Milk & cream","en:milks"],["🧀","Cheese","en:cheeses"],["🥚","Eggs","en:eggs"],["🍦","Yogurt","en:yogurts"],["🧈","Butter & spreads","en:spreads"]]],
   ["Bakery & Breakfast", [["🍞","Bread","en:breads"],["🌯","Tortillas & wraps","en:flatbreads"],["🥐","Cakes & pastries","en:cakes"],["🥣","Cereals & oats","en:breakfast-cereals|en:oat-flakes"],["🍓","Jams & spreads","en:jams"]]],
-  ["Pantry & Cooking", [["🍝","Pasta & rice","en:pastas|en:rices"],["🥫","Canned foods & soups","en:canned-foods|en:soups"],["🍅","Sauces & condiments","en:sauces|en:condiments"],["🫒","Oils & vinegars","en:vegetable-oils"],["🌾","Flour & sugar","en:flours|en:sweeteners"],["🧂","Herbs & spices","en:spices"]]],
+  ["Pantry & Cooking", [["🍝","Pasta & rice","en:pastas|en:rices"],["🥫","Canned foods & soups","en:canned-foods|en:soups"],["🍅","Sauces & condiments","en:sauces|en:condiments"],["🫒","Oils & vinegars","en:vegetable-oils"],["🌾","Flour & sugar","en:flours|en:sweeteners"],["🧂","Herbs & spices","@spices"]]],
   ["Snacks & Sweets", [["🥨","Crisps & salty snacks","en:salty-snacks"],["🍫","Chocolate & sweets","en:chocolates|en:confectioneries"],["🍪","Cookies & biscuits","en:biscuits"],["🥜","Nuts & seeds","en:nuts"]]],
   ["Drinks", [["🧃","Juices & soft drinks","en:fruit-juices|en:sodas"],["☕","Coffee & tea","en:hot-beverages"],["💧","Water","en:waters"],["🥛","Plant milks","en:plant-based-milk-alternatives"]]],
   ["Frozen & Plant-based", [["🧊","Frozen meals","en:frozen-foods"],["🥦","Frozen vegetables & fruit","en:frozen-vegetables|en:frozen-fruits"],["🌱","Meat alternatives","en:meat-analogues"]]]
@@ -2370,25 +2376,54 @@ window.exProduceAll = kind => { const k = PRODUCE[kind]; if (!k) return; exLast 
   body.scrollIntoView({behavior:"smooth", block:"start"}); };
 const producePanel = kind => { const k = PRODUCE[kind];
   return `<div class="panel ex-aisle"><h3>${k.em} ${k.title}</h3>${vegTiles(k.top.map(id => produceByCode(kind + ":" + id)))}<button type="button" class="linkbtn" style="margin-top:10px" onclick="exProduceAll('${kind}')">All ${k.items.length} ${k.title.replace("Fresh ", "")} ›</button></div>`; };
+/* Herbs & spices (v6.9): Gaylan's list of 100 spices and seasonings, with duplicates merged (Ajwain = carom seed,
+   Mahlab = mahlab seed, Dried lime = black lime, Galangal powder, Horseradish powder, Ground mustard = mustard powder).
+   Tapping one searches packaged products by name and scores them like any other product (anti-caking agents,
+   colourings, sulphites, allergens such as mustard, sesame and celery). No calories: a pinch of spice adds very few. */
+const SPICES = [
+  ["🌶️","Peppers & chillies",["Black pepper","White pepper","Green peppercorn","Pink peppercorn","Cayenne pepper","Paprika","Smoked paprika","Chili powder","Aleppo pepper","Chipotle powder","Ancho chili","Guajillo chili","Habanero powder","Crushed red pepper","Bird's eye chili","Kashmiri chili","Sichuan pepper","Sansho pepper","Grains of paradise","Cubeb pepper","Long pepper","Tasmanian pepperberry","Grains of Selim"]],
+  ["🌰","Seeds",["Mustard seed","Cumin","Black cumin (nigella)","Coriander seed","Fennel seed","Caraway seed","Dill seed","Celery seed","Fenugreek","Anise seed","Ajwain (carom seed)","Sesame seed","Poppy seed","Mahlab","Lovage seed","Angelica seed"]],
+  ["🫚","Roots, barks & whole spices",["Turmeric","Ginger","Galangal","Horseradish","Cardamom","Black cardamom","Cinnamon","Cassia","Cloves","Nutmeg","Mace","Allspice","Saffron","Vanilla bean","Juniper berries","Star anise","Licorice root","Marshmallow root","Orris root","Annatto","Mastic","Asafoetida (hing)"]],
+  ["🍋","Sour & fruity",["Sumac","Amchur (dried mango)","Tamarind powder","Dried lime (black lime)","Dried rose petals"]],
+  ["🧄","Powders",["Mustard powder","Onion powder","Garlic powder","Leek powder","Shallot powder","Wasabi powder"]],
+  ["🌿","Herbs & leaves",["Fenugreek leaves (kasuri methi)","Curry leaves","Bay leaf","Rosemary","Thyme","Oregano","Mexican oregano","Marjoram","Sage","Savory","Tarragon","Basil","Mint","Dill weed","Parsley","Chervil","Lavender","Lemongrass","Kaffir lime leaf","Pandan leaf","Epazote","Hyssop"]]
+];
+// What to search for: the plain name without the bracketed alternative ("Asafoetida (hing)" -> "asafoetida").
+const spiceQuery = n => n.replace(/\s*\(.*\)/, "").trim();
+let exParent = null; // a list to go back to instead of the aisles (the spice list)
+const exBackBtn = () => exParent ? `<button type="button" class="linkbtn" onclick="exParent()" aria-label="Back to herbs and spices">‹ Spices</button>` : `<button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button>`;
+window.exSpice = n => { exParent = exSpices; exEmoji = "🧂"; const q = spiceQuery(n); exLast = () => exSpice(n); exRun(n, {search_terms: q}); };
+window.exSpices = () => {
+  exParent = null; exLast = exSpices; ++exSeq; const body = $("#exBody");
+  const n = SPICES.reduce((t, g) => t + g[2].length, 0);
+  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>Herbs & spices</h3></div>
+    <p class="muted" style="font-size:13px;margin:0">${n} herbs and spices. Tap one to see packaged products, best score first. Many are just the spice, but some add anti-caking agents, colourings or salt.</p>
+    <input type="search" class="sp-filter" id="spFilter" placeholder="Find a spice, e.g. cumin" aria-label="Find a spice" autocomplete="off">
+    <div id="spGroups" class="stack">${SPICES.map(([em, g, list]) => `<div class="sp-group"><h4>${em} ${esc(g)}</h4><div class="sp-chips">${list.map(x => `<button type="button" data-n="${esc(norm(x))}" onclick="exSpice('${esc(x).replace(/'/g,"&#39;")}')">${esc(x)}</button>`).join("")}</div></div>`).join("")}</div>
+    <button type="button" class="linkbtn" onclick="exCategory('en:spices', 'All spice products')">All spice products ›</button></div>`;
+  $("#spFilter").addEventListener("input", e => { const q = norm(e.target.value).trim();
+    body.querySelectorAll(".sp-group").forEach(g => { let any = false; g.querySelectorAll("button").forEach(b => { const on = !q || b.dataset.n.includes(q); b.hidden = !on; any ||= on; }); g.hidden = !any; }); });
+  body.scrollIntoView({behavior:"smooth", block:"start"});
+};
 let exLast = null;
 window.exploreHome = () => {
   if (exLast && $("#exBody").childElementCount) return; // keep the current results when coming back to the tab
   $("#exBody").innerHTML = `<p class="muted" style="font-size:13px;margin:0">Loose fruit and vegetables have no barcode. Tap one for its calories and to add it to your Dinner list.</p>` + producePanel("veg") + producePanel("fruit")
     + AISLES.map(([aisle, cats]) => `<div class="panel ex-aisle"><h3>${esc(aisle)}</h3><div class="ex-tiles">${cats.map(([em, label, tag]) =>
-    `<button type="button" onclick="exCategory('${tag}', '${esc(label).replace(/'/g,"&#39;")}')"><span class="em" aria-hidden="true">${em}</span>${esc(label)}</button>`).join("")}</div></div>`).join("")
+    `<button type="button" onclick="${tag === "@spices" ? "exSpices()" : `exCategory('${tag}', '${esc(label).replace(/'/g,"&#39;")}')`}"><span class="em" aria-hidden="true">${em}</span>${esc(label)}</button>`).join("")}</div></div>`).join("")
     + `<p class="disclaimer">Product data from Open Food Facts, a free database built by volunteers, so some products and stores are missing. Scores are worked out on your phone. No paid placements.</p>`;
 };
 let exEmoji = "🛒";
-window.exCategory = (tag, label) => { exEmoji = AISLES.flatMap(a => a[1]).find(c => c[2] === tag)?.[0] || "🛒"; exLast = () => exCategory(tag, label); exRun(label, {categories_tags: tag}); };
-window.exSearch = q => { exEmoji = "🛒"; q = (q||"").trim(); if (!q){ exLast = null; exploreHome(); return; } exLast = () => exSearch(q); exRun(`“${q}”`, {search_terms: q}, vegMatch(q)); };
+window.exCategory = (tag, label) => { exParent = null; exEmoji = AISLES.flatMap(a => a[1]).find(c => c[2] === tag)?.[0] || "🛒"; exLast = () => exCategory(tag, label); exRun(label, {categories_tags: tag}); };
+window.exSearch = q => { exParent = null; exEmoji = "🛒"; q = (q||"").trim(); if (!q){ exLast = null; exploreHome(); return; } exLast = () => exSearch(q); exRun(`“${q}”`, {search_terms: q}, vegMatch(q)); };
 window.exStoreTop = () => { const st = exStoreVal(); if (!st) return; exLast = exStoreTop; exRun(`Popular at ${STORES.find(x => x[0] === st)[1]}`, {}); };
-window.exBack = () => { exLast = null; $("#exQ").value = ""; exploreHome(); };
+window.exBack = () => { exParent = null; exLast = null; $("#exQ").value = ""; exploreHome(); };
 const vegBlock = veg => veg.length ? `<div><div class="label" style="margin:2px 0 6px">Fresh produce</div>${vegTiles(veg)}</div>` : "";
 async function exRun(title, query, veg = []){
   const seq = ++exSeq, body = $("#exBody");
   const country = $("#exCountry").value, store = exStoreVal(), hideAlg = $("#exAlg").checked;
   const where = [store ? STORES.find(x => x[0] === store)?.[1] : "", country ? $("#exCountry").selectedOptions[0].textContent : ""].filter(Boolean).join(", ");
-  body.innerHTML = `<div class="panel stack"><div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${esc(title)}</h3></div>${vegBlock(veg)}<p class="muted">Finding and scoring products${where ? " in " + esc(where) : ""}…</p></div>`;
+  body.innerHTML = `<div class="panel stack"><div class="ex-head">${exBackBtn()}<h3>${esc(title)}</h3></div>${vegBlock(veg)}<p class="muted">Finding and scoring products${where ? " in " + esc(where) : ""}…</p></div>`;
   body.scrollIntoView({behavior:"smooth", block:"start"});
   const key = JSON.stringify([query, country, store]);
   let items = exCache.get(key);
@@ -2420,7 +2455,7 @@ async function exRun(title, query, veg = []){
     } catch(_) { items = null; }
   }
   if (seq !== exSeq) return;
-  const head = `<div class="ex-head"><button type="button" class="linkbtn" onclick="exBack()" aria-label="Back to aisles">‹ Aisles</button><h3>${esc(title)}</h3></div>`;
+  const head = `<div class="ex-head">${exBackBtn()}<h3>${esc(title)}</h3></div>`;
   if (!items){ body.innerHTML = `<div class="panel stack">${head}${vegBlock(veg)}<p class="muted">Open Food Facts didn't answer, even after a retry. It allows about 10 searches a minute and is sometimes busy. Wait a minute and <a href="#" onclick="exLast&&exLast();return false">try again</a>. Searches you've already done stay on your phone for a day.</p></div>`; return; }
   const hidden = hideAlg ? items.filter(i => i.algs.length).length : 0;
   const shown = items.filter(i => !hideAlg || !i.algs.length).sort((a,b) => b.score - a.score || (a.clear === b.clear ? 0 : a.clear ? -1 : 1));
