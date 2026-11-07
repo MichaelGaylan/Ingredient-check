@@ -220,6 +220,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - Products from the USDA database now appear in an aisle only when USDA itself files them under that kind of food. Products from Open Food Facts were already sorted by their food category.
 - Searching by name still finds everything with that word, as before.
 
+## 6.11 (6 Nov 2026): alternatives explain themselves
+- Your allergen list is kept separately on each phone or computer, and alternatives never include anything that contains (or may contain) one of your allergens. So the same product could show alternatives on one device and none on another. Now, instead of the alternatives box quietly disappearing, it says how many similar products were left out and for which allergens, so you know to check Settings on that device.
+- If the product database can't be reached, the box says so instead of disappearing, and the search is tried again next time.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.

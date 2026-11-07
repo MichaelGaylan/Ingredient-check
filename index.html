@@ -1834,7 +1834,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.10", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.11", APP_DATE = "2026-11-06";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2055,11 +2055,11 @@ async function findAlternatives({code, name, cats, score: myScore, why, has}){
   for (const cat of specific) queries.push({cat, urls:[...ownSearch({cat}), `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(cat)}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`]});
   if (words.length){ const q = words.slice(0, 3).join(" ");
     queries.push({q, urls:[...ownSearch({q}), `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&langs=en&page_size=40&sort_by=-unique_scans_n&fields=${OFF_FIELDS}`]}); }
-  const seen = new Set([code]), found = [];
+  const seen = new Set([code]), found = [], skipped = {}; let answered = 0;
   for (const [qi, qy] of queries.entries()){
     if (found.length >= 5) break;
     let prods = [];
-    try { prods = await offSearch(qy.urls); } catch(_) { continue; }
+    try { prods = await offSearch(qy.urls); answered++; } catch(_) { continue; }
     prods.forEach((p, pop) => {
       if (!p.code || seen.has(p.code)) return;
       const c = scoreOFF(p); if (!c) return;
@@ -2070,7 +2070,8 @@ async function findAlternatives({code, name, cats, score: myScore, why, has}){
       if (qy.cat && !c.cats.includes(qy.cat) && overlap === 0) return; // guard: a search that ignored the category
       seen.add(p.code);
       // Never suggest anything that would set off one of the user's allergen alerts.
-      if (c.algs.some(id => why.alg.includes(id) || !(has || []).includes(id))) return;
+      const bad = c.algs.filter(id => why.alg.includes(id) || !(has || []).includes(id));
+      if (bad.length){ bad.forEach(id => skipped[id] = (skipped[id] || 0) + 1); return; }
       if (c.score < 60 || c.score < myScore || ((why.score || why.highs.length) && (c.score <= myScore || c.score < 80))) return;
       if (why.highs.length && c.nutriUsed && c.highs.length >= why.highsN) return;
       c.why = [...(why.alg.length ? why.alg.map(id => "no " + algName(id).toLowerCase()) : []),
@@ -2080,18 +2081,37 @@ async function findAlternatives({code, name, cats, score: myScore, why, has}){
     });
   }
   found.sort((a,b) => b.rank - a.rank || b.score - a.score || a.pop - b.pop);
-  const res = found.slice(0, 5); altCache.set(key, res); return res;
+  // Why the list may be short, so an empty result can say so instead of vanishing (v6.11).
+  const res = Object.assign(found.slice(0, 5), {skipped, searched: queries.length, answered});
+  if (answered) altCache.set(key, res); // don't remember a failed search
+  return res;
 }
 async function loadAlternatives(code, cats, myScore, token, why, name){
   const box = () => (token === renderToken ? $("#alts") : null);
   let res = null;
   try { res = await findAlternatives({code, name, cats, score:myScore, why, has:algCtx?.has || []}); } catch(_) {}
   const b = box(); if (!b) return;
-  if (!res || res.length < 1 || (res.length < 2 && !why.alg.length)){ b.remove(); return; }
+  if (!res || res.length < 1 || (res.length < 2 && !why.alg.length)){
+    const note = altNote(res);
+    if (!note){ b.remove(); return; }
+    b.innerHTML = `<div class="label">${b.querySelector(".label")?.textContent || "Better alternatives"}</div><p class="muted" style="font-size:13.5px;margin:0">${note}</p>`;
+    return;
+  }
   b.innerHTML = `<div class="label">${b.querySelector(".label")?.textContent || "Better alternatives"}</div>
     ${productList(res)}
     <p class="disclaimer">The same kind of product from Open Food Facts, scored on the phone with our evidence library and nutrition (tap one for the full check, including FDA, WHO and IARC records). None of them set off your allergen alerts, but always check the pack. No paid placements.</p>`;
   fillThumbs(b);
+}
+/* Says why no alternatives are shown, when it isn't simply "none score better": the search didn't answer,
+   or the similar products found all contain (or may contain) allergens on your list. Allergen settings are kept
+   per device, so this is what makes a phone and a computer show different alternatives for the same product. */
+function altNote(res){
+  if (!res || !res.answered) return "Couldn't reach the product database to look for alternatives just now. Try again in a minute.";
+  const ids = Object.keys(res.skipped || {}); if (!ids.length) return "";
+  const n = ids.reduce((t, id) => Math.max(t, res.skipped[id]), 0);
+  const names = ids.sort((a,b) => res.skipped[b] - res.skipped[a]).map(algName);
+  const list = names.length > 1 ? names.slice(0, -1).join(", ") + " or " + names[names.length-1] : names[0];
+  return `No better alternative to show. At least ${n} similar product${n>1?"s were":" was"} left out because ${n>1?"they contain":"it contains"} (or may contain) ${esc(list)}, which ${names.length>1?"are":"is"} on your allergen list in Settings on this device.`;
 }
 // Explore: "Better option" under a product with concerns or one of your allergens.
 window.exAlt = async (code, btn) => {
@@ -2102,7 +2122,7 @@ window.exAlt = async (code, btn) => {
   const has = [...new Set([...(a.algs||[])])];
   let res = []; try { res = await findAlternatives({code, name:a.name, cats:a.cats, score:a.score, why, has}); } catch(_) {}
   if (!li.isConnected) return;
-  out.innerHTML = res.length ? `<div class="label" style="margin:2px 0 6px">Better option${res.length > 1 ? "s" : ""}</div>${productList(res.slice(0, 2))}` : `<p class="muted" style="font-size:13px;margin:0">No same-kind product without these issues found yet.</p>`;
+  out.innerHTML = res.length ? `<div class="label" style="margin:2px 0 6px">Better option${res.length > 1 ? "s" : ""}</div>${productList(res.slice(0, 2))}` : `<p class="muted" style="font-size:13px;margin:0">${altNote(res) || "No same-kind product without these issues found yet."}</p>`;
   fillThumbs(out);
 };
 const PRODUCTS = new Map(); // code -> list item, for the compare cards
