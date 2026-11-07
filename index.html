@@ -73,6 +73,15 @@ select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(-
 .set-help{font-size:13px;color:var(--muted);margin:0}
 .set-foot{display:flex;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface);padding-top:8px}
 dialog.settings{overflow:auto}
+/* Personal preferences switch (v6.12) */
+.pref-sw{display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:14.5px}
+.pref-sw input{position:absolute;opacity:0;pointer-events:none}
+.pref-sw .knob{flex:none;width:42px;height:24px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;margin-top:1px}
+.pref-sw .knob::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s}
+.pref-sw input:checked + .knob{background:var(--accent)}
+.pref-sw input:checked + .knob::after{transform:translateX(18px)}
+.pref-sw input:focus-visible + .knob{outline:2px solid var(--accent);outline-offset:2px}
+.pref-sw b{display:block;font-weight:600}
 .alg-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
 .alg-except{display:block;font-size:12px;color:var(--neg);line-height:1.2}
 .alg-except:empty{display:none}
@@ -528,6 +537,10 @@ header.top .icon-btn svg{width:20px;height:20px}
         <label class="label" for="langSel">Show product text in</label>
         <select id="langSel"></select>
         <p class="set-help">Product names and ingredient lists are shown in this language. When the database has no version in it, the text is machine-translated (MyMemory), so check it against the pack. Scoring always uses the English names, whatever language you pick.</p>
+      </div>
+      <div class="set-row">
+        <span class="label">Personal preferences</span>
+        <label class="pref-sw"><input type="checkbox" id="strictAltsIn" role="switch"><span class="knob" aria-hidden="true"></span><span><b>Stricter alternatives</b><span class="set-help">Also look for better alternatives when a product has an ingredient rated Possible (or stronger), even if it scores well overall. The alternatives shown must have no ingredient rated Possible, Probable or Established.</span></span></label>
       </div>
       <div class="set-row">
         <span class="label" id="algLbl">My allergens</span>
@@ -1377,9 +1390,11 @@ function renderResult(args){
   const ringOff = checking ? C : clear ? 0 : off;
   const alg = example ? null : allergenReport(text, args.allergens||[], args.traces||[], {code:current?.code, name, labels:args.labels||[]});
   // Alternatives: when the product has concerns or is high in sugar, salt or fat, or contains one of your allergens.
+  // With "Stricter alternatives" on (Settings, v6.12), also when any ingredient is rated Possible or stronger.
   const altWhy = !example && current?.code && ((args.cats||[]).length || nameWords(name).length) ? {
-    score: !checking && !clear && sc.score < 80, highs: sc.highs.map(h => h.key || h.label), alg: alg && alg.mineHit ? (alg.mineIds || []) : [] } : null;
-  const altEligible = !!altWhy && (altWhy.score || altWhy.highs.length || altWhy.alg.length);
+    score: !checking && !clear && sc.score < 80, highs: sc.highs.map(h => h.key || h.label), alg: alg && alg.mineHit ? (alg.mineIds || []) : [],
+    grade: strictGrade(worst, checking) } : null;
+  const altEligible = !!altWhy && (altWhy.score || altWhy.highs.length || altWhy.alg.length || !!altWhy.grade);
   $("#result").innerHTML = `
     ${args.savedAt?`<div class="saved-note">Saved result from ${esc(niceDate(args.savedAt))}${args.oldRules?", scored under older rules":""}. <button type="button" class="linkbtn" onclick="lookup('${esc(current?.code||"")}', true)">Rescan for the latest</button></div>`:""}
     ${alg ? alg.html : ""}
@@ -1834,7 +1849,7 @@ function renderSources(){
 /* ---------- history and favourites (this phone only) ---------- */
 // Bump RULES_VERSION whenever scoring rules change; older history entries then show as outdated.
 const RULES_VERSION = 2;
-const APP_VERSION = "6.11", APP_DATE = "2026-11-06";
+const APP_VERSION = "6.12", APP_DATE = "2026-11-07";
 const HIST_KEY = "sourced.history.v1", FAV_KEY = "sourced.fav.v1", HIST_MAX = 60;
 let scanFresh = false, histTab = "recent";
 const jget = k => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch(_) { return {}; } };
@@ -2033,13 +2048,17 @@ function scoreOFF(p){
   const nm = p.nutriments || {}, num = v => (typeof v === "number" ? v : undefined), pc = p.categories_tags || [];
   const nutr = {sugars:num(nm.sugars_100g), salt:num(nm.salt_100g), fat:num(nm.fat_100g), sat:num(nm["saturated-fat_100g"]), drink: pc.includes("en:beverages") && !pc.includes("en:alcoholic-beverages")};
   const hasN = ["sugars","salt","fat","sat"].some(k => typeof nutr[k] === "number");
-  const sc = score(matchEntries(text, p.additives_tags||[]), hasN ? nutr : null, []);
+  const matched = matchEntries(text, p.additives_tags||[]), sc = score(matched, hasN ? nutr : null, []);
+  const worst = matched.map(topGrade).filter(g => g in GRADE_PTS).sort((a,b) => GRADE_ORDER[a]-GRADE_ORDER[b])[0] || null;
   const t = algScan(norm(text)), mine = SET.allergens || [];
   const offHit = id => (ALLERGENS.find(a => a.id === id)?.off || []).some(x => (p.allergens_tags||[]).includes(x) || (p.traces_tags||[]).includes(x));
   let algs = mine.filter(id => t.has(id) || offHit(id));
   if (algs.includes("lactose") && LACTOSE_FREE.test(text + " " + p.product_name)) algs = algs.filter(id => id !== "lactose");
-  return {code:p.code, name, cats:p.categories_tags||[], brand:(p.brands||"").split(",")[0].trim(), img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, highs:sc.highs, nutriUsed:hasN, algs};
+  return {code:p.code, name, cats:p.categories_tags||[], brand:(p.brands||"").split(",")[0].trim(), img:p.image_front_small_url||"", score:sc.score, clear:sc.rows.length===0, highs:sc.highs, nutriUsed:hasN, algs, worst};
 }
+// "Stricter alternatives" (v6.12): the product's most serious grade when it is Possible (C) or stronger, else null.
+const STRICT_GRADES = ["A","B","C"];
+function strictGrade(worst, checking){ return SET.strictAlts && !checking && STRICT_GRADES.includes(worst) ? worst : null; }
 const altCache = new Map();
 // Words that say what a product is ("mac", "cheese", "tortillas"), for keeping alternatives to the same kind of food.
 const NAME_STOP = new Set("the and with for from made style original classic organic natural flavor flavour flavored flavoured family size pack value brand new free low reduced less more extra light lite premium select fresh real whole great best".split(" "));
@@ -2048,14 +2067,14 @@ const nameWords = n => [...new Set(norm(n||"").trim().split(" ").filter(w => w.l
    keep only candidates that are the same kind of food (same specific category, or sharing a name word), that set off
    none of the allergens this product does (nor any new ones), and that score better when the product had concerns. */
 async function findAlternatives({code, name, cats, score: myScore, why, has}){
-  const key = [code, (SET.allergens||[]).join(","), why.alg.join(",")].join("|");
+  const key = [code, (SET.allergens||[]).join(","), why.alg.join(","), why.grade || ""].join("|");
   if (altCache.has(key)) return altCache.get(key);
   const words = nameWords(name), specific = (cats||[]).slice(-2).reverse();
   const queries = [];
   for (const cat of specific) queries.push({cat, urls:[...ownSearch({cat}), `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(cat)}&fields=${OFF_FIELDS}&page_size=50&sort_by=unique_scans_n`]});
   if (words.length){ const q = words.slice(0, 3).join(" ");
     queries.push({q, urls:[...ownSearch({q}), `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&langs=en&page_size=40&sort_by=-unique_scans_n&fields=${OFF_FIELDS}`]}); }
-  const seen = new Set([code]), found = [], skipped = {}; let answered = 0;
+  const seen = new Set([code]), found = [], skipped = {}; let answered = 0, gradeSkipped = 0;
   for (const [qi, qy] of queries.entries()){
     if (found.length >= 5) break;
     let prods = [];
@@ -2074,15 +2093,18 @@ async function findAlternatives({code, name, cats, score: myScore, why, has}){
       if (bad.length){ bad.forEach(id => skipped[id] = (skipped[id] || 0) + 1); return; }
       if (c.score < 60 || c.score < myScore || ((why.score || why.highs.length) && (c.score <= myScore || c.score < 80))) return;
       if (why.highs.length && c.nutriUsed && c.highs.length >= why.highsN) return;
+      // Stricter alternatives: nothing rated Possible, Probable or Established.
+      if (why.grade && STRICT_GRADES.includes(c.worst)){ gradeSkipped++; return; }
       c.why = [...(why.alg.length ? why.alg.map(id => "no " + algName(id).toLowerCase()) : []),
                ...(why.highs.length && c.nutriUsed && !c.highs.length ? ["not high in sugar, salt or fat"] : []),
+               ...(why.grade ? ["nothing rated Possible or stronger"] : []),
                ...(c.score > myScore ? [`scores ${c.score - myScore} higher`] : [])];
       c.rank = (sameCat ? 2 : 0) + overlap; c.pop = pop + qi*100; found.push(c);
     });
   }
   found.sort((a,b) => b.rank - a.rank || b.score - a.score || a.pop - b.pop);
   // Why the list may be short, so an empty result can say so instead of vanishing (v6.11).
-  const res = Object.assign(found.slice(0, 5), {skipped, searched: queries.length, answered});
+  const res = Object.assign(found.slice(0, 5), {skipped, gradeSkipped, searched: queries.length, answered});
   if (answered) altCache.set(key, res); // don't remember a failed search
   return res;
 }
@@ -2107,7 +2129,8 @@ async function loadAlternatives(code, cats, myScore, token, why, name){
    per device, so this is what makes a phone and a computer show different alternatives for the same product. */
 function altNote(res){
   if (!res || !res.answered) return "Couldn't reach the product database to look for alternatives just now. Try again in a minute.";
-  const ids = Object.keys(res.skipped || {}); if (!ids.length) return "";
+  const ids = Object.keys(res.skipped || {});
+  if (!ids.length) return res.gradeSkipped ? `No better alternative to show. ${res.gradeSkipped} similar product${res.gradeSkipped>1?"s were":" was"} left out because ${res.gradeSkipped>1?"they also have":"it also has"} an ingredient rated Possible or stronger (Stricter alternatives is on in Settings).` : "";
   const n = ids.reduce((t, id) => Math.max(t, res.skipped[id]), 0);
   const names = ids.sort((a,b) => res.skipped[b] - res.skipped[a]).map(algName);
   const list = names.length > 1 ? names.slice(0, -1).join(", ") + " or " + names[names.length-1] : names[0];
@@ -2118,7 +2141,7 @@ window.exAlt = async (code, btn) => {
   const a = PRODUCTS.get(code); if (!a) return;
   const li = btn.closest("li"), out = document.createElement("div"); out.className = "ex-alt"; out.textContent = "Looking for the same kind of product without these issues…";
   btn.replaceWith(out);
-  const why = {score: a.score < 80, highs: (a.highs||[]).map(h => h.label), highsN: (a.highs||[]).length, alg: a.algs || []};
+  const why = {score: a.score < 80, highs: (a.highs||[]).map(h => h.label), highsN: (a.highs||[]).length, alg: a.algs || [], grade: strictGrade(a.worst)};
   const has = [...new Set([...(a.algs||[])])];
   let res = []; try { res = await findAlternatives({code, name:a.name, cats:a.cats, score:a.score, why, has}); } catch(_) {}
   if (!li.isConnected) return;
@@ -2578,8 +2601,8 @@ const SET = (() => { let o = {}; try { o = JSON.parse(localStorage.getItem("sour
   const NW = {milk:["milk"],eggs:["egg","eggs"],fish:["fish"],peanuts:["peanut","peanuts"],soy:["soy","soya"],sesame:["sesame"],mustard:["mustard"],celery:["celery"],lupin:["lupin"],sulphites:["sulphites","sulfites"]};
   let offW = Array.isArray(o.algOffWords) ? o.algOffWords : [];
   for (const [id, ws] of Object.entries(NW)) if (offW.some(w => ws.includes(w))){ alg = alg.filter(x => x !== id); offW = offW.filter(w => !ws.includes(w)); }
-  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: alg, algOffWords: offW}; })();
-function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang, allergens:SET.allergens, algOffWords:SET.algOffWords, algV:2}));
+  return {theme: t==="light"||t==="dark" ? t : "system", lang: LANGS[o.lang] ? o.lang : "en", allergens: alg, algOffWords: offW, strictAlts: o.strictAlts === true}; })();
+function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringify({lang:SET.lang, allergens:SET.allergens, algOffWords:SET.algOffWords, strictAlts:SET.strictAlts, algV:2}));
   if (SET.theme==="system") localStorage.removeItem("sourced.theme"); else localStorage.setItem("sourced.theme", SET.theme); } catch(_) {} }
 (function(){
   const btn=$("#themeBtn"), root=document.documentElement, dlg=$("#settings");
@@ -2629,9 +2652,11 @@ function saveSet(){ try { localStorage.setItem("sourced.settings", JSON.stringif
   };
   $("#urList").textContent = UNDER_REVIEW.map(u => u.name).sort().join(", ") + ".";
   window.renderOKList=()=>{}; // "Keep as allergen" and "OK for me" lists retired (buttons removed in 2.7 and 3.0)
+  const strictIn=$("#strictAltsIn");
+  strictIn.addEventListener("change",()=>{ SET.strictAlts=strictIn.checked; saveSet(); if (lastArgs && !lastArgs.example) renderResult(lastArgs); });
   const keyIn=$("#fdcKeyIn");
   keyIn.addEventListener("input",()=>{ try { const v=keyIn.value.trim(); if (v) localStorage.setItem("fdcKey", v); else localStorage.removeItem("fdcKey"); } catch(_) {} });
-  window.openSettings=section=>{ renderOKList(); renderAlgOff(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal();
+  window.openSettings=section=>{ renderOKList(); renderAlgOff(); keyIn.value = fdcKey()==="DEMO_KEY" ? "" : fdcKey(); paint(); sel.value=SET.lang; strictIn.checked=SET.strictAlts; grid.querySelectorAll("input").forEach(cb=>cb.checked=SET.allergens.includes(cb.value)); dlg.showModal();
     if (section === "alg") requestAnimationFrame(() => $("#algLbl").scrollIntoView({block:"start"})); };
   $("#settingsBtn").addEventListener("click",()=>openSettings());
   dlg.addEventListener("click",e=>{ if (e.target===dlg) dlg.close(); });
