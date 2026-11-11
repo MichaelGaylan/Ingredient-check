@@ -229,6 +229,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - With it on, better alternatives are also suggested for products that score well overall but have an ingredient rated Possible (or stronger), for example a sweetener classed as a possible carcinogen.
 - With it on, every alternative shown has no ingredient rated Possible, Probable or Established, and is labelled "nothing rated Possible or stronger". If similar products were left out for this reason, the alternatives box says so.
 
+## 6.13 (9 Nov 2026): new app icon
+- A new icon: a leaf with a check mark for its vein, standing for food that has been checked against the evidence. It uses the app's Sage green and shows on your Home Screen, in the browser tab and when you install Sourced.
+- If you already installed Sourced on your Home Screen, the old icon may stay until you remove it and add it again (phones keep the icon from when the app was first added).
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
