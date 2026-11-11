@@ -233,6 +233,10 @@ Every major change to Sourced, oldest first. Versions 1.0 to 1.3 were numbered a
 - A new icon: a leaf with a check mark for its vein, standing for food that has been checked against the evidence. It uses the app's Sage green and shows on your Home Screen, in the browser tab and when you install Sourced.
 - If you already installed Sourced on your Home Screen, the old icon may stay until you remove it and add it again (phones keep the icon from when the app was first added).
 
+## 6.14 (11 Nov 2026): leaf logo inside the app
+- The small logo beside "Sourced" at the top of the app is now the same leaf with a check mark as the app icon. It follows your colour theme.
+- Phones now fetch the new app icon instead of reusing the old saved one.
+
 ## Coming before public release
 - A small server so lookups and translation are faster and don't depend on shared limits.
 - Privacy policy, and release on Google Play, then the Apple App Store.
